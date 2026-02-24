@@ -12,6 +12,7 @@ import {
 	type Node_UI,
 	TRIGGER_NODES_UI,
 } from "@/constants/nodes";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 const NodeItem = ({ node }: { node: Node_UI }) => {
 	const Icon = node.icon;
@@ -31,41 +32,64 @@ const NodeItem = ({ node }: { node: Node_UI }) => {
 	);
 };
 
+const Nodes = () => {
+	return (
+		<>
+			<SidebarGroup>
+				<SidebarGroupLabel>Triggers</SidebarGroupLabel>
+				<SidebarMenu className="gap-1 text-sm tracking-tight [word-spacing:0.125rem]">
+					{TRIGGER_NODES_UI.map((node) => {
+						return (
+							<SidebarMenuItem
+								key={node.type}
+								className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5"
+							>
+								<NodeItem node={node} />
+							</SidebarMenuItem>
+						);
+					})}
+				</SidebarMenu>
+			</SidebarGroup>
+			<SidebarGroup>
+				<SidebarGroupLabel>Actions</SidebarGroupLabel>
+				<SidebarMenu className="text-sm gap-1 tracking-tight">
+					{ACTION_NODES_UI.map((node) => {
+						return (
+							<SidebarMenuItem
+								key={node.type}
+								className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5"
+							>
+								<NodeItem node={node} />
+							</SidebarMenuItem>
+						);
+					})}
+				</SidebarMenu>
+			</SidebarGroup>
+		</>
+	);
+};
+
+const NodeEditor = () => {
+	return <p>select a node</p>;
+};
+
 export const WorkflowEditorSidebar = () => {
 	return (
 		<Sidebar side="right" collapsible="offcanvas" className="h-screen">
 			<SidebarRail />
-			<SidebarContent>
-				<SidebarGroup>
-					<SidebarGroupLabel>Triggers</SidebarGroupLabel>
-					<SidebarMenu className="gap-1 text-sm tracking-tight [word-spacing:0.125rem]">
-						{TRIGGER_NODES_UI.map((node) => {
-							return (
-								<SidebarMenuItem
-									key={node.type}
-									className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5"
-								>
-									<NodeItem node={node} />
-								</SidebarMenuItem>
-							);
-						})}
-					</SidebarMenu>
-				</SidebarGroup>
-				<SidebarGroup>
-					<SidebarGroupLabel>Actions</SidebarGroupLabel>
-					<SidebarMenu className="text-sm gap-1 tracking-tight">
-						{ACTION_NODES_UI.map((node) => {
-							return (
-								<SidebarMenuItem
-									key={node.type}
-									className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5"
-								>
-									<NodeItem node={node} />
-								</SidebarMenuItem>
-							);
-						})}
-					</SidebarMenu>
-				</SidebarGroup>
+			<SidebarContent className="mt-10 pl-1">
+				<Tabs defaultValue="nodes">
+					<TabsList className="ml-2 px-2 py-1.5 gap-2 mb-1">
+						<TabsTrigger value="nodes">Nodes</TabsTrigger>
+						<TabsTrigger value="editor">Editor</TabsTrigger>
+					</TabsList>
+					<TabsContent value="nodes">
+						<Nodes />
+					</TabsContent>
+					<TabsContent value="editor">
+						<NodeEditor />
+					</TabsContent>
+				</Tabs>
 			</SidebarContent>
 		</Sidebar>
 	);
