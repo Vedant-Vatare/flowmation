@@ -175,7 +175,24 @@ body {
 		@apply bg-background text-foreground;
 	}
 }
+.react-flow__controls {
+	position: absolute;
+	bottom: 8rem;
+}
 
+.react-flow__panel.bottom {
+	bottom: 8rem;
+}
+.react-flow__controls button {
+	background-color: var(--color-accent);
+	border: none;
+	outline: none;
+	padding: 0.5rem;
+	margin-inline: 4px;
+}
+.react-flow__controls button:hover {
+	background: var(--color-accent) / 80;
+}
 .dark {
 	--sidebar: hsl(240 5.9% 10%);
 	--sidebar-foreground: hsl(240 4.8% 95.9%);
