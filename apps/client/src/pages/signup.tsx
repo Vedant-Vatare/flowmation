@@ -3,7 +3,7 @@ import { type userSignup, userSignupSchema } from "@nodebase/shared";
 import { EyeClosedIcon, EyeIcon } from "lucide-react";
 import { useState } from "react";
 import { type SubmitHandler, useForm } from "react-hook-form";
-import GoogleIcon from "@/assets/icons/google.svg?react";
+import GoogleIcon from "@/assets/icons/nodes/google.svg?react";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
