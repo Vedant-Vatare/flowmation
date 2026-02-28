@@ -77,8 +77,18 @@ export const baseNodeSchema = z.object({
 	icon: z.string().optional(),
 	type: nodeTypesSchema,
 	parameters: z.array(nodeParameterSchema),
-	outputPorts: z.array(nodeOutputPortsSchema).optional(),
-	InputPorts: z.array(nodeInputPortsSchema).optional(),
+	outputPorts: z.array(nodeOutputPortsSchema).default([
+		{
+			name: "default",
+			label: "default",
+		},
+	]),
+	inputPorts: z.array(nodeInputPortsSchema).default([
+		{
+			name: "default",
+			label: "default",
+		},
+	]),
 	credentials: nodeCredentialSchema.optional(),
 	settings: baseNodeSettingsSchema.optional(),
 });
