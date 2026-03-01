@@ -13,7 +13,6 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 			.values({
 				workflowId: node.workflowId,
 				nodeId: node.nodeId,
-				instanceId: node.instanceId,
 				name: node.name,
 				task: node.task,
 				description: node.description,
@@ -59,14 +58,14 @@ export const getNodesInWorkflow = async (req: Request, res: Response) => {
 export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	const node = req.body.validatedNode as PartialWorkflowNode;
 
-	if (!node.instanceId) {
-		throw createHttpError.BadRequest("node instance id is required");
+	if (!node.id) {
+		throw createHttpError.BadRequest("node id is required");
 	}
 
 	const [existingNode] = await db
 		.select()
 		.from(workflowNodesTable)
-		.where(eq(workflowNodesTable.instanceId, node.instanceId));
+		.where(eq(workflowNodesTable.id, node.id));
 
 	if (!existingNode) {
 		throw createHttpError.NotFound("node does not exist");
@@ -77,7 +76,7 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	const [updatedNode] = await db
 		.update(workflowNodesTable)
 		.set(mergedData)
-		.where(eq(workflowNodesTable.instanceId, node.instanceId))
+		.where(eq(workflowNodesTable.id, node.id))
 		.returning();
 
 	return res.status(200).json({
@@ -99,12 +98,12 @@ export const deleteNodeInWorkflow = async (req: Request, res: Response) => {
 		.delete(workflowNodesTable)
 		.where(
 			and(
-				eq(workflowNodesTable.instanceId, instanceId),
+				eq(workflowNodesTable.id, instanceId),
 				eq(workflowNodesTable.workflowId, workflowId),
 			),
 		);
 	if (query.rowCount === 0) {
 		throw createHttpError.NotFound("node was not found");
 	}
-	return res.status(200).json({ mesage: "node instance deleted" });
+	return res.status(200).json({ message: "node instance deleted" });
 };

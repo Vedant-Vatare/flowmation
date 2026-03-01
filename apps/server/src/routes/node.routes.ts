@@ -7,21 +7,18 @@ import {
 	updateNode,
 } from "@/controllers/node.controller.js";
 import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
-import { upload } from "@/utils/uploads.utils.js";
 
 const router = Router() as routerType;
 
 router.post(
 	"/add",
-	upload.single("icon"),
-	validateRequest(baseNodeSchema, "body", { parse: true }),
+	validateRequest(baseNodeSchema, "body"),
 	asyncHandler(createNode),
 );
 router.get("/all", asyncHandler(getAllNodes));
 router.patch(
 	"/:id",
-	upload.single("icon"),
-	validateRequest(updateBaseNodeSchema, "body", { parse: true }),
+	validateRequest(updateBaseNodeSchema, "body"),
 	asyncHandler(updateNode),
 );
 router.delete("/:id", asyncHandler(deleteNode));
