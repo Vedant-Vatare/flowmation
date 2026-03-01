@@ -27,7 +27,9 @@ export const getWorkflowConnections = async (workflowId: string) => {
 	return response.data.workflowConnections;
 };
 
-export const addWorkflowNode = async (node: WorkflowNode) => {
+export const addWorkflowNodeApi = async (node: WorkflowNode) => {
+	console.log("sending req", node.id);
+
 	const response = await api.post<{ userWorkflowNode: WorkflowNode }>(
 		"/workflow-nodes",
 		{
@@ -35,4 +37,11 @@ export const addWorkflowNode = async (node: WorkflowNode) => {
 		},
 	);
 	return response.data.userWorkflowNode;
+};
+
+export const deleteWorkflowNodeApi = async (id: string, workflowId: string) => {
+	const response = await api.delete("/workflow-nodes/", {
+		data: { id, workflowId },
+	});
+	return response.data;
 };

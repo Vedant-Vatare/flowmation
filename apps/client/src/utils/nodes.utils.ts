@@ -4,7 +4,7 @@ import type {
 	WorkflowConnection,
 	WorkflowNode,
 } from "@nodebase/shared";
-import type { Edge } from "@xyflow/react";
+import type { Edge, XYPosition } from "@xyflow/react";
 import {
 	DEFAULT_UI,
 	NODE_UI_REGISTRY,
@@ -20,6 +20,8 @@ export const toCanvasNode = (node: WorkflowNode): WorkflowCanvasNode => ({
 	position: { x: node.positionX ?? 100, y: node.positionY ?? 100 },
 	data: {
 		id: node.id ?? "",
+		nodeId: node.nodeId,
+		workflowId: node.workflowId,
 		name: node.name,
 		task: node.task,
 		type: node.type as WorkflowNodeData["type"],
@@ -27,6 +29,8 @@ export const toCanvasNode = (node: WorkflowNode): WorkflowCanvasNode => ({
 		parameters: (node.parameters as WorkflowNodeData["parameters"]) ?? [],
 		inputPorts: (node.inputPorts as WorkflowNodeData["inputPorts"]) ?? [],
 		outputPorts: (node.outputPorts as WorkflowNodeData["outputPorts"]) ?? [],
+		credentials: node.credentials,
+		settings: node.settings,
 		ui: getNodeUI(node.task),
 	},
 });
@@ -39,10 +43,17 @@ export function getNodeColorByTask(task: string): string {
 	return NODE_UI_REGISTRY[task]?.background ?? "#6366f1";
 }
 
-export function createCanvasNode(
-	apiNode: BaseNode,
-	position: { x: number; y: number } = { x: 100, y: 100 },
-): WorkflowCanvasNode {
+export type CanvasNodeProps = {
+	apiNode: BaseNode;
+	workflowId: string;
+	position: XYPosition;
+};
+
+export function createCanvasNode({
+	apiNode,
+	workflowId,
+	position = { x: 100, y: 100 },
+}: CanvasNodeProps): WorkflowCanvasNode {
 	const id = crypto.randomUUID();
 	const ui = getNodeUI(apiNode.task);
 
@@ -52,6 +63,8 @@ export function createCanvasNode(
 		position,
 		data: {
 			id,
+			nodeId: apiNode.id,
+			workflowId,
 			task: apiNode.task,
 			name: ui.name,
 			type: apiNode.type as WorkflowNodeData["type"],
@@ -70,25 +83,20 @@ export function createCanvasNode(
 	};
 }
 
-export function toApiNode(
+export function createWorkflowNode(
 	canvasNode: WorkflowCanvasNode,
-	workflowId: string,
-	nodeId: string,
-): Omit<WorkflowNode, "id"> {
+): WorkflowNode {
 	const { ui: _ui, ...data } = canvasNode.data;
 
 	return {
-		nodeId,
-		workflowId,
-		name: data.name,
-		task: data.task,
-		type: data.type,
-		description: data.description ?? "",
-		parameters: data.parameters,
-		inputPorts: data.inputPorts,
-		outputPorts: data.outputPorts,
+		...data,
+		id: data.id,
 		positionX: canvasNode.position.x,
 		positionY: canvasNode.position.y,
+		description: data.description ?? "",
+		parameters: data.parameters ?? [],
+		inputPorts: data.inputPorts ?? [],
+		outputPorts: data.outputPorts ?? [],
 	};
 }
 

@@ -27,6 +27,7 @@ export type PortDefinition = {
 export type WorkflowNodeData = Pick<
 	WorkflowNode,
 	| "id"
+	| "nodeId"
 	| "name"
 	| "task"
 	| "type"
@@ -34,9 +35,13 @@ export type WorkflowNodeData = Pick<
 	| "parameters"
 	| "inputPorts"
 	| "outputPorts"
+	| "workflowId"
+	| "credentials"
+	| "settings"
 > & { ui: NodeUI };
 
 export type WorkflowCanvasNode = Node<WorkflowNodeData>;
+
 export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	"event.click": {
 		name: "Click",

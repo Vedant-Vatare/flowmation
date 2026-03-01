@@ -1,5 +1,6 @@
 import type { BaseNode } from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
+import { useCallback } from "react";
 import {
 	Sidebar,
 	SidebarContent,
@@ -12,7 +13,12 @@ import {
 import type { NodeUI } from "@/constants/nodes";
 import { useSortedNodes } from "@/hooks/nodes";
 import { useAddWorkflowNode } from "@/queries/userWorkflows";
-import { createCanvasNode, getNodeUI } from "@/utils/nodes.utils";
+import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import {
+	createCanvasNode,
+	createWorkflowNode,
+	getNodeUI,
+} from "@/utils/nodes.utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 
 const NodeItem = ({
@@ -44,20 +50,28 @@ const NodeItem = ({
 };
 
 const Nodes = () => {
+	const { workflowId } = Route.useParams();
 	const { addNodes, getNodes, fitView } = useReactFlow();
 	const ALL_NODES = useSortedNodes();
-	useAddWorkflowNode();
-	const handleAddNode = (apiNode: BaseNode) => {
-		const nodes = getNodes();
-		const last = nodes[nodes.length - 1];
-		const position = last
-			? { x: last.position.x + 200, y: last.position.y }
-			: { x: 225, y: 225 };
+	const { mutate } = useAddWorkflowNode();
 
-		const node = createCanvasNode(apiNode, position);
-		addNodes(node);
-		fitView({ padding: 20, duration: 300 });
-	};
+	const handleAddNode = useCallback(
+		(apiNode: BaseNode) => {
+			const nodes = getNodes();
+			const last = nodes[nodes.length - 1];
+			const position = last
+				? { x: last.position.x + 200, y: last.position.y }
+				: { x: 225, y: 225 };
+
+			const canvasNode = createCanvasNode({ apiNode, workflowId, position });
+			addNodes(canvasNode);
+			fitView({ padding: 20, duration: 300 });
+
+			const workflowNodeData = createWorkflowNode(canvasNode);
+			mutate(workflowNodeData);
+		},
+		[workflowId, addNodes, getNodes, fitView, mutate],
+	);
 
 	if (!ALL_NODES) {
 		return (

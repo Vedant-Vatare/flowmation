@@ -1,7 +1,8 @@
 import type { WorkflowNode } from "@nodebase/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-	addWorkflowNode,
+	addWorkflowNodeApi,
+	deleteWorkflowNodeApi,
 	getUserWorkflowsApi,
 	getWorkflowConnections,
 	getWorkflowNodes,
@@ -27,5 +28,11 @@ export const useWorkflowConnectionsQuery = (workflowId: string) =>
 
 export const useAddWorkflowNode = () =>
 	useMutation({
-		mutationFn: (node: WorkflowNode) => addWorkflowNode(node),
+		mutationFn: (node: WorkflowNode) => addWorkflowNodeApi(node),
+	});
+
+export const useDeleteWorkflowNode = () =>
+	useMutation({
+		mutationFn: ({ id, workflowId }: { id: string; workflowId: string }) =>
+			deleteWorkflowNodeApi(id, workflowId),
 	});

@@ -26,6 +26,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 
 import {
+	useDeleteWorkflowNode,
 	useWorkflowConnectionsQuery,
 	useWorkflowNodesQuery,
 } from "@/queries/userWorkflows";
@@ -152,7 +153,7 @@ const WorkflowCanvas = () => {
 		useWorkflowNodesQuery(workflowId);
 	const { data: workflowConnections, isLoading: connectionsLoading } =
 		useWorkflowConnectionsQuery(workflowId);
-
+	const { mutate: deleteNode } = useDeleteWorkflowNode();
 	const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowCanvasNode>(
 		[],
 	);
@@ -174,6 +175,14 @@ const WorkflowCanvas = () => {
 		},
 		[setEdges],
 	);
+	const onNodesDelete = useCallback(
+		(deletedNodes: WorkflowCanvasNode[]) => {
+			for (const canvasNode of deletedNodes) {
+				deleteNode({ id: canvasNode.data.id, workflowId });
+			}
+		},
+		[deleteNode, workflowId],
+	);
 
 	if (nodesLoading || connectionsLoading) {
 		return <div>loading workflow</div>;
@@ -186,8 +195,10 @@ const WorkflowCanvas = () => {
 				edges={edges}
 				nodeTypes={nodeTypes}
 				fitView={true}
+				maxZoom={1.5}
 				fitViewOptions={{ duration: 250, padding: 0.75, minZoom: 0.9 }}
 				onNodesChange={onNodesChange}
+				onNodesDelete={onNodesDelete}
 				onEdgesChange={onEdgesChange}
 				onConnect={onConnect}
 				onReconnect={(oldEdge, newConnection) => {
@@ -195,6 +206,8 @@ const WorkflowCanvas = () => {
 				}}
 				connectionMode={ConnectionMode.Strict}
 				deleteKeyCode="Delete"
+				panOnDrag={[1]}
+				selectionOnDrag={true}
 				defaultEdgeOptions={{
 					markerEnd: { type: MarkerType.ArrowClosed },
 					style: {

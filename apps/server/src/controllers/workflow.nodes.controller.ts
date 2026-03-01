@@ -86,19 +86,19 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 };
 
 export const deleteNodeInWorkflow = async (req: Request, res: Response) => {
-	if (!req.body || !req.body.workflowId || !req.body.instanceId) {
+	if (!req.body || !req.body.workflowId || !req.body.id) {
 		throw createHttpError.BadRequest("invalid node data");
 	}
-	const { workflowId, instanceId } = req.body as {
+	const { workflowId, id } = req.body as {
+		id: string;
 		workflowId: string;
-		instanceId: string;
 	};
 
 	const query = await db
 		.delete(workflowNodesTable)
 		.where(
 			and(
-				eq(workflowNodesTable.id, instanceId),
+				eq(workflowNodesTable.id, id),
 				eq(workflowNodesTable.workflowId, workflowId),
 			),
 		);
