@@ -90,10 +90,7 @@ export const workflowNodesTable = pgTable(
 			.$type<{ name: string; label: string }>()
 			.array(),
 	},
-	(t) => [
-		index("workflow_nodes_workflow_id_idx").on(t.workflowId),
-		unique("unique_node_per_workflow").on(t.workflowId, t.nodeId),
-	],
+	(t) => [index("workflow_nodes_workflow_id_idx").on(t.workflowId)],
 );
 
 export const workflowConnectionsTable = pgTable(

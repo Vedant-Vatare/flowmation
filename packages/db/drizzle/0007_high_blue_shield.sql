@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_nodes" DROP CONSTRAINT "unique_node_per_workflow";
