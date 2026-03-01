@@ -7,7 +7,7 @@ import {
 	pgTable,
 	text,
 	timestamp,
-	uniqueIndex,
+	unique,
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
@@ -34,11 +34,17 @@ export const usersTable = pgTable("users", {
 export const nodesTable = pgTable("nodes", {
 	id: uuid().defaultRandom().primaryKey(),
 	name: varchar({ length: 255 }).unique().notNull(),
+	type: nodeTypeEnum().notNull(),
 	task: varchar({ length: 255 }).unique().notNull(),
 	description: text().notNull(),
-	icon: text().notNull(),
 	parameters: jsonb().$type<NodeParameters[]>().notNull(),
 	credentials: jsonb().$type<NodeCredentials>(),
+	outputPorts: jsonb("output_ports")
+		.$type<{ name: string; label: string }>()
+		.array(),
+	inputPorts: jsonb("input_ports")
+		.$type<{ name: string; label: string }>()
+		.array(),
 });
 
 export const userWorkflowsTable = pgTable(
@@ -69,7 +75,6 @@ export const workflowNodesTable = pgTable(
 		nodeId: uuid("node_id")
 			.references(() => nodesTable.id)
 			.notNull(),
-		instanceId: uuid("instance_id").defaultRandom().notNull().unique(),
 		positionX: integer("position_x"),
 		positionY: integer("position_y"),
 		name: varchar({ length: 255 }).notNull(),
@@ -86,8 +91,8 @@ export const workflowNodesTable = pgTable(
 			.array(),
 	},
 	(t) => [
-		index("workflow_instance_ids_idx").on(t.workflowId, t.instanceId),
-		uniqueIndex("unique_workflow_instance").on(t.workflowId, t.instanceId),
+		index("workflow_nodes_workflow_id_idx").on(t.workflowId),
+		unique("unique_node_per_workflow").on(t.workflowId, t.nodeId),
 	],
 );
 
@@ -98,16 +103,24 @@ export const workflowConnectionsTable = pgTable(
 		workflowId: uuid("workflow_id")
 			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
 			.notNull(),
-		sourceInstanceId: uuid("source_instance_id")
-			.references(() => workflowNodesTable.instanceId)
+		sourceId: uuid("source_id")
+			.references(() => workflowNodesTable.id)
 			.notNull(),
-		targetInstanceId: uuid("target_instance_id")
-			.references(() => workflowNodesTable.instanceId)
+		targetId: uuid("target_id")
+			.references(() => workflowNodesTable.id)
 			.notNull(),
-		sourceOutput: varchar("source_output", { length: 255 }),
-		targetInput: varchar("target_input", { length: 255 }),
+		sourcePort: varchar("source_port", { length: 255 }),
+		targetPort: varchar("target_port", { length: 255 }),
 	},
-	(t) => [index("workflow_conn_workflowId_idx").on(t.workflowId)],
+	(t) => [
+		index("workflow_conn_workflowId_idx").on(t.workflowId),
+		unique("unique_connection").on(
+			t.sourceId,
+			t.sourcePort,
+			t.targetId,
+			t.targetPort,
+		),
+	],
 );
 
 export const workflowExecutionTable = pgTable(

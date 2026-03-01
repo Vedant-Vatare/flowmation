@@ -29,6 +29,27 @@
       "when": 1771176642273,
       "tag": "0003_mute_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1772350783409,
+      "tag": "0004_uneven_zzzax",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1772351456970,
+      "tag": "0005_worthless_skaar",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1772361812363,
+      "tag": "0006_fast_amazoness",
+      "breakpoints": true
     }
   ]
 }
