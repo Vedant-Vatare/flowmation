@@ -20,13 +20,13 @@ import {
 import type React from "react";
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
-
 import { Plus } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
-
+import { useDebounce } from "@/hooks/debouce";
 import {
 	useDeleteWorkflowNode,
+	useUpdateWorkflowNode,
 	useWorkflowConnectionsQuery,
 	useWorkflowNodesQuery,
 } from "@/queries/userWorkflows";
@@ -153,6 +153,7 @@ const WorkflowCanvas = () => {
 		useWorkflowNodesQuery(workflowId);
 	const { data: workflowConnections, isLoading: connectionsLoading } =
 		useWorkflowConnectionsQuery(workflowId);
+	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const { mutate: deleteNode } = useDeleteWorkflowNode();
 	const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowCanvasNode>(
 		[],
@@ -175,6 +176,7 @@ const WorkflowCanvas = () => {
 		},
 		[setEdges],
 	);
+
 	const onNodesDelete = useCallback(
 		(deletedNodes: WorkflowCanvasNode[]) => {
 			for (const canvasNode of deletedNodes) {
@@ -182,6 +184,25 @@ const WorkflowCanvas = () => {
 			}
 		},
 		[deleteNode, workflowId],
+	);
+
+	const saveNodePosition = useCallback(
+		(canvasNode: WorkflowCanvasNode) => {
+			console.log("updating node:", canvasNode.id);
+
+			updateNode({
+				id: canvasNode.id,
+				task: canvasNode.data.task,
+				positionX: Math.round(canvasNode.position.x),
+				positionY: Math.round(canvasNode.position.y),
+			});
+		},
+		[updateNode],
+	);
+
+	const debouncedSaveNode = useDebounce(
+		saveNodePosition,
+		(node: WorkflowCanvasNode) => node.id,
 	);
 
 	if (nodesLoading || connectionsLoading) {
@@ -196,9 +217,10 @@ const WorkflowCanvas = () => {
 				nodeTypes={nodeTypes}
 				fitView={true}
 				maxZoom={1.5}
-				fitViewOptions={{ duration: 250, padding: 0.75, minZoom: 0.9 }}
+				fitViewOptions={{ duration: 250, padding: 0.75, minZoom: 1 }}
 				onNodesChange={onNodesChange}
 				onNodesDelete={onNodesDelete}
+				onNodeDragStop={(_e, node) => debouncedSaveNode(node)}
 				onEdgesChange={onEdgesChange}
 				onConnect={onConnect}
 				onReconnect={(oldEdge, newConnection) => {

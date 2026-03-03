@@ -1,4 +1,5 @@
 import type {
+	PartialWorkflowNode,
 	UserWorkflow,
 	WorkflowConnection,
 	WorkflowNode,
@@ -44,4 +45,11 @@ export const deleteWorkflowNodeApi = async (id: string, workflowId: string) => {
 		data: { id, workflowId },
 	});
 	return response.data;
+};
+
+export const updateWorkflowNodeApi = async (node: PartialWorkflowNode) => {
+	const response = await api.patch("/workflow-nodes/", {
+		node,
+	});
+	return response.data.updatedNode as WorkflowNode;
 };

@@ -35,7 +35,7 @@ const NodeItem = ({
 	return (
 		<button
 			type="button"
-			className="flex gap-2 items-center w-full"
+			className="flex gap-2 items-center w-full cursor-pointer"
 			onClick={onClick}
 		>
 			<Icon
