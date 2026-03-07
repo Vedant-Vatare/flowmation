@@ -52,7 +52,7 @@ export const userWorkflowsTable = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		userId: uuid("user_id")
-			.references(() => usersTable.id)
+			.references(() => usersTable.id, { onDelete: "cascade" })
 			.notNull(),
 		name: varchar({ length: 255 }).unique(),
 		description: text(),
@@ -73,7 +73,7 @@ export const workflowNodesTable = pgTable(
 			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
 			.notNull(),
 		nodeId: uuid("node_id")
-			.references(() => nodesTable.id)
+			.references(() => nodesTable.id, { onDelete: "cascade" })
 			.notNull(),
 		positionX: integer("position_x"),
 		positionY: integer("position_y"),
@@ -125,10 +125,10 @@ export const workflowExecutionTable = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		workflowId: uuid()
-			.references(() => userWorkflowsTable.id)
+			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
 			.notNull(),
 		userId: uuid()
-			.references(() => usersTable.id)
+			.references(() => usersTable.id, { onDelete: "cascade" })
 			.notNull(),
 		status: WorkflowStatusEnum().default("running").notNull(),
 		executedAt: timestamp("started_at").defaultNow().notNull(),
@@ -143,9 +143,11 @@ export const nodeExecutionTable = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		workflowId: uuid()
-			.references(() => userWorkflowsTable.id)
+			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
 			.notNull(),
-		instanceId: uuid("instance_id").references(() => workflowNodesTable.id),
+		instanceId: uuid("instance_id").references(() => workflowNodesTable.id, {
+			onDelete: "cascade",
+		}),
 		executedAt: timestamp("executed_at").defaultNow().notNull(),
 		completedAt: timestamp("completed_at").notNull(),
 		output: jsonb().$type<unknown>(),

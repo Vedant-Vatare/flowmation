@@ -57,6 +57,13 @@
       "when": 1772372600439,
       "tag": "0007_high_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1772901131549,
+      "tag": "0008_brainy_richard_fisk",
+      "breakpoints": true
     }
   ]
 }
