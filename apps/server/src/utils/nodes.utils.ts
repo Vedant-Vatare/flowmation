@@ -40,6 +40,7 @@ export const validateNodeSchema = (
 		throw new Error(`No schema found for task: ${nodeData.task}`);
 	}
 	const fullNodeSchema = workflowNodeSchema.extend(schema.shape);
+
 	const validationSchema = options.partial
 		? fullNodeSchema.partial()
 		: fullNodeSchema;

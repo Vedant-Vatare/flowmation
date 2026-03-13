@@ -27,6 +27,14 @@ export const httpNodeSchema = baseNodeSchema.extend({
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
+				label: z.literal("URL Parameters"),
+				name: z.literal("urlParams"),
+				type: z.literal("key-value"),
+				value: z.array(z.record(z.string(), z.string())),
+				required: z.boolean(),
+				multiValued: z.boolean().optional(),
+			}),
+			nodeParameterSchema.extend({
 				label: z.literal("Body"),
 				name: z.literal("body"),
 				type: z.literal("textarea"),

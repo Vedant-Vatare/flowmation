@@ -1,12 +1,16 @@
 import { z } from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "./base.nodes.js";
 
-export const clickNodeSchema = baseNodeSchema.extend({
+export const baseTriggerNodeSchema = baseNodeSchema.extend({
+	inputPorts: z.union([z.null(), z.array(z.never())]),
+});
+
+export const clickNodeSchema = baseTriggerNodeSchema.extend({
 	task: z.literal("trigger.click"),
 	type: z.literal("trigger"),
 });
 
-export const cronJobNodeSchema = baseNodeSchema.extend({
+export const cronJobNodeSchema = baseTriggerNodeSchema.extend({
 	task: z.literal("trigger.cron"),
 	type: z.union([z.literal("trigger"), z.literal("action")]),
 	parameters: z.array(
@@ -43,7 +47,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 	),
 });
 
-export const inputNodeSchema = baseNodeSchema.extend({
+export const inputNodeSchema = baseTriggerNodeSchema.extend({
 	task: z.literal("trigger.input"),
 	type: z.literal("trigger"),
 	parameters: z.array(
