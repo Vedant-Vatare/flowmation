@@ -13,6 +13,6 @@ export const db = drizzle(pool, {
 	casing: "snake_case",
 });
 
-export { and, eq, or } from "drizzle-orm";
+export { and, eq, inArray, or, SQL, sql } from "drizzle-orm";
 export { DrizzleQueryError } from "drizzle-orm/errors";
 export * from "./db/schema.js";

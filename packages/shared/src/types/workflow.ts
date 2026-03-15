@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type {
+	NodeIdsWithPositionSchema,
 	partialWorkflowConnectionSchema,
 	partialWorkflowNodeSchema,
 	userWorkflowSchema,
@@ -28,3 +29,4 @@ export type WorkflowConnection = z.infer<typeof workflowConnectionSchema>;
 export type partialWorkflowConnection = z.infer<
 	typeof partialWorkflowConnectionSchema
 >;
+export type NodeIdsWithPosition = z.infer<typeof NodeIdsWithPositionSchema>;

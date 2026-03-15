@@ -1,11 +1,13 @@
+import { NodeIdsWithPositionSchema } from "@nodebase/shared";
 import { Router, type Router as RouterType } from "express";
 import {
 	addNodeInWorkflow,
 	deleteNodeInWorkflow,
 	getNodesInWorkflow,
 	updateNodeInWorkflow,
+	updateNodesPositions,
 } from "@/controllers/workflow.nodes.controller.js";
-import { asyncHandler } from "@/utils/api.utils.js";
+import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
 import { authenticateUser } from "@/utils/auth.utils.js";
 import {
 	validateNodeMiddleware,
@@ -22,6 +24,13 @@ router.patch(
 	"/",
 	validatePartialNodeMiddleware,
 	asyncHandler(updateNodeInWorkflow),
+);
+router.patch(
+	"/positions",
+	validateRequest(NodeIdsWithPositionSchema, "body", {
+		key: "nodes",
+	}),
+	updateNodesPositions,
 );
 router.delete("/", asyncHandler(deleteNodeInWorkflow));
 

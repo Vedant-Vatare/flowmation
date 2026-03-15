@@ -56,3 +56,11 @@ export const workflowConnectionSchema = z.object({
 export const partialWorkflowConnectionSchema = workflowConnectionSchema
 	.partial()
 	.extend({ id: z.string() });
+
+export const NodeIdsWithPositionSchema = z.array(
+	workflowNodeSchema.pick({
+		id: true,
+		positionX: true,
+		positionY: true,
+	}),
+);

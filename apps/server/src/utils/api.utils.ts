@@ -7,18 +7,17 @@ import type {
 	Response,
 } from "express";
 import { DatabaseError } from "pg";
-import { flattenError, type ZodObject } from "zod";
+import { flattenError, type ZodType } from "zod";
 
 type RequestField = "body" | "params" | "query";
 
-type ValidationOptions =
-	| {
-			parse: boolean;
-	  }
-	| Record<string, unknown>;
+type ValidationOptions = {
+	parse?: boolean;
+	key?: string;
+};
 
 export const validateRequest = (
-	schema: ZodObject,
+	schema: ZodType,
 	field: RequestField,
 	options: ValidationOptions = {},
 ): RequestHandler => {
@@ -51,7 +50,15 @@ export const validateRequest = (
 				});
 			}
 		}
-
+		if (options.key) {
+			if (!(options.key in data)) {
+				return res.status(400).json({
+					error: "MissingKey",
+					message: `Expected key "${options.key}" in request ${field}`,
+				});
+			}
+			data = data[options.key];
+		}
 		const zodResponse = schema.safeParse(data);
 
 		if (!zodResponse.success) {

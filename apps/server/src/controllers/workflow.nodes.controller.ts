@@ -1,5 +1,17 @@
-import { and, db, eq, workflowNodesTable } from "@nodebase/db";
-import type { PartialWorkflowNode, WorkflowNode } from "@nodebase/shared";
+import {
+	and,
+	db,
+	eq,
+	inArray,
+	type SQL,
+	sql,
+	workflowNodesTable,
+} from "@nodebase/db";
+import type {
+	NodeIdsWithPosition,
+	PartialWorkflowNode,
+	WorkflowNode,
+} from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
@@ -83,6 +95,56 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	return res.status(200).json({
 		message: "node instance updated",
 		updatedNode,
+	});
+};
+
+export const updateNodesPositions = async (req: Request, res: Response) => {
+	const nodes = req.body as NodeIdsWithPosition;
+	if (nodes.length === 0)
+		throw createHttpError.BadRequest("No nodes provided for position update");
+
+	const ids: string[] = [];
+	const positionXChunks: SQL[] = [];
+	const positionYChunks: SQL[] = [];
+
+	positionXChunks.push(sql`(case`);
+	positionYChunks.push(sql`(case`);
+
+	for (const node of nodes) {
+		positionXChunks.push(
+			sql`when ${workflowNodesTable.id} = ${node.id} then ${node.positionX}::integer`,
+		);
+		positionYChunks.push(
+			sql`when ${workflowNodesTable.id} = ${node.id} then ${node.positionY}::integer`,
+		);
+		ids.push(node.id);
+	}
+
+	positionXChunks.push(sql`end)`);
+	positionYChunks.push(sql`end)`);
+
+	const finalPositionX: SQL = sql.join(positionXChunks, sql.raw(" "));
+	const finalPositionY: SQL = sql.join(positionYChunks, sql.raw(" "));
+
+	const updatedNodes = await db
+		.update(workflowNodesTable)
+		.set({
+			positionX: finalPositionX,
+			positionY: finalPositionY,
+		})
+		.where(inArray(workflowNodesTable.id, ids))
+		.returning({
+			id: workflowNodesTable.id,
+			positionX: workflowNodesTable.positionX,
+			positionY: workflowNodesTable.positionY,
+		});
+
+	if (updatedNodes.length === 0)
+		throw createHttpError.NotFound("No nodes were found to update");
+
+	return res.status(200).json({
+		message: "Node positions updated successfully",
+		nodes: updatedNodes,
 	});
 };
 
