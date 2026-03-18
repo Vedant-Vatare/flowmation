@@ -1,28 +1,45 @@
 import { Queue } from "bullmq";
 import "dotenv/config";
-import type { WorkflowNode } from "@nodebase/shared";
-import { QUEUE_NAME } from "./types.js";
+import type { NodeJobPayload, WorkflowJobPayload } from "./types.js";
+import { NODE_QUEUE_NAME, WORKFLOW_QUEUE_NAME } from "./types.js";
 
 export const connection = {
 	host: process.env.REDIS_HOST || "localhost",
-	port: 6379,
+	port: Number(process.env.REDIS_PORT) || 6379,
 	maxRetriesPerRequest: null,
 };
 
-const workflowQueue = new Queue<WorkflowNode>(QUEUE_NAME, {
-	connection,
-	defaultJobOptions: {
-		removeOnComplete: {
-			age: 3 * 24 * 60 * 60,
-			count: 1000,
-		},
-		removeOnFail: {
-			age: 7 * 24 * 60 * 60,
-			count: 500,
-		},
+const defaultJobOptions = {
+	removeOnComplete: {
+		age: 3 * 24 * 60 * 60,
+		count: 1000,
 	},
+	removeOnFail: {
+		age: 7 * 24 * 60 * 60,
+		count: 500,
+	},
+};
+
+const workflowQueue = new Queue<WorkflowJobPayload>(WORKFLOW_QUEUE_NAME, {
+	connection,
+	defaultJobOptions,
 });
 
-export async function addNodeInQueue(data: WorkflowNode) {
-	return workflowQueue.add("execute-node", data);
+const nodeQueue = new Queue<NodeJobPayload>(NODE_QUEUE_NAME, {
+	connection,
+	defaultJobOptions,
+});
+
+export async function addWorkflowInQueue(data: WorkflowJobPayload) {
+	return workflowQueue.add("execute-workflow", data);
+}
+
+export async function addNodeInQueue(data: NodeJobPayload) {
+	return nodeQueue.add("execute-node", data, {
+		attempts: 3,
+		backoff: {
+			type: "exponential",
+			delay: 1000,
+		},
+	});
 }
