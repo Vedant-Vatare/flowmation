@@ -13,6 +13,5 @@ export type WorkflowJobPayload = {
 export interface NodeJobPayload {
 	executionId: string;
 	workflowId: string;
-	nodeInstanceId: string;
-	input: Record<string, unknown>;
+	node: WorkflowNode;
 }
