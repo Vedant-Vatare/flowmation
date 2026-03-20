@@ -5,6 +5,7 @@ export const NODE_QUEUE_NAME = "workflow-nodes" as const;
 
 export type WorkflowJobPayload = {
 	executionId: string;
+	workflowId: string;
 	nodes: WorkflowNode[];
 	connections: WorkflowConnection[];
 };

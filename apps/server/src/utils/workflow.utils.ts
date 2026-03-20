@@ -34,10 +34,11 @@ export const enqueueWorkflow = async (workflowId: string, userId: string) => {
 		);
 
 	await addWorkflowInQueue({
+		workflowId: workflowId,
 		executionId: execution.id,
 		nodes: workflowData.nodes,
 		connections: workflowData.connections,
 	});
 
-	return execution.id;
+	return execution;
 };
