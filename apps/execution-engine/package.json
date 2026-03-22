@@ -24,7 +24,8 @@
 		"@nodebase/queue": "workspace:*",
 		"@nodebase/shared": "workspace:*",
 		"bullmq": "^5.5.0",
-		"ioredis": "^5.3.0"
+		"ioredis": "^5.3.0",
+		"zod": "^4.3.6"
 	},
 	"peerDependencies": {
 		"tsc-alias": "^1.8.16",

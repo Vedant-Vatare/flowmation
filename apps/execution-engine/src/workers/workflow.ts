@@ -16,15 +16,14 @@ const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 export const workflowWorker = new Worker(
 	WORKFLOW_QUEUE_NAME,
 	async (job: Job<WorkflowJobPayload>) => {
-		console.log("id:", job.id);
-		console.log(job.data.executionId);
+		console.log("executing workflow:", job.data.workflowId);
 		await handleSequentialNodeExecution(job);
 	},
 	{ connection },
 );
 
 workflowWorker.on("completed", async (job: Job<WorkflowJobPayload>) => {
-	console.log("completed exec. for id:", job.data.executionId);
+	console.log("workflow execution complete for workflow:", job.data.workflowId);
 	await updateWorkflowStatusQuery(job.data.executionId, "executed");
 	await updateUserWorkflowStatusQuery(job.data.workflowId, "active");
 });
@@ -35,6 +34,7 @@ workflowWorker.on(
 		if (!job) return;
 		console.error(err);
 		await updateWorkflowStatusQuery(job.data.executionId, "failed");
+		await updateUserWorkflowStatusQuery(job.data.workflowId, "failed");
 	},
 );
 
