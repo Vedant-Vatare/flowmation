@@ -1,5 +1,6 @@
-import type { WorkflowNode } from "@nodebase/shared";
+import type { InputNode, WorkflowNode } from "@nodebase/shared";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
+import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
 import type { HttpNode, NodeExecutorOutput } from "./types/nodes.js";
 import { checkRequiredParameters } from "./utils/node.executor.utils.js";
 
@@ -19,6 +20,8 @@ export const executeNode = (
 	switch (node.task) {
 		case "action.http":
 			return httpNodeExecutor(node as HttpNode);
+		case "trigger.input":
+			return inputNodeExecutor(node as InputNode);
 		default:
 			return {
 				success: false,

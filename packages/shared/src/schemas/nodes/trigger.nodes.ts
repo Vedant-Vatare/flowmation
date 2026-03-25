@@ -2,7 +2,9 @@ import { z } from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "./base.nodes.js";
 
 export const baseTriggerNodeSchema = baseNodeSchema.extend({
-	inputPorts: z.union([z.null(), z.array(z.never())]),
+	inputPorts: z
+		.array(z.object({ name: z.string(), label: z.string() }))
+		.length(0),
 });
 
 export const clickNodeSchema = baseTriggerNodeSchema.extend({

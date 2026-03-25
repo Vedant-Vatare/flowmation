@@ -25,3 +25,11 @@ export type parameterDepends = z.infer<typeof parameterDependSchema>;
 export type NodeParameters = z.infer<typeof nodeParameterSchema>;
 
 export type BaseNode = z.infer<typeof baseNodeSchema>;
+
+export * from "./action.nodes.js";
+
+export * from "./control.nodes.js";
+
+export * from "./transform.nodes.js";
+
+export * from "./trigger.nodes.js";
