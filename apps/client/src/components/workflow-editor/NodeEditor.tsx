@@ -54,62 +54,53 @@ function allRequiredFilled(
 
 function useIsVisible(
 	field: NodeParameters,
-	control: NodeFieldProps["control"],
+	allValues: Record<string, unknown>,
 ): boolean {
-	const depNames = useMemo(
-		() => field.dependsOn?.map((d) => d.parameter) ?? [],
-
-		[field.dependsOn?.map],
-	);
-
-	const depValues = useWatch({
-		control,
-		name: depNames as [string, ...string[]],
-		disabled: depNames.length === 0,
-	}) as unknown[];
-
 	if (!field.dependsOn?.length) return true;
-
-	return field.dependsOn.every((param, idx) =>
-		param.values.includes(depValues[idx]),
+	return field.dependsOn.every(({ parameter, values }) =>
+		values.includes(allValues[parameter]),
 	);
 }
 
-export const NodeField = memo(
-	({ field, register, control }: Omit<NodeFieldProps, "allValues">) => {
-		const visible = useIsVisible(field, control);
-		if (!visible) return null;
+export const NodeField = ({
+	field,
+	register,
+	control,
+	allValues,
+	currentNodeId,
+}: NodeFieldProps & { allValues: Record<string, unknown> }) => {
+	const visible = useIsVisible(field, allValues);
+	if (!visible) return null;
 
-		const shared = { field, register, control };
+	const shared = { field, register, control, currentNodeId };
 
-		switch (field.type as NodePropertyType) {
-			case "input":
-				return <InputField {...shared} />;
-			case "number":
-				return <NumberField {...shared} />;
-			case "textarea":
-				return <TextareaField {...shared} />;
-			case "boolean":
-				return <BooleanField {...shared} />;
-			case "checkbox":
-				return <CheckboxField {...shared} />;
-			case "radio":
-				return <RadioField {...shared} />;
-			case "dropdown":
-				return <DropdownField {...shared} />;
-			case "date":
-				return <DateField {...shared} />;
-			case "date-time":
-				return <DateTimeField {...shared} />;
-			case "array":
-				return <ArrayField {...shared} />;
-			case "key-value":
-				return <KeyValueField {...shared} />;
-			default:
-				return <InputField {...shared} />;
-		}
-	},
-);
+	switch (field.type as NodePropertyType) {
+		case "input":
+			return <InputField {...shared} />;
+		case "number":
+			return <NumberField {...shared} />;
+		case "textarea":
+			return <TextareaField {...shared} />;
+		case "boolean":
+			return <BooleanField {...shared} />;
+		case "checkbox":
+			return <CheckboxField {...shared} />;
+		case "radio":
+			return <RadioField {...shared} />;
+		case "dropdown":
+			return <DropdownField {...shared} />;
+		case "date":
+			return <DateField {...shared} />;
+		case "date-time":
+			return <DateTimeField {...shared} />;
+		case "array":
+			return <ArrayField {...shared} />;
+		case "key-value":
+			return <KeyValueField {...shared} />;
+		default:
+			return <InputField {...shared} />;
+	}
+};
 
 export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 	const { icon: Icon, color, background } = node.data.ui;
@@ -151,8 +142,14 @@ export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 
 			setEditorStatus("saving");
 			updateNode(
-				{ id: node.id, task: node.data.task, parameters: updatedParams },
-				{ onSettled: () => setEditorStatus("idle") },
+				{
+					id: node.id,
+					task: node.data.task,
+					parameters: updatedParams,
+				},
+				{
+					onSettled: () => setEditorStatus("idle"),
+				},
 			);
 		},
 		[node, updateNode],
@@ -170,6 +167,8 @@ export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 		});
 		return () => subscription.unsubscribe();
 	}, [watch, debouncedSave]);
+
+	const allValues = useWatch({ control }) as Record<string, unknown>;
 
 	return (
 		<div className="flex flex-col min-w-70 max-w-90 bg-background shadow-sm">
@@ -209,6 +208,8 @@ export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 							field={param}
 							register={register}
 							control={control}
+							allValues={allValues}
+							currentNodeId={node.id}
 						/>
 					))
 				)}
