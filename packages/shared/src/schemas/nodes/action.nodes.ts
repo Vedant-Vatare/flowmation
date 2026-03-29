@@ -129,7 +129,7 @@ export const waitingNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Wait time"),
 				name: z.literal("wait_time_period"),
 				type: z.literal("number"),
-				value: z.union([z.number(), z.string()]),
+				value: z.string(),
 				default: z.literal("10").optional(),
 				required: z.boolean(),
 				dependsOn: z

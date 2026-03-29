@@ -70,7 +70,7 @@ export const nodeParameterSchema = z.object({
 			}),
 		)
 		.optional(),
-	default: z.string().optional(),
+	default: anyNodeValueSchema.optional(),
 	required: z.boolean().optional(),
 	multiValued: z.boolean().optional(),
 	dependsOn: z.array(parameterDependSchema).optional(),

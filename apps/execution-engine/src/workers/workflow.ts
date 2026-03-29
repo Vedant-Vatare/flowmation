@@ -2,14 +2,17 @@ import {
 	addNodeInQueue,
 	connection,
 	NODE_QUEUE_NAME,
+	type NodeExecutionConfig,
 	WORKFLOW_QUEUE_NAME,
 	type WorkflowJobPayload,
 } from "@nodebase/queue";
 import { type Job, QueueEvents, Worker } from "bullmq";
 import {
+	completeNodeExecutionQuery,
 	updateUserWorkflowStatusQuery,
 	updateWorkflowStatusQuery,
 } from "@/queries/workflow.executions.js";
+import { nodeExecutionConfig } from "@/utils/node.executor.utils.js";
 
 const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 
@@ -51,12 +54,35 @@ const handleSequentialNodeExecution = async (job: Job<WorkflowJobPayload>) => {
 
 	let currentId: string | undefined = startNode.id;
 
+	// nodeconfigs are populated when node is executed and configs can be passed to next node for execution
+	let previousExecution: { id: string; status: string } | null = null;
+	let nodeConfigs: NodeExecutionConfig = {};
+
 	while (currentId) {
 		const node = nodes.find((n) => n.id === currentId);
 		if (!node) throw new Error(`node ${currentId} not found`);
 
-		const nodeJob = await addNodeInQueue({ node, executionId, workflowId });
-		await nodeJob.waitUntilFinished(nodeQueueEvents);
+		if (previousExecution?.status === "waiting") {
+			await completeNodeExecutionQuery(previousExecution.id, null);
+		}
+
+		const nodeJob = await addNodeInQueue({
+			node,
+			executionId,
+			workflowId,
+			nodeConfig: nodeConfigs,
+		});
+
+		const nodeExecution = await nodeJob.waitUntilFinished(nodeQueueEvents);
+
+		console.log({ nodeExecution });
+
+		nodeConfigs = nodeExecutionConfig(node, nodeExecution?.output);
+		previousExecution = {
+			id: nodeExecution.id,
+			status: nodeExecution.status,
+		};
+
 		currentId = connections.find((c) => c.sourceId === currentId)?.targetId;
 	}
 };

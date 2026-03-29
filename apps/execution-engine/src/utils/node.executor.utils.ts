@@ -1,5 +1,6 @@
-import type { NodeParameters } from "@nodebase/shared";
-import { FormatParamsValueExpressions } from "./resolve.params.js";
+import type { NodeExecutionConfig } from "@nodebase/queue";
+import type { NodeParameters, WorkflowNode } from "@nodebase/shared";
+import { FormatParamsValueExpressions } from "./resolve.params.expressions.js";
 
 type KeyValueEntry = Record<string, string>;
 
@@ -64,9 +65,17 @@ export const checkRequiredParameters = (
 	params: NodeParameters[],
 ): { valid: boolean; missing: string[] } => {
 	const missing: string[] = [];
+	const valueMap = Object.fromEntries(params.map((p) => [p.name, p.value]));
 
 	for (const p of params) {
 		if (!p.required) continue;
+
+		if (p.dependsOn?.length) {
+			const isActive = p.dependsOn.every((condition) =>
+				condition.values.includes(valueMap[condition.parameter] as string),
+			);
+			if (!isActive) continue;
+		}
 
 		if (p.value === undefined || p.value === null || p.value === "") {
 			missing.push(p.label);
@@ -86,4 +95,22 @@ export const checkRequiredParameters = (
 	}
 
 	return { valid: missing.length === 0, missing };
+};
+
+export const nodeExecutionConfig = (
+	node: WorkflowNode,
+	previousNodeOutput: Record<string, unknown> = {},
+): NodeExecutionConfig => {
+	if (node.task === "action.wait") {
+		if (typeof previousNodeOutput.delay !== "number") {
+			throw new Error("wait node did not provide delay");
+		}
+		return { delay: previousNodeOutput.delay };
+	}
+
+	if (node.task === "action.schedule") {
+		return { repeat: { pattern: "0 * * * *" } };
+	}
+
+	return {};
 };

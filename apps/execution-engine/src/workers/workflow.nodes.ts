@@ -26,7 +26,11 @@ export const workflowNodesWorker = new Worker(
 				executionResponse?.message || "failed to execute node",
 			);
 		}
-		return { id: executionId, output: executionResponse.output };
+		return {
+			id: executionId,
+			output: executionResponse.output,
+			status: executionResponse.status ?? "completed",
+		};
 	},
 	{ connection },
 );
@@ -35,6 +39,8 @@ workflowNodesWorker.on(
 	"completed",
 	async (job: Job<NodeJobPayload>, execution) => {
 		console.log("node completed with result", execution);
+
+		if (execution.status === "waiting") return;
 
 		await completeNodeExecutionQuery(execution.id, execution.output);
 		await storeNodeOutput(
