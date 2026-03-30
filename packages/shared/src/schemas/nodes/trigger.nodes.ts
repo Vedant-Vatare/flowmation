@@ -16,38 +16,70 @@ export const clickNodeSchema = baseTriggerNodeSchema.extend({
 	type: z.literal("trigger"),
 });
 
-export const cronJobNodeSchema = baseTriggerNodeSchema.extend({
+export const cronJobNodeSchema = baseNodeSchema.extend({
 	task: z.literal("trigger.cron"),
 	type: z.union([z.literal("trigger"), z.literal("action")]),
+	inputPorts: z
+		.array(z.object({ name: z.string(), label: z.string() }))
+		.length(0),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({
-				label: z.literal("Minutes"),
-				name: z.literal("minutes"),
-				type: z.literal("number"),
-				value: z.number(),
-				default: z.literal("0").optional(),
+				name: z.literal("trigger_type"),
+				label: z.literal("Trigger Type"),
+				type: z.literal("dropdown"),
+				value: z.enum(["interval", "cron"]),
+				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
-				label: z.literal("Hour"),
-				name: z.literal("hour"),
+				name: z.literal("interval_value"),
+				label: z.literal("Every"),
 				type: z.literal("number"),
-				value: z.number(),
-				default: z.literal("0").optional(),
+				value: z.string(),
+				required: z.boolean(),
+				dependsOn: z
+					.array(
+						z.object({
+							parameter: z.literal("trigger_type"),
+							values: z.array(z.literal("interval")),
+						}),
+					)
+					.optional(),
 			}),
 			nodeParameterSchema.extend({
-				label: z.literal("Day of the Month"),
-				name: z.literal("day_of_the_month"),
-				type: z.literal("number"),
-				value: z.number(),
-				default: z.literal("0").optional(),
+				name: z.literal("interval_unit"),
+				label: z.literal("Unit"),
+				type: z.literal("dropdown"),
+				value: z.enum(["seconds", "minutes", "hours", "days"]),
+				required: z.boolean(),
+				dependsOn: z
+					.array(
+						z.object({
+							parameter: z.literal("trigger_type"),
+							values: z.array(z.literal("interval")),
+						}),
+					)
+					.optional(),
 			}),
 			nodeParameterSchema.extend({
-				label: z.literal("Month"),
-				name: z.literal("month"),
-				type: z.literal("number"),
-				value: z.number(),
-				default: z.literal("0").optional(),
+				name: z.literal("cron_expression"),
+				label: z.literal("Cron Expression"),
+				type: z.literal("input"),
+				value: z.string(),
+				required: z.boolean(),
+				dependsOn: z
+					.array(
+						z.object({
+							parameter: z.literal("trigger_type"),
+							values: z.array(z.literal("cron")),
+						}),
+					)
+					.optional(),
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("limit"),
+				label: z.literal("Limit"),
+				type: z.literal("input"),
 			}),
 		]),
 	),

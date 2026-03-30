@@ -1,0 +1,1 @@
+ALTER TABLE "workflow_nodes" ALTER COLUMN "config" SET NOT NULL;
