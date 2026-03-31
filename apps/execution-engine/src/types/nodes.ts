@@ -1,4 +1,8 @@
-import type { httpNodeSchema, waitingNodeSchema } from "@nodebase/shared";
+import type {
+	cronJobNodeSchema,
+	httpNodeSchema,
+	waitingNodeSchema,
+} from "@nodebase/shared";
 import type z from "zod";
 
 export type NodeExecutorOutput = {
@@ -10,3 +14,4 @@ export type NodeExecutorOutput = {
 
 export type HttpNode = z.infer<typeof httpNodeSchema>;
 export type WaitNode = z.infer<typeof waitingNodeSchema>;
+export type CronNode = z.infer<typeof cronJobNodeSchema>;

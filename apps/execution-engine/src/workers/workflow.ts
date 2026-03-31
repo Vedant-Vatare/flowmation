@@ -7,7 +7,8 @@ import {
 	WORKFLOW_QUEUE_NAME,
 	type WorkflowJobPayload,
 } from "@nodebase/queue";
-import { type Job, QueueEvents, Worker } from "bullmq";
+import type { WorkflowNode } from "@nodebase/shared";
+import { type Job, QueueEvents, UnrecoverableError, Worker } from "bullmq";
 import {
 	updateUserWorkflowStatusQuery,
 	updateWorkflowStatusQuery,
@@ -22,8 +23,16 @@ const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 export const workflowWorker = new Worker(
 	WORKFLOW_QUEUE_NAME,
 	async (job: Job<WorkflowJobPayload>) => {
-		console.log("executing workflow:", job.data.workflowId);
-		await handleSequentialNodeExecution(job);
+		console.log(
+			`executing workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
+		);
+
+		const triggerResult = await handleWorkflowTrigger(job);
+		if (!triggerResult) return;
+
+		const startNode = getStartNodeOfWorkflow(job, triggerResult);
+
+		await handleSequentialNodeExecution(job, startNode);
 	},
 	{ connection },
 );
@@ -48,12 +57,48 @@ workflowWorker.on("error", (err) => {
 	console.error(err);
 });
 
-const handleSequentialNodeExecution = async (job: Job<WorkflowJobPayload>) => {
-	const { nodes, connections, executionId, workflowId } = job.data;
+const handleWorkflowTrigger = async (job: Job<WorkflowJobPayload>) => {
+	const { executionId, workflowId, nodes, triggerNodeId, triggerType } =
+		job.data;
 
-	const targetIds = new Set(connections.map((c) => c.targetId));
-	const startNode = nodes.find((n) => !targetIds.has(n.id));
-	if (!startNode) throw new Error("no start node found");
+	if (!triggerType) {
+		throw new UnrecoverableError(
+			"triggerType is required for workflow execution",
+		);
+	}
+
+	if (!triggerNodeId) {
+		throw new UnrecoverableError(
+			"triggerNodeId is required — specify which trigger node fired this execution",
+		);
+	}
+
+	const triggerNode = nodes.find((n) => n.id === triggerNodeId);
+
+	if (!triggerNode) {
+		throw new UnrecoverableError(
+			`trigger node ${triggerNodeId} not found in workflow nodes`,
+		);
+	}
+
+	if (triggerType === "schedule") return null;
+
+	const nodeJob = await addNodeInQueue({
+		node: triggerNode,
+		executionId,
+		workflowId,
+	});
+
+	await nodeJob.waitUntilFinished(nodeQueueEvents);
+
+	return triggerNode;
+};
+
+const handleSequentialNodeExecution = async (
+	job: Job<WorkflowJobPayload>,
+	startNode: WorkflowNode,
+) => {
+	const { nodes, connections, executionId, workflowId } = job.data;
 
 	let currentId: string | undefined = startNode.id;
 
@@ -63,7 +108,7 @@ const handleSequentialNodeExecution = async (job: Job<WorkflowJobPayload>) => {
 
 	while (currentId) {
 		const node = nodes.find((n) => n.id === currentId);
-		if (!node) throw new Error(`node ${currentId} not found`);
+		if (!node) throw new UnrecoverableError(`node ${currentId} not found`);
 
 		// saving work for  previosly executed node
 		handlePreviousNodeExecution(previousExecution, workflowId);
@@ -72,7 +117,6 @@ const handleSequentialNodeExecution = async (job: Job<WorkflowJobPayload>) => {
 			{ node, executionId, workflowId },
 			nodeConfigs,
 		);
-
 		const nodeExecution = await nodeJob.waitUntilFinished(nodeQueueEvents);
 
 		nodeConfigs = nodeExecutionConfig(node, nodeExecution?.output);
@@ -85,4 +129,21 @@ const handleSequentialNodeExecution = async (job: Job<WorkflowJobPayload>) => {
 
 		currentId = connections.find((c) => c.sourceId === currentId)?.targetId;
 	}
+};
+
+const getStartNodeOfWorkflow = (
+	job: Job<WorkflowJobPayload>,
+	triggerNode: WorkflowNode,
+) => {
+	const { nodes, connections } = job.data;
+	const triggerConnection = connections.find(
+		(c) => c.sourceId === triggerNode.id,
+	);
+	const startNode = nodes.find((n) => n.id === triggerConnection?.targetId);
+
+	if (!startNode) {
+		throw new UnrecoverableError("trigger node has no connected action nodes");
+	}
+
+	return startNode;
 };
