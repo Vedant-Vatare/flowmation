@@ -25,6 +25,7 @@ import {
 } from "@/utils/node.executor.utils.js";
 
 const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
+await nodeQueueEvents.waitUntilReady();
 
 export const workflowWorker = new Worker(
 	WORKFLOW_QUEUE_NAME,
@@ -129,6 +130,7 @@ const handleWorkflowTrigger = async (
 
 	/* runs the trigger node and also determines if trigger node and workflow 
   should continue executing */
+
 	const nodeExecution = await executeTriggerNode(triggerNode, job);
 
 	await completeNodeExecutionQuery(executionId, nodeExecution);
@@ -157,13 +159,12 @@ const handleSequentialNodeExecution = async (
 
 		// saving work for  previosly executed node
 		handlePreviousNodeExecution(previousExecution, workflowId);
-
 		const nodeJob = await addNodeInQueue(
 			{ node, executionId, workflowId },
 			nodeConfigs,
 		);
-		const nodeExecution = await nodeJob.waitUntilFinished(nodeQueueEvents);
 
+		const nodeExecution = await nodeJob.waitUntilFinished(nodeQueueEvents);
 		nodeConfigs = nodeExecutionConfig(node, nodeExecution?.output);
 		previousExecution = {
 			id: nodeExecution.id,
