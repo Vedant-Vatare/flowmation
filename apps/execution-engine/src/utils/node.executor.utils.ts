@@ -129,7 +129,7 @@ export const nodeExecutionConfig = (
 
 export const handlePreviousNodeExecution = async (
 	previousExecution: PrevioudExecution,
-	_workflowId: string,
+	workflowId: string,
 ) => {
 	if (!previousExecution) return;
 	if (previousExecution?.status === "waiting") {
@@ -138,7 +138,7 @@ export const handlePreviousNodeExecution = async (
 			previousExecution.output,
 		);
 		await storeNodeOutput(
-			previousExecution.id,
+			workflowId,
 			previousExecution.nodeName,
 			previousExecution.output,
 		);

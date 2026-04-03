@@ -32,6 +32,7 @@ export const conditionNodeExecutor = async (
 	const operator = params.operator.value;
 	const leftValue = params.left_operand.value;
 	const rightValue = params.right_operand.value;
+	console.log({ leftValue, rightValue, operator });
 
 	let success = true;
 	let output = false;

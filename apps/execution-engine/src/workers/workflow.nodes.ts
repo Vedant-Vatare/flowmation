@@ -51,7 +51,7 @@ workflowNodesWorker.on(
 
 		await completeNodeExecutionQuery(execution.id, execution.output);
 		await storeNodeOutput(
-			job.data.executionId,
+			job.data.workflowId,
 			job.data.node.name,
 			execution.output,
 		);
@@ -65,7 +65,7 @@ workflowNodesWorker.on(
 		console.error(err);
 
 		await completeNodeExecutionQuery(job.data.node.id, err.message);
-		await storeNodeOutput(job.data.executionId, job.data.node.name, {
+		await storeNodeOutput(job.data.workflowId, job.data.node.name, {
 			error: err.message,
 		});
 	},
