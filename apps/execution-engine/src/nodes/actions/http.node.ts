@@ -3,9 +3,9 @@ import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const httpNodeExecutor = async (
 	node: HttpNode,
-	workflowId: string,
+	executionId: string,
 ): Promise<NodeExecutorOutput> => {
-	const params = await getResolvedParams(node, workflowId);
+	const params = await getResolvedParams(node, executionId);
 	const url = new URL(params.url.value);
 	const method = params.method.value.toUpperCase();
 

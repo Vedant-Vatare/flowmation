@@ -8,11 +8,11 @@ type KeyValueEntry = Record<string, string>;
 
 export const getResolvedParams = async <T extends NodeParameters>(
 	node: { parameters: T[]; config?: { hasExpressions?: boolean } },
-	workflowId: string,
+	executionId: string,
 ) => {
 	const parameters = (
 		node.config?.hasExpressions
-			? await FormatParamsValueExpressions(node.parameters, workflowId)
+			? await FormatParamsValueExpressions(node.parameters, executionId)
 			: node.parameters
 	) as T[];
 
@@ -129,7 +129,7 @@ export const nodeExecutionConfig = (
 
 export const handlePreviousNodeExecution = async (
 	previousExecution: PrevioudExecution,
-	workflowId: string,
+	executionId: string,
 ) => {
 	if (!previousExecution) return;
 	if (previousExecution?.status === "waiting") {
@@ -138,7 +138,7 @@ export const handlePreviousNodeExecution = async (
 			previousExecution.output,
 		);
 		await storeNodeOutput(
-			workflowId,
+			executionId,
 			previousExecution.nodeName,
 			previousExecution.output,
 		);

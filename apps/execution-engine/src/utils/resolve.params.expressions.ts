@@ -5,33 +5,33 @@ const EXPRESSION_REGEX = /\{\{\s*([^}.]+?)(?:\.([^}]+?))?\s*\}\}/g;
 
 export async function FormatParamsValueExpressions(
 	params: NodeParameters[],
-	workflowId: string,
+	executionId: string,
 ): Promise<NodeParameters[]> {
 	return Promise.all(
 		params.map(async (param) => ({
 			...param,
-			value: await resolveExpression(workflowId, param.value, param.type),
+			value: await resolveExpression(executionId, param.value, param.type),
 		})),
 	);
 }
 
 async function resolveExpression(
-	workflowId: string,
+	executionId: string,
 	value: unknown,
 	type: NodePropertyType,
 ): Promise<unknown> {
-	if (typeof value === "string") return resolveValue(workflowId, value, type);
+	if (typeof value === "string") return resolveValue(executionId, value, type);
 
 	if (Array.isArray(value))
 		return Promise.all(
-			value.map((v) => resolveExpression(workflowId, v, type)),
+			value.map((v) => resolveExpression(executionId, v, type)),
 		);
 
 	if (value !== null && typeof value === "object") {
 		const entries = await Promise.all(
 			Object.entries(value).map(async ([k, v]) => [
 				k,
-				await resolveExpression(workflowId, v, type),
+				await resolveExpression(executionId, v, type),
 			]),
 		);
 		return Object.fromEntries(entries);
@@ -41,7 +41,7 @@ async function resolveExpression(
 }
 
 async function resolveValue(
-	workflowId: string,
+	executionId: string,
 	str: string,
 	type: NodePropertyType,
 ): Promise<unknown> {
@@ -53,7 +53,7 @@ async function resolveValue(
 		const [, nodeName, path] = matches[0];
 		if (!nodeName) return str;
 
-		const output = await getNodeOutput(workflowId, nodeName);
+		const output = await getNodeOutput(executionId, nodeName);
 		const val = path ? getNestedValue(output, path) : output;
 
 		return coerce(val, type);
@@ -64,7 +64,7 @@ async function resolveValue(
 		const [full, nodeName, path] = match;
 		if (!full || !nodeName) continue;
 
-		const output = await getNodeOutput(workflowId, nodeName);
+		const output = await getNodeOutput(executionId, nodeName);
 		const val = path ? getNestedValue(output, path) : output;
 
 		const stringified =
