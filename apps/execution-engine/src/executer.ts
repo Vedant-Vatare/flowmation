@@ -3,6 +3,7 @@ import type { InputNode, WorkflowNode } from "@nodebase/shared";
 import type { Job } from "bullmq";
 import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
+import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
 import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
@@ -10,6 +11,7 @@ import type {
 	ConditionNode,
 	CronNode,
 	HttpNode,
+	MergeNode,
 	NodeExecutorOutput,
 	TriggerNodeExecutorOutput,
 	WaitNode,
@@ -17,8 +19,9 @@ import type {
 import { checkRequiredParameters } from "./utils/node.executor.utils.js";
 
 export const executeNode = ({
-	workflowId,
+	executionId,
 	node,
+	nodeData,
 }: NodeJobPayload): Promise<NodeExecutorOutput> | NodeExecutorOutput => {
 	const { valid, missing } = checkRequiredParameters(node.parameters);
 
@@ -30,11 +33,17 @@ export const executeNode = ({
 	}
 	switch (node.task) {
 		case "action.http":
-			return httpNodeExecutor(node as HttpNode, workflowId);
+			return httpNodeExecutor(node as HttpNode, executionId);
 		case "action.wait":
-			return waitNodeExecutor(node as WaitNode, workflowId);
+			return waitNodeExecutor(node as WaitNode, executionId);
 		case "action.condition":
-			return conditionNodeExecutor(node as ConditionNode, workflowId);
+			return conditionNodeExecutor(node as ConditionNode, executionId);
+		case "action.merge":
+			return mergeNodeExecutor(
+				node as MergeNode,
+				executionId,
+				nodeData?.inputNodeNames,
+			);
 		default:
 			return {
 				success: false,
@@ -42,6 +51,7 @@ export const executeNode = ({
 			};
 	}
 };
+
 export const executeTriggerNode = async (
 	triggerNode: WorkflowNode,
 	job: Job<WorkflowJobPayload>,

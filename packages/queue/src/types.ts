@@ -31,6 +31,7 @@ export type NodeJobPayload = {
 	workflowId: string;
 	node: WorkflowNode;
 	nodeConfig?: NodeExecutionConfig;
+	nodeData?: { inputNodeNames: string[] };
 };
 
 export type PrevioudExecution = {
