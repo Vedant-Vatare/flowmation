@@ -33,6 +33,7 @@ export type WorkflowNodeData = Pick<
 	| "type"
 	| "description"
 	| "parameters"
+	| "config"
 	| "inputPorts"
 	| "outputPorts"
 	| "workflowId"

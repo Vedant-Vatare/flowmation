@@ -29,6 +29,7 @@ export const toCanvasNode = (node: WorkflowNode): WorkflowCanvasNode => ({
 		parameters: (node.parameters as WorkflowNodeData["parameters"]) ?? [],
 		inputPorts: (node.inputPorts as WorkflowNodeData["inputPorts"]) ?? [],
 		outputPorts: (node.outputPorts as WorkflowNodeData["outputPorts"]) ?? [],
+		config: node.config,
 		credentials: node.credentials,
 		settings: node.settings,
 		positionX: node.positionX,
@@ -83,6 +84,7 @@ export function createCanvasNode({
 			parameters: structuredClone(
 				(apiNode.parameters as NodeParameters[]) ?? [],
 			),
+			config: apiNode.config,
 		},
 	};
 }

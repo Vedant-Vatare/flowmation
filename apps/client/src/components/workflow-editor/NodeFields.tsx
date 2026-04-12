@@ -166,15 +166,16 @@ export const CheckboxField = ({
 	field,
 	control,
 }: Pick<NodeFieldProps, "field" | "control">) => {
-	const options = useMemo(() => {
+	const options = useMemo<string[]>(() => {
 		if (Array.isArray(field.options))
 			return field.options.map((o: OptionItem) => String(o.value));
-		return (
-			field.default
-				?.split(",")
-				.map((s) => s.trim())
-				.filter(Boolean) ?? []
-		);
+		if (typeof field.default === "string") {
+			return field.default
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean);
+		}
+		return [];
 	}, [field]);
 
 	return (
@@ -193,7 +194,7 @@ export const CheckboxField = ({
 						);
 					return (
 						<div className="flex flex-col gap-2">
-							{options.map((opt) => (
+							{options.map((opt: string) => (
 								<label
 									key={opt}
 									htmlFor={`${field.name}-${opt}`}
@@ -219,15 +220,16 @@ export const RadioField = ({
 	field,
 	control,
 }: Pick<NodeFieldProps, "field" | "control">) => {
-	const options = useMemo(() => {
+	const options = useMemo<string[]>(() => {
 		if (Array.isArray(field.options))
 			return field.options.map((o: OptionItem) => String(o.value));
-		return (
-			field.default
-				?.split(",")
-				.map((s) => s.trim())
-				.filter(Boolean) ?? []
-		);
+		if (typeof field.default === "string") {
+			return field.default
+				.split(",")
+				.map((s: string) => s.trim())
+				.filter(Boolean);
+		}
+		return [];
 	}, [field]);
 
 	return (
@@ -241,7 +243,7 @@ export const RadioField = ({
 						onValueChange={f.onChange}
 						className="flex flex-col gap-2"
 					>
-						{options.map((opt) => (
+						{options.map((opt: string) => (
 							<label
 								key={opt}
 								htmlFor={`${field.name}-${opt}`}
