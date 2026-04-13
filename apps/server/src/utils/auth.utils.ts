@@ -1,7 +1,7 @@
+import { verifyJWT } from "@nodebase/shared";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
-import jwt from "jsonwebtoken";
 
 export const authenticateUser = async (
 	req: Request,
@@ -22,29 +22,4 @@ export const bcryptHash = async (data: string) => {
 
 export const bcryptCompareHash = async (password: string, hash: string) => {
 	return bcrypt.compare(password, hash);
-};
-
-interface jwt_Payload extends jwt.JwtPayload {
-	userId: string;
-}
-
-export const createJWT = async (data: jwt_Payload) => {
-	return jwt.sign(data, process.env.JWT_secret as string, {
-		algorithm: "HS256",
-		expiresIn: "14d",
-	});
-};
-
-export const verifyJWT = async (token: string) => {
-	try {
-		return jwt.verify(token, process.env.JWT_secret as string) as jwt_Payload;
-	} catch (e: unknown) {
-		if (e instanceof jwt.TokenExpiredError) {
-			throw new Error("Token expired");
-		}
-		if (e instanceof jwt.JsonWebTokenError) {
-			throw new Error("Invalid JWT Token");
-		}
-		throw createHttpError.Unauthorized("failed to verify token");
-	}
 };

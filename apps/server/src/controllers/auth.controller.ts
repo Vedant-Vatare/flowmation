@@ -1,13 +1,9 @@
 import { db, eq, usersTable } from "@nodebase/db";
-import type { userLogin, userSignup } from "@nodebase/shared";
+import { createJWT, type userLogin, type userSignup } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
-import {
-	bcryptCompareHash,
-	bcryptHash,
-	createJWT,
-} from "@/utils/auth.utils.js";
+import { bcryptCompareHash, bcryptHash } from "@/utils/auth.utils.js";
 
 export const Signup = async (req: Request, res: Response) => {
 	try {
