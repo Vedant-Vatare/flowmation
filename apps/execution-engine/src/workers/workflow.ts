@@ -36,7 +36,12 @@ export const workflowWorker = new Worker(
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
 		);
-		await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
+		if (job.data.liveUpdates) {
+			console.log("initiating live updates for workflow");
+		}
+		// using new execution id for scheduled runs
+		if (job.data.triggerType === "schedule")
+			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
 
 		await createWorflowExecutionQuery(
 			job.data.executionId,

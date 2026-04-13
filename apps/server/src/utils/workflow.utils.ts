@@ -7,6 +7,7 @@ export const enqueueWorkflow = async (
 	userId: string,
 	triggerNodeId: string,
 	triggerType: WorkflowTriggerType,
+	liveUpdates: boolean | undefined,
 ) => {
 	const workflowData = await db.query.userWorkflowsTable.findFirst({
 		where: eq(userWorkflowsTable.id, workflowId),
@@ -18,14 +19,16 @@ export const enqueueWorkflow = async (
 	if (!workflowData) throw createHttpError.NotFound("Workflow not found");
 
 	if (workflowData.userId !== userId) throw createHttpError.Unauthorized();
-
+	const executionId = crypto.randomUUID();
 	await addWorkflowInQueue({
 		workflowId: workflowId,
 		userId,
-		executionId: crypto.randomUUID(),
+		executionId: executionId,
 		nodes: workflowData.nodes,
 		connections: workflowData.connections,
 		triggerNodeId,
 		triggerType,
+		liveUpdates: liveUpdates,
 	});
+	return executionId;
 };

@@ -32,7 +32,7 @@ export const workflowNodesWorker = new Worker(
 		}
 
 		console.log(
-			`${job.data.node.name} completed with result", ${executionResponse}`,
+			`${job.data.node.name} completed with result", ${JSON.stringify(executionResponse)}`,
 		);
 
 		if (executionResponse?.status !== "waiting") {

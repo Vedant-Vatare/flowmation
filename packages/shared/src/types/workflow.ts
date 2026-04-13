@@ -22,6 +22,12 @@ export type CreateWorkflow = {
 	executionCount: 0;
 };
 
+export type ExecuteWorkflowRequest = {
+	triggerNodeId: string;
+	liveUpdates?: boolean;
+	triggerType: "trigger" | "webhook" | "schedule";
+};
+
 export type UserWorkflow = z.infer<typeof userWorkflowSchema>;
 export type WorkflowNode = z.infer<typeof workflowNodeSchema>;
 export type PartialWorkflowNode = z.infer<typeof partialWorkflowNodeSchema>;

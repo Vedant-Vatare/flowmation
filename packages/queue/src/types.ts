@@ -15,6 +15,7 @@ export type WorkflowJobPayload = {
 	triggerType: WorkflowTriggerType;
 	nodes: WorkflowNode[];
 	connections: WorkflowConnection[];
+	liveUpdates?: boolean;
 };
 
 export type WorkflowNodesWorker = {

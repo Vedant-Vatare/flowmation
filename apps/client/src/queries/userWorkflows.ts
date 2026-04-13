@@ -1,4 +1,8 @@
-import type { PartialWorkflowNode, WorkflowNode } from "@nodebase/shared";
+import type {
+	ExecuteWorkflowRequest,
+	PartialWorkflowNode,
+	WorkflowNode,
+} from "@nodebase/shared";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useReactFlow } from "@xyflow/react";
 import { toast } from "sonner";
@@ -104,11 +108,13 @@ export const useExecuteWorkflow = () => {
 			workflowId,
 			triggerNodeId,
 			triggerType,
-		}: {
-			workflowId: string;
-			triggerNodeId: string;
-			triggerType: "trigger" | "webhook" | "schedule";
-		}) => executeWorkflowApi(workflowId, { triggerNodeId, triggerType }),
+			liveUpdates = true,
+		}: { workflowId: string } & ExecuteWorkflowRequest) =>
+			executeWorkflowApi(workflowId, {
+				triggerNodeId,
+				triggerType,
+				liveUpdates,
+			}),
 		onSuccess: () => {
 			toast.success("Workflow execution started");
 		},

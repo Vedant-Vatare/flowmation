@@ -27,6 +27,18 @@ export const createWorkflowSchema = z.object({
 	status: workflowStatusEnum.default("active"),
 });
 
+export const workflowTriggerTypeEnum = z.enum([
+	"trigger",
+	"webhook",
+	"schedule",
+]);
+
+export const executeWorkflowSchema = z.object({
+	triggerNodeId: z.uuid(),
+	liveUpdates: z.boolean().optional(),
+	triggerType: workflowTriggerTypeEnum,
+});
+
 export const workflowNodeSchema = baseNodeSchema.extend({
 	id: z.uuid().default(() => crypto.randomUUID()),
 	workflowId: z.uuid(),

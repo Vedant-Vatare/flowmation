@@ -1,4 +1,4 @@
-import { createWorkflowSchema } from "@nodebase/shared";
+import { createWorkflowSchema, executeWorkflowSchema } from "@nodebase/shared";
 import { Router, type Router as RouterType } from "express";
 import {
 	createWorkflow,
@@ -18,7 +18,11 @@ router.post(
 	validateRequest(createWorkflowSchema, "body"),
 	createWorkflow,
 );
-router.post("/run/:id", asyncHandler(executeWorkflow));
+router.post(
+	"/run/:id",
+	validateRequest(executeWorkflowSchema, "body"),
+	asyncHandler(executeWorkflow),
+);
 router.get("/all", getAllUserWorkflow);
 router.get("/:id", getUserWorkflow);
 
