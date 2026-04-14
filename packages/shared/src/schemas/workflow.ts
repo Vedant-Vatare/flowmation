@@ -3,6 +3,7 @@ import { baseNodeSchema, nodeCredentialSchema } from "./nodes/index.js";
 
 const workflowStatusEnum = z.enum([
 	"active",
+	"waiting",
 	"cancelled",
 	"executed",
 	"failed",

@@ -42,6 +42,11 @@ export const createWorflowExecutionQuery = async (
 			workflowId,
 			userId,
 			status: "running",
+			executedAt: new Date(),
+		})
+		.onConflictDoUpdate({
+			target: workflowExecutionTable.id,
+			set: { status: "running", executedAt: new Date() },
 		})
 		.returning({ id: workflowExecutionTable.id });
 };

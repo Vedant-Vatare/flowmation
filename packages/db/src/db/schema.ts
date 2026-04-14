@@ -20,6 +20,7 @@ import {
 export const nodeTypeEnum = pgEnum("nodesEnum", ["action", "trigger"]);
 export const WorkflowStatusEnum = pgEnum("WorkflowStatusEnum", [
 	"active",
+	"waiting",
 	"cancelled",
 	"executed",
 	"failed",

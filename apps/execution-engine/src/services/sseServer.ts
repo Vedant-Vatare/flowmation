@@ -1,4 +1,4 @@
-import { and, db, eq, workflowExecutionTable } from "@nodebase/db";
+import { and, db, eq, or, workflowExecutionTable } from "@nodebase/db";
 import { verifyJWT } from "@nodebase/shared";
 
 type HandleUserAuth = {
@@ -6,24 +6,17 @@ type HandleUserAuth = {
 	executionId: string;
 };
 
-const handleUserAuth = async ({ req, executionId }: HandleUserAuth) => {
-	const authHeader = req.headers.get("authorization");
-	const token = authHeader?.split(" ")[1];
-	if (!token) return new Response("Invalid token", { status: 401 });
-
+const authenticateUser = async ({
+	req,
+}: HandleUserAuth): Promise<string | Response> => {
 	try {
-		const decoded = await verifyJWT(token);
-		const userWorkflowExecution =
-			await db.query.workflowExecutionTable.findFirst({
-				where: and(
-					eq(workflowExecutionTable.id, executionId),
-					eq(workflowExecutionTable.userId, decoded.userId),
-				),
-			});
+		const authHeader = req.headers.get("authorization");
+		const token = authHeader?.split(" ")[1];
 
-		if (!userWorkflowExecution) {
-			return new Response("Workflow execution not found", { status: 404 });
-		}
+		if (!token) return new Response("Invalid token", { status: 401 });
+
+		const decoded = await verifyJWT(token);
+		return decoded.userId;
 	} catch (e: unknown) {
 		if (e instanceof Error) {
 			return new Response(e.message || "interal server error", {
@@ -31,8 +24,26 @@ const handleUserAuth = async ({ req, executionId }: HandleUserAuth) => {
 			});
 		}
 	}
+	return new Response("failed to authenticate user", { status: 401 });
+};
 
-	return null;
+const checkWorkflowStatus = async (executionId: string, userId: string) => {
+	const userWorkflowExecution = await db.query.workflowExecutionTable.findFirst(
+		{
+			where: and(
+				eq(workflowExecutionTable.id, executionId),
+				or(
+					eq(workflowExecutionTable.status, "waiting"),
+					eq(workflowExecutionTable.status, "running"),
+				),
+				eq(workflowExecutionTable.userId, userId),
+			),
+		},
+	);
+
+	if (!userWorkflowExecution) {
+		return new Response("some error", { status: 404 });
+	}
 };
 
 export const sseClients = new Map<
@@ -44,10 +55,18 @@ Bun.serve({
 	port: process.env.SSE_SERVER_PORT,
 	routes: {
 		"/updates/:executionId": {
-			POST: async (req, server) => {
+			GET: async (req, server) => {
 				const executionId = req.params.executionId;
-				const authError = await handleUserAuth({ req, executionId });
-				if (authError) return authError;
+
+				const authResult = await authenticateUser({ req, executionId });
+				if (authResult instanceof Response) return authResult;
+
+				const workflowResponse = await checkWorkflowStatus(
+					executionId,
+					authResult,
+				);
+
+				if (workflowResponse instanceof Response) return workflowResponse;
 
 				const stream = new ReadableStream({
 					start(controller) {
