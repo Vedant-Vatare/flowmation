@@ -31,6 +31,7 @@ export type NodeJobPayload = {
 	executionId: string;
 	workflowId: string;
 	node: WorkflowNode;
+	liveUpdates?: boolean;
 	nodeConfig?: NodeExecutionConfig;
 	nodeData?: { inputNodeNames: string[] };
 };

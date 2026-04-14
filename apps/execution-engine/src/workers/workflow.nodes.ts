@@ -12,6 +12,7 @@ import {
 } from "@/queries/workflow.executions.js";
 import { storeNodeOutput } from "@/services/executionStore.js";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { broadcastExecutionUpdate } from "@/utils/sse.utils.js";
 
 export const workflowNodesWorker = new Worker(
 	NODE_QUEUE_NAME,
@@ -54,14 +55,37 @@ export const workflowNodesWorker = new Worker(
 	{ connection, concurrency: 10 },
 );
 
+workflowNodesWorker.on("active", async (job: Job<NodeJobPayload>) => {
+	broadcastExecutionUpdate(job.data, {
+		type: "node:started",
+		nodeId: job.data.node.id,
+		startedAt: new Date(),
+	});
+});
+workflowNodesWorker.on(
+	"completed",
+	async (job: Job<NodeJobPayload>, result: { output: unknown }) => {
+		broadcastExecutionUpdate(job.data, {
+			type: "node:completed",
+			nodeId: job.data.node.id,
+			completedAt: new Date(),
+			output: result.output,
+		});
+	},
+);
+
 workflowNodesWorker.on(
 	"failed",
 	async (job: Job<NodeJobPayload> | undefined, err: Error) => {
 		if (!job) return;
 		console.error(err);
-
 		await completeNodeExecutionQuery(job.data.node.id, err.message);
 		await storeNodeOutput(job.data.executionId, job.data.node.name, {
+			error: err.message,
+		});
+		broadcastExecutionUpdate(job.data, {
+			type: "node:failed",
+			nodeId: job.data.node.id,
 			error: err.message,
 		});
 	},

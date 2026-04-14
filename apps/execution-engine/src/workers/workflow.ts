@@ -26,6 +26,7 @@ import {
 	handlePreviousNodeExecution,
 	nodeExecutionConfig,
 } from "@/utils/node.executor.utils.js";
+import { broadcastExecutionUpdate } from "@/utils/sse.utils.js";
 
 const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 await nodeQueueEvents.waitUntilReady();
@@ -36,9 +37,6 @@ export const workflowWorker = new Worker(
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
 		);
-		if (job.data.liveUpdates) {
-			console.log("initiating live updates for workflow");
-		}
 		// using new execution id for scheduled runs
 		if (job.data.triggerType === "schedule")
 			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
@@ -88,6 +86,10 @@ workflowWorker.on(
 		);
 		await updateWorkflowStatusQuery(job.data.executionId, "executed");
 		await updateUserWorkflowStatusQuery(job.data.workflowId, "active");
+		broadcastExecutionUpdate(job.data, {
+			type: "workflow:completed",
+			completedAt: new Date(),
+		});
 	},
 );
 
@@ -192,7 +194,13 @@ const handleSequentialNodeExecution = async (
 		}
 
 		const nodeJob = await addNodeInQueue(
-			{ node, executionId, workflowId, nodeData: preExecutionResult?.data },
+			{
+				node,
+				executionId,
+				workflowId,
+				liveUpdates: job.data.liveUpdates,
+				nodeData: preExecutionResult?.data,
+			},
 			nodeConfigs,
 		);
 

@@ -39,7 +39,6 @@ export const sseClients = new Map<
 	string,
 	Bun.ReadableStreamController<unknown>
 >();
-console.log({ sseClients });
 
 Bun.serve({
 	port: process.env.SSE_SERVER_PORT,
