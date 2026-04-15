@@ -1,30 +1,5 @@
+import type { ExecutionEventType, ExecutionUpdate } from "@nodebase/shared";
 import { sseClients } from "@/services/sseServer.js";
-
-export type ExecutionUpdate =
-	| {
-			type: "workflow:completed";
-			completedAt: Date;
-	  }
-	| {
-			type: "workflow:failed";
-			error: string;
-	  }
-	| {
-			type: "node:started";
-			nodeId: string;
-			startedAt: Date;
-	  }
-	| {
-			type: "node:completed";
-			nodeId: string;
-			output: unknown;
-			completedAt: Date;
-	  }
-	| {
-			type: "node:failed";
-			nodeId: string;
-			error: string;
-	  };
 
 export const broadcastExecutionUpdate = (
 	jobData: {
@@ -34,11 +9,18 @@ export const broadcastExecutionUpdate = (
 	executionUpdate: ExecutionUpdate,
 ) => {
 	if (!jobData.liveUpdates) return null;
-
 	const controller = sseClients.get(jobData.executionId);
 	if (!controller) return;
 
-	controller.enqueue(`data: ${JSON.stringify(executionUpdate)}\n\n`);
+	const eventType: ExecutionEventType = executionUpdate.type.startsWith(
+		"workflow:",
+	)
+		? "workflow-update"
+		: "node-update";
+
+	controller.enqueue(
+		`event: ${eventType}\n` + `data: ${JSON.stringify(executionUpdate)}\n\n`,
+	);
 
 	if (
 		executionUpdate.type === "workflow:completed" ||
