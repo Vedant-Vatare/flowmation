@@ -45,6 +45,9 @@ importers:
       '@jalez/react-flow-automated-layout':
         specifier: ^1.2.4
         version: 1.2.6(@xyflow/react@12.10.2(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@microsoft/fetch-event-source':
+        specifier: ^2.0.1
+        version: 2.0.1
       '@nodebase/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -172,9 +175,6 @@ importers:
       ioredis:
         specifier: ^5.3.0
         version: 5.10.1
-      jsonwebtoken:
-        specifier: ^9.0.3
-        version: 9.0.3
       tsc-alias:
         specifier: ^1.8.16
         version: 1.8.16
@@ -191,9 +191,6 @@ importers:
       '@types/bun':
         specifier: ^1.3.11
         version: 1.3.12
-      '@types/jsonwebtoken':
-        specifier: ^9.0.10
-        version: 9.0.10
       bun-types:
         specifier: ^1.3.11
         version: 1.3.12
@@ -1035,6 +1032,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@microsoft/fetch-event-source@2.0.1':
+    resolution: {integrity: sha512-W6CLUJ2eBMw3Rec70qrsEW0jOm/3twwJv21mrmj2yORiaVmVYGS4sSS5yUwvQc1ZlDLYGPnClVWmUUMagKNsfA==}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     resolution: {integrity: sha512-QZHtlVgbAdy2zAqNA9Gu1UpIuI8Xvsd1v8ic6B2pZmeFnFcMWiPLfWXh7TVw4eGEZ/C9TH281KwhVoeQUKbyjw==}
@@ -4642,6 +4642,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@microsoft/fetch-event-source@2.0.1': {}
 
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.3':
     optional: true

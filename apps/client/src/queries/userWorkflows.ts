@@ -20,7 +20,11 @@ import {
 	updateWorkflowNodeConnApi,
 } from "@/apis/userWorkflow";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
-import { useWorkflowStore } from "@/store/workflow/useWorkflowStore";
+import { useSSE } from "@/hooks/useSSE";
+import {
+	useWorkflowExecutionStore,
+	useWorkflowStore,
+} from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
 export const useUserWorkflowQuery = () =>
@@ -103,6 +107,10 @@ export const useUpdateNodesPositions = () =>
 	});
 
 export const useExecuteWorkflow = () => {
+	const { createSSEConnection } = useSSE();
+	const setShowExecutionUpdates = useWorkflowExecutionStore(
+		(s) => s.setShowExecutionUpdates,
+	);
 	return useMutation({
 		mutationFn: ({
 			workflowId,
@@ -115,8 +123,10 @@ export const useExecuteWorkflow = () => {
 				triggerType,
 				liveUpdates,
 			}),
-		onSuccess: () => {
+		onSuccess: (data) => {
 			toast.success("Workflow execution started");
+			createSSEConnection(data.executionId);
+			setShowExecutionUpdates(true);
 		},
 		onError: (error) => {
 			toast.error(getErrorMessage(error));

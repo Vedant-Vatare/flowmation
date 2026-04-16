@@ -92,6 +92,9 @@ export const executeWorkflowApi = async (
 	workflowId: string,
 	payload: ExecuteWorkflowRequest,
 ) => {
-	const response = await api.post(`/workflows/run/${workflowId}`, payload);
+	const response = await api.post<{ executionId: string }>(
+		`/workflows/run/${workflowId}`,
+		payload,
+	);
 	return response.data;
 };
