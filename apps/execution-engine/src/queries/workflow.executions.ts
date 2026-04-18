@@ -54,10 +54,11 @@ export const createWorflowExecutionQuery = async (
 export const createNodeExecutionQuery = async (
 	workflowId: string,
 	instanceId: string,
+	nodeExecutionId: string,
 ) => {
 	const [execution] = await db
 		.insert(nodeExecutionTable)
-		.values({ workflowId, instanceId })
+		.values({ id: nodeExecutionId, workflowId, instanceId })
 		.returning({ id: nodeExecutionTable.id });
 	if (!execution)
 		throw new UnrecoverableError("workflow node could not be saved");

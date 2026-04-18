@@ -3,7 +3,7 @@ import {
 	connection,
 	NODE_QUEUE_NAME,
 	type NodeExecutionConfig,
-	type PrevioudExecution,
+	type PreviousExecution,
 	WORKFLOW_QUEUE_NAME,
 	type WorkflowJobPayload,
 	type WorkflowNodesWorker,
@@ -12,9 +12,6 @@ import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
 import { type Job, QueueEvents, UnrecoverableError, Worker } from "bullmq";
 import { executeTriggerNode } from "@/executer.js";
 import {
-	completeNodeExecutionQuery,
-	createNodeExecutionQuery,
-	createNodeExecutionRecordQuery,
 	createWorflowExecutionQuery,
 	deleteWorkflowExecutionQuery,
 	updateUserWorkflowStatusQuery,
@@ -27,6 +24,11 @@ import {
 	nodeExecutionConfig,
 } from "@/utils/node.executor.utils.js";
 import { broadcastExecutionUpdate } from "@/utils/sse.utils.js";
+import {
+	recordNodeCompletion,
+	recordNodeExecution,
+	recordNodeStart,
+} from "@/utils/workflow.updates.utils.js";
 
 const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 await nodeQueueEvents.waitUntilReady();
@@ -118,6 +120,7 @@ const handleWorkflowTrigger = async (
 	job: Job<WorkflowJobPayload>,
 ): Promise<WorkflowTrigger & TriggerNodeExecutorOutput> => {
 	const { nodes, triggerNodeId, triggerType } = job.data;
+	const nodeExecutionId = crypto.randomUUID();
 	if (!triggerType) {
 		throw new UnrecoverableError(
 			"triggerType is required for workflow execution",
@@ -137,15 +140,25 @@ const handleWorkflowTrigger = async (
 	}
 
 	if (triggerType === "schedule") {
-		await createNodeExecutionRecordQuery(job.data.workflowId, triggerNode.id);
+		await recordNodeExecution(
+			{
+				node: triggerNode,
+				workflowId: job.data.workflowId,
+				executionId: job.data.executionId,
+				nodeExecutionId,
+			},
+			null,
+		);
 		return { node: triggerNode };
 	}
 
-	const executionId = await createNodeExecutionQuery(
-		job.data.workflowId,
-		triggerNode.id,
-	);
-	if (!executionId) {
+	await recordNodeStart({
+		node: triggerNode,
+		workflowId: job.data.workflowId,
+		executionId: job.data.executionId,
+		nodeExecutionId,
+	});
+	if (!nodeExecutionId) {
 		throw new UnrecoverableError("could not start trigger node execution");
 	}
 
@@ -154,7 +167,15 @@ const handleWorkflowTrigger = async (
 
 	const nodeExecution = await executeTriggerNode(triggerNode, job);
 
-	await completeNodeExecutionQuery(executionId, nodeExecution);
+	await recordNodeCompletion(
+		{
+			node: triggerNode,
+			workflowId: job.data.workflowId,
+			executionId: job.data.executionId,
+			nodeExecutionId,
+		},
+		nodeExecution.output,
+	);
 
 	return {
 		node: triggerNode,
@@ -171,7 +192,7 @@ const handleSequentialNodeExecution = async (
 	const { nodes, connections, executionId, workflowId } = job.data;
 
 	let currentNode: WorkflowNode | undefined = startNode;
-	let previousExecution: PrevioudExecution = null;
+	let previousExecution: PreviousExecution = null;
 
 	/* nodeconfigs is populated when current node is executed and its configs can be passed for the next node execution which is used by worker job configs. */
 	let nodeConfigs: NodeExecutionConfig = {};
@@ -201,7 +222,7 @@ const handleSequentialNodeExecution = async (
 				liveUpdates: job.data.liveUpdates,
 				nodeData: preExecutionResult?.data,
 			},
-			nodeConfigs,
+			{ ...nodeConfigs, jobId: crypto.randomUUID() },
 		);
 
 		nodeJob.waitUntilFinished;
@@ -267,7 +288,7 @@ type CurrentNodePreExecution = {
 	jobData: WorkflowJobPayload;
 	node: WorkflowNode | undefined;
 	globalPendingBranches: WorkflowNode[];
-	previousExecution?: PrevioudExecution;
+	previousExecution?: PreviousExecution;
 };
 
 type CurrentNodePreExecutionResult = {

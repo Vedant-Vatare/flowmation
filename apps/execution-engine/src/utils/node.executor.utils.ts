@@ -1,4 +1,4 @@
-import type { NodeExecutionConfig, PrevioudExecution } from "@nodebase/queue";
+import type { NodeExecutionConfig, PreviousExecution } from "@nodebase/queue";
 import type { NodeParameters, WorkflowNode } from "@nodebase/shared";
 import { completeNodeExecutionQuery } from "@/queries/workflow.executions.js";
 import { storeNodeOutput } from "@/services/executionStore.js";
@@ -128,7 +128,7 @@ export const nodeExecutionConfig = (
 };
 
 export const handlePreviousNodeExecution = async (
-	previousExecution: PrevioudExecution,
+	previousExecution: PreviousExecution,
 	executionId: string,
 ) => {
 	if (!previousExecution) return;

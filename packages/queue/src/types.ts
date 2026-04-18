@@ -31,12 +31,13 @@ export type NodeJobPayload = {
 	executionId: string;
 	workflowId: string;
 	node: WorkflowNode;
+	nodeExecutionId?: string;
 	liveUpdates?: boolean;
 	nodeConfig?: NodeExecutionConfig;
 	nodeData?: { inputNodeNames: string[] };
 };
 
-export type PrevioudExecution = {
+export type PreviousExecution = {
 	id: string;
 	nodeName: string;
 	status: string;
