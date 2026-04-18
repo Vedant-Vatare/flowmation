@@ -39,7 +39,7 @@ export const workflowWorker = new Worker(
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
 		);
-		// using new execution id for scheduled runs
+
 		if (job.data.triggerType === "schedule")
 			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
 
@@ -212,6 +212,7 @@ const handleSequentialNodeExecution = async (
 
 		if (preExecutionResult?.skipCurrent) {
 			currentNode = preExecutionResult.nextNode;
+			nodeConfigs = {};
 			continue;
 		}
 
@@ -246,21 +247,22 @@ const handleSequentialNodeExecution = async (
 			nodeExecution?.allowedNodePorts ?? [],
 			globalPendingBranches,
 		);
-		console.log("the next node will be", currentNode?.name);
 
-		if (!currentNode && globalPendingBranches.length > 0) {
-			currentNode = globalPendingBranches.pop();
-			nodeConfigs = {};
-			previousExecution = null;
-		} else {
-			if (previousExecution?.status === "waiting") {
-				await handlePreviousNodeExecution({
-					workflowId,
-					executionId,
-					node: previousExecution.node,
-					liveUpdates: job.data.liveUpdates,
-					previousNodeExecution: previousExecution,
-				});
+		if (!currentNode) {
+			if (globalPendingBranches.length > 0) {
+				currentNode = globalPendingBranches.pop();
+				nodeConfigs = {};
+				previousExecution = null;
+			} else {
+				if (previousExecution?.status === "waiting") {
+					await handlePreviousNodeExecution({
+						workflowId,
+						executionId,
+						node: previousExecution.node,
+						liveUpdates: job.data.liveUpdates,
+						previousNodeExecution: previousExecution,
+					});
+				}
 			}
 		}
 	}
@@ -273,7 +275,7 @@ const getNextNode = (
 	allowedPorts: string[],
 	pendingBranches: WorkflowNode[],
 ): WorkflowNode | undefined => {
-	const _pendingBranchesNames = pendingBranches.map((n) => n.name);
+	// const _pendingBranchesNames = pendingBranches.map((n) => n.name);
 
 	const outgoing = connections.filter(
 		(c) =>
