@@ -99,7 +99,10 @@ export const workflowNodesTable = pgTable(
 			.notNull()
 			.default([{ name: "default", label: "Default" }]),
 	},
-	(t) => [index("workflow_nodes_workflow_id_idx").on(t.workflowId)],
+	(t) => [
+		index("workflow_nodes_workflow_id_idx").on(t.workflowId),
+		unique("unique_workflow_node_name").on(t.workflowId, t.name),
+	],
 );
 
 export const workflowConnectionsTable = pgTable(
@@ -156,6 +159,9 @@ export const nodeExecutionTable = pgTable(
 	"node_executions",
 	{
 		id: uuid().defaultRandom().primaryKey(),
+		workflowExecutionId: uuid("workflow_execution_id")
+			.references(() => workflowExecutionTable.id, { onDelete: "cascade" })
+			.notNull(),
 		workflowId: uuid("workflow_id")
 			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
 			.notNull(),
@@ -168,7 +174,7 @@ export const nodeExecutionTable = pgTable(
 	},
 	(t) => [
 		index("node_exec_workflowId_idx").on(t.workflowId),
-		index("node_exec_workflowInstanceIds_idx").on(t.workflowId, t.instanceId),
+		index("node_workflow_execution_idx").on(t.workflowExecutionId),
 	],
 );
 
