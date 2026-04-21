@@ -55,10 +55,16 @@ export const createNodeExecutionQuery = async (
 	workflowId: string,
 	instanceId: string,
 	nodeExecutionId: string,
+	workflowExecutionId: string,
 ) => {
 	const [execution] = await db
 		.insert(nodeExecutionTable)
-		.values({ id: nodeExecutionId, workflowId, instanceId })
+		.values({
+			id: nodeExecutionId,
+			workflowExecutionId,
+			workflowId,
+			instanceId,
+		})
 		.returning({ id: nodeExecutionTable.id });
 	if (!execution)
 		throw new UnrecoverableError("workflow node could not be saved");
@@ -92,11 +98,12 @@ export const deleteWorkflowExecutionQuery = async (executionId: string) => {
 export const createNodeExecutionRecordQuery = async (
 	workflowId: string,
 	instanceId: string,
+	workflowExecutionId: string,
 	output?: unknown,
 ) => {
 	const [execution] = await db
 		.insert(nodeExecutionTable)
-		.values({ workflowId, instanceId, output })
+		.values({ workflowId, instanceId, output, workflowExecutionId })
 		.returning({ id: nodeExecutionTable.id });
 	if (!execution)
 		throw new UnrecoverableError("workflow node could not be saved");

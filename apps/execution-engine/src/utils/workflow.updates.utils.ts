@@ -15,6 +15,7 @@ export const recordNodeStart = async (jobData: NodeJobPayload) => {
 		jobData.workflowId,
 		jobData.node.id,
 		jobData.nodeExecutionId,
+		jobData.executionId,
 	);
 	broadcastExecutionUpdate(jobData, {
 		type: "node:started",
@@ -59,6 +60,7 @@ export const recordNodeExecution = async (
 	const saveToDB = createNodeExecutionRecordQuery(
 		jobData.workflowId,
 		jobData.node.id,
+		jobData.executionId,
 		nodeOutput,
 	);
 	const saveToStore = storeNodeOutput(
