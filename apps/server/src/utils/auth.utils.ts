@@ -1,4 +1,4 @@
-import { verifyJWT } from "@nodebase/shared";
+import { verifyJWT } from "@nodebase/shared/utils";
 import bcrypt from "bcryptjs";
 import type { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";

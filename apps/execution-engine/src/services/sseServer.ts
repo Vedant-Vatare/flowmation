@@ -1,5 +1,5 @@
 import { and, db, eq, or, workflowExecutionTable } from "@nodebase/db";
-import { verifyJWT } from "@nodebase/shared";
+import { verifyJWT } from "@nodebase/shared/utils";
 
 type HandleUserAuth = {
 	req: Bun.BunRequest<"/updates/:executionId">;

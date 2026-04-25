@@ -1,5 +1,6 @@
 import { db, eq, usersTable } from "@nodebase/db";
-import { createJWT, type userLogin, type userSignup } from "@nodebase/shared";
+import type { userLogin, userSignup } from "@nodebase/shared";
+import { createJWT } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
