@@ -31,6 +31,11 @@ export const scheduleNodeExecutor = async (
 		repeat = { pattern: params.cron_expression.value, limit };
 	}
 
+	/* do not add workflow to scheduled runs if its for live update
+    instead run immediatly */
+	if (job.data.liveUpdates) {
+		return { success: true, skipCurrentExecution: false };
+	}
 	await scheduleWorkflow(job.data.workflowId, job.data, repeat);
 	return { success: true, skipCurrentExecution: true };
 };
