@@ -21,6 +21,7 @@ import {
 	createCanvasNode,
 	createWorkflowNode,
 	getNodeUI,
+	getUniqueNodeName,
 } from "@/utils/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -93,7 +94,13 @@ const Nodes = memo(() => {
 				? { x: last.position.x + 200, y: last.position.y }
 				: { x: 225, y: 225 };
 
-			const canvasNode = createCanvasNode({ apiNode, workflowId, position });
+			const uniqueNodeName = getUniqueNodeName(apiNode.name, nodes);
+
+			const canvasNode = createCanvasNode({
+				apiNode: { ...apiNode, name: uniqueNodeName },
+				workflowId,
+				position,
+			});
 
 			const resolvedNodes = resolveCollisions([...nodes, canvasNode], {
 				maxIterations: 50,

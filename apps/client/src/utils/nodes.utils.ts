@@ -51,6 +51,30 @@ export type CanvasNodeProps = {
 	workflowId: string;
 	position: XYPosition;
 };
+export const isUniqueNodeName = (
+	nodeName: string,
+	nodes: WorkflowCanvasNode[],
+): boolean => {
+	const nameExists = nodes.some(
+		(n) => n.data.name.toLowerCase() === nodeName.toLocaleLowerCase(),
+	);
+	return !nameExists;
+};
+
+export const getUniqueNodeName = (
+	name: string,
+	nodes: WorkflowCanvasNode[],
+): string => {
+	const isUniqueName = isUniqueNodeName(name, nodes);
+	if (isUniqueName) return name;
+
+	let counter = 2;
+	while (!isUniqueNodeName(`${name} ${counter}`, nodes)) {
+		counter++;
+	}
+
+	return `${name} ${counter}`;
+};
 
 export function createCanvasNode({
 	apiNode,
@@ -69,7 +93,7 @@ export function createCanvasNode({
 			nodeId: apiNode.id,
 			workflowId,
 			task: apiNode.task,
-			name: ui.name,
+			name: apiNode.name,
 			type: apiNode.type as WorkflowNodeData["type"],
 			description: apiNode.description,
 			positionX: position.x,
