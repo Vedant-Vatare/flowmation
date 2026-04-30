@@ -46,6 +46,7 @@ import {
 	toCanvasEdges,
 	toCanvasNodes,
 } from "@/utils/nodes.utils";
+import { resolveCollisions } from "@/utils/resolve-collisions";
 import Loader from "../ui/Loader";
 import { useSidebar } from "../ui/sidebar";
 import { WorkflowNode } from "./WorkflowNodes";
@@ -259,7 +260,39 @@ const WorkflowCanvas = () => {
 			onNodesChange={onNodesChange}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
 			onNodesDelete={onNodesDelete}
-			onNodeDragStop={(_e, node) => debouncedSaveNode(node)}
+			onNodeDragStop={(_e, node) => {
+				const resolvedPositions = resolveCollisions([...nodes], {
+					maxIterations: 50,
+					overlapThreshold: 0.5,
+					margin: 20,
+				});
+
+				setNodes(resolvedPositions);
+
+				const finalNode =
+					resolvedPositions.find((n) => n.id === node.id) || node;
+				debouncedSaveNode(finalNode);
+
+				const changedNodes = resolvedPositions
+					.filter((n) => {
+						const original = nodes.find((on) => on.id === n.id);
+						return (
+							original &&
+							(Math.round(original.position.x) !== Math.round(n.position.x) ||
+								Math.round(original.position.y) !== Math.round(n.position.y))
+						);
+					})
+					.filter((n) => n.id !== node.id)
+					.map((n) => ({
+						id: n.id,
+						positionX: Math.round(n.position.x),
+						positionY: Math.round(n.position.y),
+					}));
+
+				if (changedNodes.length > 0) {
+					updateNodesPositions(changedNodes);
+				}
+			}}
 			onEdgesChange={onEdgesChange}
 			onEdgesDelete={onEdgesDelete}
 			onConnect={onConnect}

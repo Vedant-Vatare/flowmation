@@ -11,7 +11,7 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { NodeUI } from "@/constants/nodes";
+import type { NodeUI, WorkflowCanvasNode } from "@/constants/nodes";
 import { useSortedNodes } from "@/hooks/nodes";
 import { useAddWorkflowNode } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
@@ -22,6 +22,7 @@ import {
 	createWorkflowNode,
 	getNodeUI,
 } from "@/utils/nodes.utils";
+import { resolveCollisions } from "@/utils/resolve-collisions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { NodeEditor } from "./NodeEditor";
 
@@ -81,10 +82,10 @@ const NodeGroupSkeleton = ({
 
 const Nodes = memo(() => {
 	const { workflowId } = Route.useParams();
-	const { addNodes, getNodes, fitView } = useReactFlow();
+	const { getNodes, fitView, setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const ALL_NODES = useSortedNodes();
 	const { mutate } = useAddWorkflowNode();
-	const handleAddNode = useCallback(
+		const handleAddNode = useCallback(
 		(apiNode: BaseNode) => {
 			const nodes = getNodes();
 			const last = nodes[nodes.length - 1];
@@ -93,13 +94,21 @@ const Nodes = memo(() => {
 				: { x: 225, y: 225 };
 
 			const canvasNode = createCanvasNode({ apiNode, workflowId, position });
-			addNodes(canvasNode);
+
+			const resolvedNodes = resolveCollisions([...nodes, canvasNode], {
+				maxIterations: 50,
+				overlapThreshold: 0.5,
+				margin: 20,
+			});
+
+			setNodes(resolvedNodes);
 			fitView({ padding: 20, duration: 300 });
 
-			const workflowNodeData = createWorkflowNode(canvasNode);
+			const resolvedCanvasNode = resolvedNodes.find(n => n.id === canvasNode.id) || canvasNode;
+			const workflowNodeData = createWorkflowNode(resolvedCanvasNode);
 			mutate(workflowNodeData);
 		},
-		[workflowId, addNodes, getNodes, fitView, mutate],
+		[workflowId, getNodes, fitView, mutate, setNodes],
 	);
 
 	if (!ALL_NODES) {
