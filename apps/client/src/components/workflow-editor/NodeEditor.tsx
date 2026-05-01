@@ -11,7 +11,7 @@ import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
-import { isUniqueNodeName } from "@/utils/nodes.utils";
+import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../ui/button";
 import {
 	ArrayField,

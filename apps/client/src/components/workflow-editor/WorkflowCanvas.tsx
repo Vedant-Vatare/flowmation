@@ -45,7 +45,7 @@ import {
 	getNodeColorByTask,
 	toCanvasEdges,
 	toCanvasNodes,
-} from "@/utils/nodes.utils";
+} from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import Loader from "../ui/Loader";
 import { useSidebar } from "../ui/sidebar";

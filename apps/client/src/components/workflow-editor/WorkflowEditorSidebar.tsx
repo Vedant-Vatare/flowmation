@@ -22,7 +22,7 @@ import {
 	createWorkflowNode,
 	getNodeUI,
 	getUniqueNodeName,
-} from "@/utils/nodes.utils";
+} from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { NodeEditor } from "./NodeEditor";
