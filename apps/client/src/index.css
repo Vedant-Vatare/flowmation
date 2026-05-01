@@ -30,7 +30,7 @@
 	--primary: oklch(0.54 0.22 285);
 	--primary-foreground: oklch(1 0 0);
 
-	--secondary: oklch(0.72 0.14 210);
+	--secondary: oklch(0.58 0.24 285);
 	--secondary-foreground: oklch(1 0 0);
 
 	--muted: oklch(0.96 0 0);
@@ -132,7 +132,7 @@ body {
 		--primary: oklch(0.58 0.24 285);
 		--primary-foreground: oklch(1 0 0);
 
-		--secondary: oklch(0.72 0.14 210);
+		--secondary: oklch(0.58 0.24 285);
 		--secondary-foreground: oklch(0.1 0 0);
 
 		--muted: oklch(0.27 0.01 285);
@@ -141,7 +141,7 @@ body {
 		--accent: oklch(0.3 0.02 285);
 		--accent-foreground: oklch(56.545% 0.15993 275.557);
 
-		--destructive: oklch(0.65 0.22 27);
+		--destructive: oklch(62% 0.2036 26.649);
 		--destructive-foreground: oklch(1 0 0);
 
 		--border: oklch(0.3 0.01 285);
@@ -225,6 +225,30 @@ body {
 	to {
 		--trail-angle: 360deg;
 	}
+}
+
+@keyframes shake {
+	0%,
+	100% {
+		transform: translateX(0);
+	}
+	20% {
+		transform: translateX(-4px);
+	}
+	40% {
+		transform: translateX(4px);
+	}
+	60% {
+		transform: translateX(-3px);
+	}
+	80% {
+		transform: translateX(3px);
+	}
+}
+
+.shake {
+	animation: shake 500ms ease;
+	animation-delay: 50ms;
 }
 
 .workflow-node.executing {

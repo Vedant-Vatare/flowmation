@@ -3,12 +3,15 @@
 import { CheckmarkSquare02Icon, Edit04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { NodeParameters, NodePropertyType } from "@nodebase/shared";
+import { useReactFlow } from "@xyflow/react";
 import { Loader2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
+import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
+import { isUniqueNodeName } from "@/utils/nodes.utils";
 import { Button } from "../ui/button";
 import {
 	ArrayField,
@@ -24,10 +27,6 @@ import {
 	RadioField,
 	TextareaField,
 } from "./NodeFields";
-
-type NodeEditorProps = {
-	node: WorkflowCanvasNode;
-};
 
 function allRequiredFilled(
 	params: NodeParameters[],
@@ -106,27 +105,18 @@ export const NodeField = ({
 	}
 };
 
-export const NodeEditor = memo(({ node }: NodeEditorProps) => {
+const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const { icon: Icon, color, background } = node.data.ui;
-	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const [isEditingName, setIsEditingName] = useState(false);
-
+	const [isDuplicateName, setIsDuplicateName] = useState(false);
+	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
 	const nodeNameRef = useRef<HTMLElement | null>(null);
-
-	const defaultValues = useMemo(() => {
-		const vals: Record<string, unknown> = {};
-		for (const param of node.data.parameters) {
-			vals[param.name] =
-				param.value !== "" && param.value !== null && param.value !== undefined
-					? param.value
-					: (param.default ?? "");
-		}
-		return vals;
-	}, [node.data.parameters]);
+	const { mutate: updateNode } = useUpdateWorkflowNode();
 
 	const editNodeName = () => {
 		if (!nodeNameRef.current) return;
 		setIsEditingName(true);
+		setIsDuplicateName(false);
 
 		nodeNameRef.current.contentEditable = "true";
 		nodeNameRef.current.focus();
@@ -140,15 +130,81 @@ export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 
 	const saveNodeName = () => {
 		if (!nodeNameRef.current) return;
-		node.data.name = nodeNameRef.current?.innerText;
+		const name = nodeNameRef.current?.innerText.trim();
+		if (!name || isDuplicateName) {
+			nodeNameRef.current.focus();
+			return;
+		}
+
+		node.data.name = name;
 		nodeNameRef.current.contentEditable = "false";
-		updateNode({
-			id: node.id,
-			task: node.data.task,
-			name: node.data.name,
-		});
+		updateNode({ id: node.id, task: node.data.task, name });
 		setIsEditingName(false);
 	};
+
+	const checkForDuplicate = () => {
+		const name = nodeNameRef.current?.innerText.trim();
+		if (!name) return;
+		setIsDuplicateName(!isUniqueNodeName(name, getNodes()));
+	};
+	const deboucedCheckDuplicate = useDebounce(checkForDuplicate, undefined, 200);
+
+	return (
+		<div className="relative flex gap-3 py-2 my-2 items-center bg-muted p-1">
+			<Icon
+				className="h-6 w-6 p-1 rounded-sm shrink-0"
+				style={{
+					color: color ?? "currentColor",
+					background: background ?? "#21212A",
+				}}
+			/>
+			<div className="flex flex-col min-w-0">
+				<span
+					ref={nodeNameRef}
+					className={cn("outline-none", isDuplicateName && "shake")}
+					onInput={deboucedCheckDuplicate}
+				>
+					{node.data.name}
+				</span>
+			</div>
+			<div className="ml-auto mr-1 cursor-pointer opacity-75">
+				{isEditingName ? (
+					<Button onClick={saveNodeName} variant={"default"} size={"icon-sm"}>
+						<HugeiconsIcon icon={CheckmarkSquare02Icon} size={14} />
+					</Button>
+				) : (
+					<Button onClick={editNodeName} variant={"ghost"} size={"icon-sm"}>
+						<HugeiconsIcon icon={Edit04Icon} size={14} />
+					</Button>
+				)}
+			</div>
+			<span
+				className={cn(
+					"absolute -bottom-4 text-destructive text-xs transition-transform duration-250 ease-out",
+					isDuplicateName
+						? "translate-y-0"
+						: "-translate-y-1 pointer-events-none",
+				)}
+			>
+				Name should be unique
+			</span>
+		</div>
+	);
+};
+
+export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
+	const { mutate: updateNode } = useUpdateWorkflowNode();
+
+	const defaultValues = useMemo(() => {
+		const vals: Record<string, unknown> = {};
+		for (const param of node.data.parameters) {
+			vals[param.name] =
+				param.value !== "" && param.value !== null && param.value !== undefined
+					? param.value
+					: (param.default ?? "");
+		}
+		return vals;
+	}, [node.data.parameters]);
 
 	const { register, control, watch } = useForm<Record<string, unknown>>({
 		defaultValues,
@@ -205,33 +261,7 @@ export const NodeEditor = memo(({ node }: NodeEditorProps) => {
 
 	return (
 		<div className="flex flex-col  w-full bg-background shadow-sm">
-			<div className="flex gap-3 py-2 my-2 items-center bg-muted p-1">
-				<Icon
-					className="h-6 w-6 p-1 rounded-sm shrink-0"
-					style={{
-						color: color ?? "currentColor",
-						background: background ?? "#21212A",
-					}}
-				/>
-				<span ref={nodeNameRef} className="outline-none">
-					{node.data.name}
-				</span>
-				<div className="ml-auto mr-1 cursor-pointer opacity-75">
-					{isEditingName ? (
-						<Button
-							onClick={saveNodeName}
-							variant={"secondary"}
-							size={"icon-sm"}
-						>
-							<HugeiconsIcon icon={CheckmarkSquare02Icon} size={14} />
-						</Button>
-					) : (
-						<Button onClick={editNodeName} variant={"ghost"} size={"icon-sm"}>
-							<HugeiconsIcon icon={Edit04Icon} size={14} />
-						</Button>
-					)}
-				</div>
-			</div>
+			<NodeNameSection node={node} />
 			<div className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 h-1 mb-3">
 				{editorStatus === "saving" ? (
 					<span className="text-white/40 flex items-center gap-1">
