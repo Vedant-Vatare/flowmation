@@ -11,6 +11,7 @@ import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
+import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../ui/button";
 import {
@@ -180,10 +181,8 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 			</div>
 			<span
 				className={cn(
-					"absolute -bottom-4 text-destructive text-xs transition-transform duration-250 ease-out",
-					isDuplicateName
-						? "translate-y-0"
-						: "-translate-y-1 pointer-events-none",
+					"absolute -bottom-4 text-destructive text-xs transition-transform duration-250 ease-out pointer-events-none",
+					isDuplicateName ? "block translate-y-0" : "hidden -translate-y-2.5",
 				)}
 			>
 				Name should be unique
@@ -229,12 +228,20 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				value: values[param.name] ?? param.value ?? "",
 			}));
 
+			const containsExpressions = updatedParams.some((p) => {
+				return hasExpressionsInParams(p.value);
+			});
+
 			setEditorStatus("saving");
+
 			updateNode(
 				{
 					id: node.id,
 					task: node.data.task,
 					parameters: updatedParams,
+					config: {
+						hasExpressions: containsExpressions,
+					},
 				},
 				{
 					onSettled: () => setEditorStatus("idle"),
