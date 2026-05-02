@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import {
 	addWorkflowNodeApi,
 	addWorkflowNodeConnApi,
+	createUserWorkflowApi,
 	deleteWorkflowConnApi,
 	deleteWorkflowNodeApi,
 	executeWorkflowApi,
@@ -26,6 +27,11 @@ import {
 	useWorkflowStore,
 } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
+
+export const useCreateUserWorkflowQuery = () =>
+	useMutation({
+		mutationFn: createUserWorkflowApi,
+	});
 
 export const useUserWorkflowQuery = () =>
 	useQuery({

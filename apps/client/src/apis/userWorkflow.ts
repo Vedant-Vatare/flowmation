@@ -8,11 +8,19 @@ import type {
 } from "@nodebase/shared";
 import api from "./axios";
 
+export const createUserWorkflowApi = async (name: string) => {
+	const response = await api.post<{ userWorkflow: UserWorkflow }>(
+		"/workflows/new",
+		{ name },
+	);
+	return response.data.userWorkflow;
+};
+
 export const getUserWorkflowsApi = async () => {
-	const respose = await api.get<{ userWorkflows: UserWorkflow[] }>(
+	const response = await api.get<{ userWorkflows: UserWorkflow[] }>(
 		"/workflows/all",
 	);
-	return respose.data.userWorkflows;
+	return response.data.userWorkflows;
 };
 
 export const getWorkflowNodes = async (workflowId: string) => {
@@ -31,8 +39,6 @@ export const getWorkflowConnections = async (workflowId: string) => {
 };
 
 export const addWorkflowNodeApi = async (node: WorkflowNode) => {
-	console.log("sending req", node.id);
-
 	const response = await api.post<{ userWorkflowNode: WorkflowNode }>(
 		"/workflow-nodes",
 		{

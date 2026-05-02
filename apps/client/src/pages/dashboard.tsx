@@ -5,7 +5,8 @@ import {
 	ZapIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Link } from "@tanstack/react-router";
+import type { UserWorkflow } from "@nodebase/shared";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +27,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { useUserWorkflowQuery } from "@/queries/userWorkflows";
+import {
+	useCreateUserWorkflowQuery,
+	useUserWorkflowQuery,
+} from "@/queries/userWorkflows";
 
 const statusVariant: Record<
 	string,
@@ -49,11 +53,32 @@ function formatDate(dateStr: string | undefined) {
 	});
 }
 
+const getPlaceholderWorkflowName = (workflows: UserWorkflow[]) => {
+	let count = 1;
+	const name = "Untitled Workflow #";
+
+	while (workflows.some((w) => w.name === `${name}${count}`)) count++;
+
+	return `${name}${count}`;
+};
+
 export const Dashboard = () => {
 	const { data: userWorkflows } = useUserWorkflowQuery();
+	const { mutateAsync: createWorkflow } = useCreateUserWorkflowQuery();
+	const navigate = useNavigate();
 	if (!userWorkflows) {
 		return null;
 	}
+
+	const handleCreateWorkflow = async () => {
+		const workflowName = getPlaceholderWorkflowName(userWorkflows);
+		const newWorkflow = await createWorkflow(workflowName);
+
+		navigate({
+			to: "/workflow/$workflowId",
+			params: { workflowId: newWorkflow.id },
+		});
+	};
 
 	const activeWorkflows = userWorkflows.filter(
 		(w) => w.status === "active",
@@ -68,7 +93,7 @@ export const Dashboard = () => {
 		<div className="flex flex-col gap-6 p-6">
 			<div className="flex items-center justify-between">
 				<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-				<Button>
+				<Button onClick={handleCreateWorkflow}>
 					<Plus className="size-4" />
 					New Workflow
 				</Button>
