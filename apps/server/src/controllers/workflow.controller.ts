@@ -1,5 +1,9 @@
 import { and, db, eq, userWorkflowsTable } from "@nodebase/db";
-import type { CreateWorkflow, ExecuteWorkflowRequest } from "@nodebase/shared";
+import type {
+	CreateWorkflow,
+	ExecuteWorkflowRequest,
+	UpdateUserWorkflow,
+} from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
@@ -24,6 +28,37 @@ export const createWorkflow = async (req: Request, res: Response) => {
 			throw createHttpError.Conflict("workflow with the name already exists");
 		}
 		throw e;
+	}
+};
+
+export const updateUserWorkflow = async (req: Request, res: Response) => {
+	try {
+		const workflowId = req.params.id as string;
+		const userId = res.locals.userId as string;
+		const workflowData = req.body as UpdateUserWorkflow;
+
+		if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+
+		const updatedWorkflow = await db
+			.update(userWorkflowsTable)
+			.set(workflowData)
+			.where(
+				and(
+					eq(userWorkflowsTable.id, workflowId),
+					eq(userWorkflowsTable.userId, userId),
+				),
+			)
+			.returning();
+
+		return res.status(200).json({
+			message: "workflow updated",
+			workflow: updatedWorkflow[0],
+		});
+	} catch (e) {
+		const queryError = isDBQueryError(e);
+		if (queryError?.code === "23503") {
+			throw createHttpError.NotFound("workflow not found");
+		}
 	}
 };
 

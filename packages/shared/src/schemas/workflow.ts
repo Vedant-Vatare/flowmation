@@ -28,6 +28,10 @@ export const createWorkflowSchema = z.object({
 	status: workflowStatusEnum.default("active"),
 });
 
+export const updateWorkflowSchema = createWorkflowSchema
+	.partial()
+	.extend({ executionCount: z.number() });
+
 export const workflowTriggerTypeEnum = z.enum([
 	"trigger",
 	"webhook",

@@ -21,6 +21,7 @@ export type CreateWorkflow = {
 	status: "active";
 	executionCount: 0;
 };
+export type UpdateUserWorkflow = Partial<CreateWorkflow>;
 
 export type ExecuteWorkflowRequest = {
 	triggerNodeId: string;
