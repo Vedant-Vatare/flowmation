@@ -11,6 +11,7 @@ import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
+import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../ui/button";
@@ -107,6 +108,7 @@ export const NodeField = ({
 };
 
 const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
+	const { workflowId } = Route.useParams();
 	const { icon: Icon, color, background } = node.data.ui;
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [isDuplicateName, setIsDuplicateName] = useState(false);
@@ -139,7 +141,10 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 
 		node.data.name = name;
 		nodeNameRef.current.contentEditable = "false";
-		updateNode({ id: node.id, task: node.data.task, name });
+		updateNode({
+			node: { id: node.id, task: node.data.task, name },
+			workflowId,
+		});
 		setIsEditingName(false);
 	};
 
@@ -193,7 +198,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const { mutate: updateNode } = useUpdateWorkflowNode();
-
+	const { workflowId } = Route.useParams();
 	const defaultValues = useMemo(() => {
 		const vals: Record<string, unknown> = {};
 		for (const param of node.data.parameters) {
@@ -236,19 +241,22 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 			updateNode(
 				{
-					id: node.id,
-					task: node.data.task,
-					parameters: updatedParams,
-					config: {
-						hasExpressions: containsExpressions,
+					node: {
+						id: node.id,
+						task: node.data.task,
+						parameters: updatedParams,
+						config: {
+							hasExpressions: containsExpressions,
+						},
 					},
+					workflowId,
 				},
 				{
 					onSettled: () => setEditorStatus("idle"),
 				},
 			);
 		},
-		[node, updateNode],
+		[node, updateNode, workflowId],
 	);
 
 	const debouncedSave = useDebounce(doSave, () => node.id);
