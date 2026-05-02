@@ -1,14 +1,9 @@
-import {
-	LayoutProvider,
-	useLayoutContext,
-} from "@jalez/react-flow-automated-layout";
+import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import {
 	addEdge,
 	Background,
 	type Connection,
 	ConnectionMode,
-	ControlButton,
-	Controls,
 	type Edge,
 	MarkerType,
 	MiniMap,
@@ -23,9 +18,7 @@ import {
 
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
-import { MagicWandIcon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import type { NodeIdsWithPosition } from "@nodebase/shared";
+
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import {
@@ -49,6 +42,7 @@ import {
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import Loader from "../ui/Loader";
 import { useSidebar } from "../ui/sidebar";
+import { WorkflowControls } from "./WorkflowControls";
 import { WorkflowNode } from "./WorkflowNodes";
 
 const nodeTypes: NodeTypes = {
@@ -80,7 +74,7 @@ const WorkflowCanvas = () => {
 		(s) => s.executionTriggerFocusRequestKey,
 	);
 	const { setOpen } = useSidebar();
-	const { applyLayout } = useLayoutContext();
+
 	const { fitView } = useReactFlow();
 
 	useEffect(() => {
@@ -217,33 +211,6 @@ const WorkflowCanvas = () => {
 		(node: WorkflowCanvasNode) => node.id,
 	);
 
-	const handleApplyLayout = useCallback(async () => {
-		const formatedCanvas = await applyLayout();
-		if (!formatedCanvas) return;
-
-		const nodesWithPosition = formatedCanvas.nodes.reduce(
-			(acc: NodeIdsWithPosition, curr) => {
-				acc.push({
-					id: curr.id,
-					positionX: Math.round(curr.position.x),
-					positionY: Math.round(curr.position.y),
-				});
-				return acc;
-			},
-			[],
-		);
-		const changedNodes = nodesWithPosition.filter((node) => {
-			const n = nodes.find((n) => n.id === node.id);
-			if (!n) return false;
-			return (
-				Math.round(n.position.x) !== node.positionX ||
-				Math.round(n.position.y) !== node.positionY
-			);
-		});
-		if (changedNodes.length === 0) return;
-		updateNodesPositions({ workflowId, nodes: changedNodes });
-	}, [applyLayout, updateNodesPositions, nodes, workflowId]);
-
 	if (nodesLoading || connectionsLoading) {
 		return <Loader fullPage={false} />;
 	}
@@ -253,14 +220,14 @@ const WorkflowCanvas = () => {
 			nodes={nodes}
 			edges={edges}
 			nodeTypes={nodeTypes}
-			fitView={true}
+			fitView={false}
 			fitViewOptions={{
 				duration: 250,
 				padding: 0.75,
 				minZoom: 1,
 				maxZoom: 1,
 			}}
-			maxZoom={1.25}
+			maxZoom={2}
 			minZoom={0.5}
 			onNodesChange={onNodesChange}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
@@ -326,20 +293,7 @@ const WorkflowCanvas = () => {
 				maskColor="hsl(var(--background) / 0.6)"
 				nodeColor={(n) => getNodeColorByTask((n.data as WorkflowNodeData).task)}
 			/>
-			<Controls
-				position="bottom-left"
-				showInteractive={false}
-				style={{
-					display: "flex",
-					flexDirection: "row",
-					bottom: "3rem",
-					scale: "1.1",
-				}}
-			>
-				<ControlButton onClick={handleApplyLayout} title="Auto-layout nodes">
-					<HugeiconsIcon icon={MagicWandIcon} size={14} />
-				</ControlButton>
-			</Controls>
+			<WorkflowControls />
 			<Background />
 		</ReactFlow>
 	);

@@ -180,16 +180,17 @@ body {
 	bottom: 8rem;
 }
 
-.react-flow__panel.bottom {
-	bottom: 8rem;
-}
 .react-flow__controls button {
-	background-color: var(--color-accent);
+	background-color: transparent;
 	border: none;
 	outline: none;
 	padding: 0.5rem;
 	margin-inline: 4px;
 }
+.react-flow__controls-button svg {
+	stroke-width: 4;
+}
+
 .react-flow__controls button:hover {
 	background: var(--color-accent) / 80;
 }
