@@ -200,13 +200,16 @@ const WorkflowCanvas = () => {
 	const saveNodePosition = useCallback(
 		(canvasNode: WorkflowCanvasNode) => {
 			updateNode({
-				id: canvasNode.id,
-				task: canvasNode.data.task,
-				positionX: Math.round(canvasNode.position.x),
-				positionY: Math.round(canvasNode.position.y),
+				workflowId,
+				node: {
+					id: canvasNode.id,
+					task: canvasNode.data.task,
+					positionX: Math.round(canvasNode.position.x),
+					positionY: Math.round(canvasNode.position.y),
+				},
 			});
 		},
-		[updateNode],
+		[updateNode, workflowId],
 	);
 
 	const debouncedSaveNode = useDebounce(
@@ -238,8 +241,8 @@ const WorkflowCanvas = () => {
 			);
 		});
 		if (changedNodes.length === 0) return;
-		updateNodesPositions(changedNodes);
-	}, [applyLayout, updateNodesPositions, nodes]);
+		updateNodesPositions({ workflowId, nodes: changedNodes });
+	}, [applyLayout, updateNodesPositions, nodes, workflowId]);
 
 	if (nodesLoading || connectionsLoading) {
 		return <Loader fullPage={false} />;
@@ -292,7 +295,7 @@ const WorkflowCanvas = () => {
 					}));
 
 				if (changedNodes.length > 0) {
-					updateNodesPositions(changedNodes);
+					updateNodesPositions({ workflowId, nodes: changedNodes });
 				}
 			}}
 			onEdgesChange={onEdgesChange}

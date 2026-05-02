@@ -64,22 +64,31 @@ export const updateUserWorkflow = async (req: Request, res: Response) => {
 
 export const getUserWorkflow = async (req: Request, res: Response) => {
 	const workflowId = req.params.id;
-
+	const userId = res.locals.userId as string;
 	if (!workflowId || Array.isArray(workflowId))
 		throw createHttpError.BadRequest("invalid workflow id");
 
 	const userWorkflows = await db
 		.select()
 		.from(userWorkflowsTable)
-		.where(eq(userWorkflowsTable.id, workflowId));
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				eq(userWorkflowsTable.id, workflowId),
+			),
+		);
 
 	return res
 		.status(200)
-		.json({ message: "user workflows fetched", userWorkflows });
+		.json({ message: "user workflow fetched", userWorkflows });
 };
 
 export const getAllUserWorkflow = async (_req: Request, res: Response) => {
-	const userWorkflows = await db.select().from(userWorkflowsTable);
+	const userId = res.locals.userId as string;
+	const userWorkflows = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(eq(userWorkflowsTable.userId, userId));
 
 	return res
 		.status(200)

@@ -21,12 +21,12 @@ router.use(authenticateUser);
 router.post("/", validateNodeMiddleware, asyncHandler(addNodeInWorkflow));
 router.get("/:workflowId", asyncHandler(getNodesInWorkflow));
 router.patch(
-	"/",
+	"/:workflowId",
 	validatePartialNodeMiddleware,
 	asyncHandler(updateNodeInWorkflow),
 );
 router.patch(
-	"/positions",
+	"/:workflowId/positions",
 	validateRequest(NodeIdsWithPositionSchema, "body", {
 		key: "nodes",
 	}),

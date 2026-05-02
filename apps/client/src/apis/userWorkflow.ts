@@ -55,8 +55,16 @@ export const deleteWorkflowNodeApi = async (id: string, workflowId: string) => {
 	return response.data;
 };
 
-export const updateWorkflowNodeApi = async (node: PartialWorkflowNode) => {
-	const response = await api.patch("/workflow-nodes/", {
+type updateWorkflowNodeApi = {
+	workflowId: string;
+	node: PartialWorkflowNode;
+};
+
+export const updateWorkflowNodeApi = async ({
+	node,
+	workflowId,
+}: updateWorkflowNodeApi) => {
+	const response = await api.patch(`/workflow-nodes/${workflowId}`, {
 		node,
 	});
 	return response.data.updatedNode as WorkflowNode;
@@ -87,8 +95,16 @@ export const updateWorkflowNodeConnApi = async (
 	return response.data.updatedNodeConnection as WorkflowConnection;
 };
 
-export const updateNodesPositionApi = async (nodes: NodeIdsWithPosition) => {
-	const response = await api.patch("/workflow-nodes/positions", {
+type UpdateNodesPositionApi = {
+	workflowId: string;
+	nodes: NodeIdsWithPosition;
+};
+
+export const updateNodesPositionApi = async ({
+	workflowId,
+	nodes,
+}: UpdateNodesPositionApi) => {
+	const response = await api.patch(`/workflow-nodes/${workflowId}/positions`, {
 		nodes,
 	});
 	return response.data.nodes as NodeIdsWithPosition;

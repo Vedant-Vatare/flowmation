@@ -67,11 +67,17 @@ export const useUpdateWorkflowNode = () => {
 	const setSelectedNode = useWorkflowStore((s) => s.setSelectedNode);
 
 	return useMutation({
-		mutationFn: (node: PartialWorkflowNode) => updateWorkflowNodeApi(node),
+		mutationFn: ({
+			workflowId,
+			node,
+		}: {
+			workflowId: string;
+			node: PartialWorkflowNode;
+		}) => updateWorkflowNodeApi({ node, workflowId }),
 		onSuccess: (_, variables) => {
-			if (!variables.id) return;
+			if (!variables.node.id) return;
 
-			const { id: nodeId, parameters, name, config } = variables;
+			const { id: nodeId, parameters, name, config } = variables.node;
 
 			const patchData = (data: WorkflowCanvasNode["data"]) => ({
 				...data,

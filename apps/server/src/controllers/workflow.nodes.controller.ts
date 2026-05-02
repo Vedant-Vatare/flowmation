@@ -5,6 +5,7 @@ import {
 	inArray,
 	type SQL,
 	sql,
+	userWorkflowsTable,
 	workflowNodesTable,
 } from "@nodebase/db";
 import type {
@@ -18,7 +19,18 @@ import { isDBQueryError } from "@/utils/api.utils.js";
 
 export const addNodeInWorkflow = async (req: Request, res: Response) => {
 	try {
+		const userId = res.locals.userId as string;
 		const node = req.body.node as WorkflowNode;
+		const workflow = await db.query.userWorkflowsTable.findFirst({
+			where: and(
+				eq(userWorkflowsTable.id, node.workflowId),
+				eq(userWorkflowsTable.userId, userId),
+			),
+		});
+
+		if (!workflow) {
+			throw createHttpError.Forbidden("workflow not found");
+		}
 		const [userWorkflowNode] = await db
 			.insert(workflowNodesTable)
 			.values({
@@ -58,6 +70,18 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 export const getNodesInWorkflow = async (req: Request, res: Response) => {
 	const workflowId = req.params.workflowId as string;
 	if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+	const userId = res.locals.userId as string;
+
+	const userWorkflow = await db.query.userWorkflowsTable.findFirst({
+		where: and(
+			eq(userWorkflowsTable.id, workflowId),
+			eq(userWorkflowsTable.userId, userId),
+		),
+	});
+
+	if (!userWorkflow) {
+		throw createHttpError.Forbidden("workflow not found");
+	}
 
 	const workflow = await db
 		.select()
@@ -70,10 +94,25 @@ export const getNodesInWorkflow = async (req: Request, res: Response) => {
 
 export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	const node = req.body.validatedNode as PartialWorkflowNode;
+	const userId = res.locals.userId as string;
+	const workflowId = req.params.workflowId as string;
 
 	if (!node.id) {
-		throw createHttpError.BadRequest("node id is required");
+		throw createHttpError.BadRequest("invalid node id");
 	}
+
+	if (!workflowId) {
+		throw createHttpError.BadRequest("invalid workflow id");
+	}
+
+	const userWorkflow = await db.query.userWorkflowsTable.findFirst({
+		where: and(
+			eq(userWorkflowsTable.id, workflowId),
+			eq(userWorkflowsTable.userId, userId),
+		),
+	});
+
+	if (!userWorkflow) throw createHttpError.Forbidden("workflow not found");
 
 	const [existingNode] = await db
 		.select()
@@ -100,8 +139,22 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 
 export const updateNodesPositions = async (req: Request, res: Response) => {
 	const nodes = req.body as NodeIdsWithPosition;
+	const workflowId = req.params.workflowId as string;
+	const userId = res.locals.userId;
+
 	if (nodes.length === 0)
 		throw createHttpError.BadRequest("No nodes provided for position update");
+
+	if (!workflowId) throw createHttpError.BadRequest("Invalid workflow id");
+
+	const userWorkflow = await db.query.userWorkflowsTable.findFirst({
+		where: and(
+			eq(userWorkflowsTable.id, workflowId),
+			eq(userWorkflowsTable.userId, userId),
+		),
+	});
+
+	if (!userWorkflow) throw createHttpError.Forbidden("workflow not found");
 
 	const ids: string[] = [];
 	const positionXChunks: SQL[] = [];
@@ -132,7 +185,12 @@ export const updateNodesPositions = async (req: Request, res: Response) => {
 			positionX: finalPositionX,
 			positionY: finalPositionY,
 		})
-		.where(inArray(workflowNodesTable.id, ids))
+		.where(
+			and(
+				inArray(workflowNodesTable.id, ids),
+				eq(workflowNodesTable.workflowId, workflowId),
+			),
+		)
 		.returning({
 			id: workflowNodesTable.id,
 			positionX: workflowNodesTable.positionX,
