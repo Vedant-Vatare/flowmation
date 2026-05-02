@@ -1,4 +1,10 @@
-import { db, eq, workflowConnectionsTable } from "@nodebase/db";
+import {
+	and,
+	db,
+	eq,
+	userWorkflowsTable,
+	workflowConnectionsTable,
+} from "@nodebase/db";
 import type {
 	partialWorkflowConnection,
 	WorkflowConnection,
@@ -8,6 +14,22 @@ import createHttpError from "http-errors";
 
 export const addWorkflowConnection = async (req: Request, res: Response) => {
 	const workflowConnection = req.body as WorkflowConnection;
+	const userId = res.locals.userId;
+
+	if (!workflowConnection.workflowId)
+		throw createHttpError.BadRequest("invalid workflow id");
+
+	const [userWorkflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				eq(userWorkflowsTable.id, workflowConnection.workflowId),
+			),
+		);
+
+	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
 	const [newWorkflowConnection] = await db
 		.insert(workflowConnectionsTable)
@@ -29,6 +51,19 @@ export const getAllConnectionsInWorkflow = async (
 	if (!workflowId) {
 		throw createHttpError.BadRequest("invalid workflow id");
 	}
+	const userId = res.locals.userId;
+
+	const [userWorkflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				eq(userWorkflowsTable.id, workflowId),
+			),
+		);
+
+	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
 	const workflowConnections = await db
 		.select()
@@ -42,13 +77,37 @@ export const getAllConnectionsInWorkflow = async (
 };
 
 export const updateNodeConnection = async (req: Request, res: Response) => {
-	const worflowConnection = req.body as partialWorkflowConnection;
+	const workflowConnection = req.body as partialWorkflowConnection;
+	const userId = res.locals.userId;
+
+	if (!workflowConnection.workflowId)
+		throw createHttpError.BadRequest("invalid workflow id");
+
+	const [userWorkflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				eq(userWorkflowsTable.id, workflowConnection.workflowId),
+			),
+		);
+
+	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
 	const [updatedConnection] = await db
 		.update(workflowConnectionsTable)
-		.set(worflowConnection)
-		.where(eq(workflowConnectionsTable.id, worflowConnection.id))
+		.set(workflowConnection)
+		.where(
+			and(
+				eq(workflowConnectionsTable.id, workflowConnection.id),
+				eq(workflowConnectionsTable.workflowId, workflowConnection.workflowId),
+			),
+		)
 		.returning();
+
+	if (!updatedConnection)
+		throw createHttpError.NotFound("node connection not found");
 
 	return res.status(200).json({
 		message: "node connection updated",
@@ -58,15 +117,34 @@ export const updateNodeConnection = async (req: Request, res: Response) => {
 
 export const removeNodeConnection = async (req: Request, res: Response) => {
 	const id = req.params.id as string;
-	if (!id) {
-		throw createHttpError.BadRequest("invalid workflow id");
-	}
+	const workflowId = req.query.workflowId as string;
+	const userId = res.locals.userId;
+
+	if (!id) throw createHttpError.BadRequest("invalid connection id");
+	if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+
+	const [userWorflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				eq(userWorkflowsTable.id, workflowId),
+			),
+		);
+	if (!userWorflow) throw createHttpError.NotFound("wokflow was not found");
+
 	const query = await db
 		.delete(workflowConnectionsTable)
-		.where(eq(workflowConnectionsTable.id, id));
+		.where(
+			and(
+				eq(workflowConnectionsTable.id, id),
+				eq(workflowConnectionsTable.workflowId, workflowId),
+			),
+		);
 
 	if (query.rowCount === 0) {
-		throw createHttpError.NotFound("node connection does not exist");
+		throw createHttpError.NotFound("node connection was not found");
 	}
 
 	return res.status(200).json({ message: "node connection deleted" });

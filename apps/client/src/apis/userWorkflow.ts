@@ -80,8 +80,17 @@ export const addWorkflowNodeConnApi = async (
 	return response.data.workflowConnection as WorkflowConnection;
 };
 
-export const deleteWorkflowConnApi = async (id: string) => {
-	const response = await api.delete(`/workflow-connections/${id}`);
+export const deleteWorkflowConnApi = async ({
+	id,
+	workflowId,
+}: {
+	id: string;
+	workflowId: string;
+}) => {
+	const response = await api.delete(
+		`/workflow-connections/${id}?workflowId=${workflowId}`,
+		{},
+	);
 	return response.data;
 };
 

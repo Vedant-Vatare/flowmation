@@ -110,7 +110,7 @@ export const useAddWorkflowConn = () =>
 
 export const useDeleteWorkflowConn = () =>
 	useMutation({
-		mutationFn: ({ id }: { id: string }) => deleteWorkflowConnApi(id),
+		mutationFn: deleteWorkflowConnApi,
 	});
 
 export const useUpdateWorkflowConn = () =>

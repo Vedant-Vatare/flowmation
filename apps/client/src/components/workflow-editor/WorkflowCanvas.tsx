@@ -181,10 +181,10 @@ const WorkflowCanvas = () => {
 	const onEdgesDelete: OnEdgesDelete<Edge> = useCallback(
 		(deletedEdges) => {
 			for (const edge of deletedEdges) {
-				deleteConnection({ id: edge.id });
+				deleteConnection({ id: edge.id, workflowId });
 			}
 		},
-		[deleteConnection],
+		[deleteConnection, workflowId],
 	);
 
 	const onNodesDelete = useCallback(
