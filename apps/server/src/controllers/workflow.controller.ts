@@ -1,13 +1,8 @@
 import { and, db, eq, userWorkflowsTable } from "@nodebase/db";
-import type {
-	CreateWorkflow,
-	ExecuteWorkflowRequest,
-	UpdateUserWorkflow,
-} from "@nodebase/shared";
+import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
-import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
 export const createWorkflow = async (req: Request, res: Response) => {
 	try {
@@ -93,45 +88,4 @@ export const getAllUserWorkflow = async (_req: Request, res: Response) => {
 	return res
 		.status(200)
 		.json({ message: "all workflows fetched", userWorkflows });
-};
-
-export const executeWorkflow = async (req: Request, res: Response) => {
-	const workflowId = req.params.id as string;
-	const { triggerNodeId, triggerType, liveUpdates } =
-		req.body as ExecuteWorkflowRequest;
-	if (!triggerNodeId || !triggerType) {
-		throw createHttpError.BadRequest(
-			" invalid workflow configs. missing trigger node id or trigger type",
-		);
-	}
-
-	const [userWorkflowExecution] = await db
-		.update(userWorkflowsTable)
-		.set({ status: "running" })
-		.where(
-			and(
-				eq(userWorkflowsTable.id, workflowId),
-				eq(userWorkflowsTable.userId, res.locals.userId),
-			),
-		)
-		.returning();
-
-	if (!userWorkflowExecution) {
-		throw createHttpError.InternalServerError(
-			"could not initate workflow execution",
-		);
-	}
-	const executionId = await enqueueWorkflow(
-		workflowId,
-		res.locals.userId,
-		triggerNodeId,
-		triggerType,
-		liveUpdates,
-	);
-
-	return res.status(201).json({
-		message: "workflow execution started successfully",
-		userWorkflowExecution,
-		executionId,
-	});
 };

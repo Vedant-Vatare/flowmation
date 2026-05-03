@@ -4,9 +4,9 @@ import {
 	updateWorkflowSchema,
 } from "@nodebase/shared";
 import { Router, type Router as RouterType } from "express";
+import { executeWorkflow } from "@/controllers/worflow.executions.js";
 import {
 	createWorkflow,
-	executeWorkflow,
 	getAllUserWorkflow,
 	getUserWorkflow,
 	updateUserWorkflow,
