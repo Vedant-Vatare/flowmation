@@ -8,12 +8,28 @@ import type {
 	workflowNodeSchema,
 } from "@/schemas/workflow.js";
 
-export type WorkflowStatus =
-	| "active"
-	| "stopped"
-	| "running"
-	| "executed"
-	| "failed";
+export const WORKFLOW_STATUSES = ["active", "inactive"] as const;
+
+export const EXECUTION_STATUSES = [
+	"running",
+	"success",
+	"failed",
+	"cancelled",
+] as const;
+
+export const NODE_EXECUTION_STATUSES = [
+	"running",
+	"success",
+	"failed",
+	"skipped",
+] as const;
+
+export const TRIGGER_TYPES = ["manual", "webhook", "schedule"] as const;
+
+export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
+export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
+export type NodeExecutionStatus = (typeof NODE_EXECUTION_STATUSES)[number];
+export type TriggerType = (typeof TRIGGER_TYPES)[number];
 
 export type CreateWorkflow = {
 	name: string;
@@ -69,3 +85,12 @@ export type partialWorkflowConnection = z.infer<
 	typeof partialWorkflowConnectionSchema
 >;
 export type NodeIdsWithPosition = z.infer<typeof NodeIdsWithPositionSchema>;
+
+export type WorkflowExecution = {
+	workflowId: string;
+	userId: string;
+	status: WorkflowStatus;
+	executedAt: Date;
+	completedAt: Date | null;
+	result: string | null;
+};
