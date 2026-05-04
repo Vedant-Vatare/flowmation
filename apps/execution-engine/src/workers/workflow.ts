@@ -14,7 +14,6 @@ import { executeTriggerNode } from "@/executer.js";
 import {
 	createWorflowExecutionQuery,
 	deleteWorkflowExecutionQuery,
-	updateUserWorkflowStatusQuery,
 	updateWorkflowStatusQuery,
 } from "@/queries/workflow.executions.js";
 import { getNodesOutputsByName } from "@/services/executionStore.js";
@@ -86,8 +85,7 @@ workflowWorker.on(
 			job.data.workflowId,
 			job.data.executionId,
 		);
-		await updateWorkflowStatusQuery(job.data.executionId, "executed");
-		await updateUserWorkflowStatusQuery(job.data.workflowId, "active");
+		await updateWorkflowStatusQuery(job.data.executionId, "success");
 		broadcastExecutionUpdate(job.data, {
 			type: "workflow:completed",
 			completedAt: new Date(),
@@ -103,7 +101,6 @@ workflowWorker.on(
 
 		await deleteWorkflowExecutionQuery(job.data.executionId);
 		await updateWorkflowStatusQuery(job.data.executionId, "failed");
-		await updateUserWorkflowStatusQuery(job.data.workflowId, "failed");
 	},
 );
 

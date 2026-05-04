@@ -2,31 +2,19 @@ import {
 	db,
 	eq,
 	nodeExecutionTable,
-	userWorkflowsTable,
 	workflowExecutionTable,
 } from "@nodebase/db";
-import type { WorkflowStatus } from "@nodebase/shared";
+import type { ExecutionStatus } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 
 export const updateWorkflowStatusQuery = async (
 	id: string,
-	status: WorkflowStatus,
+	status: ExecutionStatus,
 ) => {
 	return await db
 		.update(workflowExecutionTable)
 		.set({ status, completedAt: new Date() })
 		.where(eq(workflowExecutionTable.id, id))
-		.returning();
-};
-
-export const updateUserWorkflowStatusQuery = async (
-	id: string,
-	status: WorkflowStatus,
-) => {
-	return await db
-		.update(userWorkflowsTable)
-		.set({ status })
-		.where(eq(userWorkflowsTable.id, id))
 		.returning();
 };
 
@@ -64,6 +52,7 @@ export const createNodeExecutionQuery = async (
 			workflowExecutionId,
 			workflowId,
 			instanceId,
+			status: "running",
 		})
 		.returning({ id: nodeExecutionTable.id });
 	if (!execution)
@@ -77,7 +66,7 @@ export const completeNodeExecutionQuery = async (
 ) => {
 	return await db
 		.update(nodeExecutionTable)
-		.set({ completedAt: new Date(), output })
+		.set({ completedAt: new Date(), output, status: "success" })
 		.where(eq(nodeExecutionTable.id, id));
 };
 
@@ -103,7 +92,13 @@ export const createNodeExecutionRecordQuery = async (
 ) => {
 	const [execution] = await db
 		.insert(nodeExecutionTable)
-		.values({ workflowId, instanceId, output, workflowExecutionId })
+		.values({
+			workflowId,
+			instanceId,
+			output,
+			workflowExecutionId,
+			status: "success",
+		})
 		.returning({ id: nodeExecutionTable.id });
 	if (!execution)
 		throw new UnrecoverableError("workflow node could not be saved");

@@ -32,10 +32,7 @@ const checkWorkflowStatus = async (executionId: string, userId: string) => {
 		{
 			where: and(
 				eq(workflowExecutionTable.id, executionId),
-				or(
-					eq(workflowExecutionTable.status, "waiting"),
-					eq(workflowExecutionTable.status, "running"),
-				),
+				or(eq(workflowExecutionTable.status, "running")),
 				eq(workflowExecutionTable.userId, userId),
 			),
 		},
