@@ -1,8 +1,12 @@
-import type {
-	NodeConfig,
-	NodeCredentials,
-	NodeParameters,
+import {
+	EXECUTION_STATUSES,
+	NODE_EXECUTION_STATUSES,
+	type NodeConfig,
+	type NodeCredentials,
+	type NodeParameters,
+	WORKFLOW_STATUSES,
 } from "@nodebase/shared";
+
 import { relations } from "drizzle-orm";
 import {
 	index,
@@ -17,16 +21,17 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 
+export const workflowStatusEnum = pgEnum("workflow_status", WORKFLOW_STATUSES);
+export const executionStatusEnum = pgEnum(
+	"execution_status",
+	EXECUTION_STATUSES,
+);
+export const nodeExecutionStatusEnum = pgEnum(
+	"node_execution_status",
+	NODE_EXECUTION_STATUSES,
+);
+
 export const nodeTypeEnum = pgEnum("nodesEnum", ["action", "trigger"]);
-export const WorkflowStatusEnum = pgEnum("WorkflowStatusEnum", [
-	"active",
-	"waiting",
-	"cancelled",
-	"executed",
-	"failed",
-	"running",
-	"stopped",
-]);
 
 export const usersTable = pgTable("users", {
 	id: uuid().defaultRandom().primaryKey(),
@@ -34,7 +39,7 @@ export const usersTable = pgTable("users", {
 	name: varchar({ length: 255 }).notNull(),
 	password: text(),
 	googleOauthId: varchar("google_oauth_id", { length: 255 }).unique(),
-	createdAt: timestamp("created_at").defaultNow(),
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const nodesTable = pgTable("nodes", {
@@ -62,11 +67,11 @@ export const userWorkflowsTable = pgTable(
 			.notNull(),
 		name: varchar({ length: 255 }).unique(),
 		description: text(),
-		status: WorkflowStatusEnum().$default(() => "active"),
+		status: workflowStatusEnum().$default(() => "active"),
 		executionCount: integer("execution_count").notNull().default(0),
-		lastExecutedAt: timestamp("last_executed_at"),
-		createdAt: timestamp("created_at").defaultNow(),
-		updatedAt: timestamp("updated_at").defaultNow(),
+		lastExecutedAt: timestamp("last_executed_at", { withTimezone: true }),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 	},
 	(t) => [index("user_id_idx").on(t.userId)],
 );
@@ -147,9 +152,11 @@ export const workflowExecutionTable = pgTable(
 		userId: uuid("user_id")
 			.references(() => usersTable.id, { onDelete: "cascade" })
 			.notNull(),
-		status: WorkflowStatusEnum().default("running").notNull(),
-		executedAt: timestamp("started_at").defaultNow().notNull(),
-		completedAt: timestamp("completed_at"),
+		status: executionStatusEnum().default("running").notNull(),
+		executedAt: timestamp("started_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		completedAt: timestamp("completed_at", { withTimezone: true }),
 		result: text(),
 	},
 	(t) => [index("workflow_exec_workflowId_idx").on(t.workflowId)],
@@ -168,8 +175,11 @@ export const nodeExecutionTable = pgTable(
 		instanceId: uuid("instance_id")
 			.references(() => workflowNodesTable.id, { onDelete: "cascade" })
 			.notNull(),
-		executedAt: timestamp("executed_at").defaultNow().notNull(),
-		completedAt: timestamp("completed_at"),
+		status: nodeExecutionStatusEnum().notNull(),
+		executedAt: timestamp("executed_at", { withTimezone: true })
+			.defaultNow()
+			.notNull(),
+		completedAt: timestamp("completed_at", { withTimezone: true }),
 		output: jsonb("output").$type<unknown>(),
 	},
 	(t) => [
