@@ -24,21 +24,18 @@ export const executeWorkflow = async (req: Request, res: Response) => {
 		);
 	}
 
-	const [userWorkflowExecution] = await db
-		.update(userWorkflowsTable)
-		.set({ status: "running" })
+	const [userWorkflow] = await db
+		.select()
+		.from(userWorkflowsTable)
 		.where(
 			and(
 				eq(userWorkflowsTable.id, workflowId),
 				eq(userWorkflowsTable.userId, res.locals.userId),
 			),
-		)
-		.returning();
-
-	if (!userWorkflowExecution) {
-		throw createHttpError.InternalServerError(
-			"could not initate workflow execution",
 		);
+
+	if (!userWorkflow) {
+		throw createHttpError.NotFound("workflow was not found");
 	}
 	const executionId = await enqueueWorkflow(
 		workflowId,
@@ -50,7 +47,7 @@ export const executeWorkflow = async (req: Request, res: Response) => {
 
 	return res.status(201).json({
 		message: "workflow execution started successfully",
-		userWorkflowExecution,
+		userWorkflow,
 		executionId,
 	});
 };

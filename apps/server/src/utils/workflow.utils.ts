@@ -29,7 +29,7 @@ export const enqueueWorkflow = async (
 		.insert(workflowExecutionTable)
 		.values({
 			workflowId: workflowId,
-			status: "waiting",
+			status: "running",
 			userId: userId,
 		})
 		.returning({ id: workflowExecutionTable.id });
