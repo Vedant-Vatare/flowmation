@@ -90,7 +90,7 @@ export type WorkflowExecution = {
 	id: string;
 	workflowId: string;
 	userId: string;
-	status: WorkflowStatus;
+	status: (typeof EXECUTION_STATUSES)[number];
 	executedAt: Date;
 	completedAt: Date | null;
 	result: string | null;

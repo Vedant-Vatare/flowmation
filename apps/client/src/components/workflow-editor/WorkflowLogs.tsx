@@ -31,22 +31,24 @@ const formatRelativeTime = (date: Date | string) => {
 	return rtf.format(Math.round(diff / 86400), "day");
 };
 
+type StatusFilter = "all" | "success" | "failed" | "running";
+
 const getStatusColor = (status: string) => {
 	switch (status) {
 		case "success":
-			return "bg-[#1b4332] text-[#52b788] border-transparent rounded-md";
+			return "bg-[#166534] text-[#a7f3d0] border-transparent rounded-md";
 		case "failed":
-			return "bg-[#5c1320] text-[#dd2d4a] border-transparent rounded-md";
+			return "bg-destructive/15 text-destructive border-transparent rounded-md";
 		case "running":
-			return "bg-blue-950 text-blue-400 border-transparent rounded-md";
+			return "bg-primary/15 text-primary border-transparent rounded-md";
 		default:
-			return "bg-secondary text-secondary-foreground border-transparent rounded-md";
+			return "bg-muted text-muted-foreground border-transparent rounded-md";
 	}
 };
 
 export const WorkflowLogs = () => {
 	const { workflowId } = Route.useParams();
-	const [statusFilter, setStatusFilter] = useState<string>("all");
+	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 	const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
 		useWorkflowLogs(workflowId);
 
@@ -69,23 +71,34 @@ export const WorkflowLogs = () => {
 
 	if (isLoading) {
 		return (
-			<div className="flex h-full min-h-[200px] items-center justify-center p-4">
-				<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+			<div className="flex h-full min-h-50 items-center justify-center p-4">
+				<Loader2
+					className="h-6 w-6 animate-spin text-muted-foreground"
+					aria-hidden="true"
+				/>
+				<span className="sr-only">Loading execution logs...</span>
 			</div>
 		);
 	}
 
-	const logs = data?.pages.flatMap((page) => page.logs) || [];
-	const filteredLogs = logs.filter(
+	const rawLogs = data?.pages.flatMap((page) => page.logs) || [];
+
+	const uniqueLogs = Array.from(
+		new Map(rawLogs.map((log) => [log.id, log])).values(),
+	);
+
+	const filteredLogs = uniqueLogs.filter(
 		(log) => statusFilter === "all" || log.status === statusFilter,
 	);
 
 	return (
-		<div className="flex flex-col h-full overflow-hidden gap-3 py-2">
-			<div className="flex justify-between items-center px-1">
-				<span className="text-sm font-medium">Execution History</span>
-				<Select value={statusFilter} onValueChange={setStatusFilter}>
-					<SelectTrigger className="w-[120px] h-8 text-xs">
+		<div className="flex flex-col h-full overflow-hidden gap-3 ">
+			<div className="flex justify-end items-center px-1">
+				<Select
+					value={statusFilter}
+					onValueChange={(v: StatusFilter) => setStatusFilter(v)}
+				>
+					<SelectTrigger className="w-30 h-8 text-xs">
 						<SelectValue placeholder="Filter Status" />
 					</SelectTrigger>
 					<SelectContent>
@@ -97,7 +110,7 @@ export const WorkflowLogs = () => {
 				</Select>
 			</div>
 
-			<div className="overflow-y-auto max-h-[calc(100vh-14rem)] border rounded-md">
+			<div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-14rem)] border rounded-md">
 				{filteredLogs.length === 0 ? (
 					<div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
 						No execution logs found.
@@ -106,15 +119,14 @@ export const WorkflowLogs = () => {
 					<Table>
 						<TableHeader className="bg-muted/50 sticky top-0 z-10">
 							<TableRow>
-								<TableHead className="w-[90px]">Status</TableHead>
-								<TableHead>Time</TableHead>
-								<TableHead className="text-right">Result</TableHead>
+								<TableHead className="w-27.5 py-3 px-4">Status</TableHead>
+								<TableHead className="py-3 px-4 text-right">Time</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{filteredLogs.map((log) => (
 								<TableRow key={log.id}>
-									<TableCell>
+									<TableCell className="py-3 px-4">
 										<Badge
 											variant="outline"
 											className={`capitalize ${getStatusColor(log.status)}`}
@@ -122,14 +134,8 @@ export const WorkflowLogs = () => {
 											{log.status}
 										</Badge>
 									</TableCell>
-									<TableCell className="text-muted-foreground text-xs whitespace-nowrap">
+									<TableCell className="text-muted-foreground text-xs whitespace-nowrap py-3 px-4 text-right">
 										{formatRelativeTime(log.executedAt)}
-									</TableCell>
-									<TableCell
-										className="text-right font-mono text-xs truncate max-w-[150px]"
-										title={log.result || ""}
-									>
-										{log.result || "-"}
 									</TableCell>
 								</TableRow>
 							))}
@@ -143,7 +149,13 @@ export const WorkflowLogs = () => {
 						className="h-10 w-full flex items-center justify-center py-2"
 					>
 						{isFetchingNextPage && (
-							<Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+							<>
+								<Loader2
+									className="h-4 w-4 animate-spin text-muted-foreground"
+									aria-hidden="true"
+								/>
+								<span className="sr-only">Fetching more logs...</span>
+							</>
 						)}
 					</div>
 				)}
