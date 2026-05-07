@@ -13,8 +13,6 @@ import { isDBQueryError } from "@/utils/api.utils.js";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
 export const executeWorkflow = async (req: Request, res: Response) => {
-	console.log("in handler abc");
-
 	const workflowId = req.params.id as string;
 	const { triggerNodeId, triggerType, liveUpdates } =
 		req.body as ExecuteWorkflowRequest;
@@ -57,7 +55,7 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 		const workflowId = req.params.workflowId as string;
 		const page = Number(req.query.page) || 1;
 		const limit = 15;
-		const skip = page * limit;
+		const skip = (page - 1) * limit;
 		const userId = res.locals.userId;
 		if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
 
