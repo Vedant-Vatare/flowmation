@@ -87,6 +87,7 @@ export type partialWorkflowConnection = z.infer<
 export type NodeIdsWithPosition = z.infer<typeof NodeIdsWithPositionSchema>;
 
 export type WorkflowExecution = {
+	id: string;
 	workflowId: string;
 	userId: string;
 	status: WorkflowStatus;

@@ -26,6 +26,7 @@ import {
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { NodeEditor } from "./NodeEditor";
+import { WorkflowLogs } from "./WorkflowLogs";
 
 const NodeItem = ({
 	node,
@@ -195,12 +196,18 @@ export const WorkflowEditorSidebar = () => {
 						<TabsTrigger value="editor" onClick={() => setTabOpen("editor")}>
 							Editor
 						</TabsTrigger>
+						<TabsTrigger value="runs" onClick={() => setTabOpen("runs")}>
+							Runs
+						</TabsTrigger>
 					</TabsList>
 					<TabsContent value="nodes">
 						<Nodes />
 					</TabsContent>
 					<TabsContent value="editor">
 						<NodeEditorTab />
+					</TabsContent>
+					<TabsContent value="runs">
+						<WorkflowLogs />
 					</TabsContent>
 				</Tabs>
 			</SidebarContent>

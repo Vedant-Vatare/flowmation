@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-type WorkflowSidebarTabs = "editor" | "nodes";
+type WorkflowSidebarTabs = "editor" | "nodes" | "runs";
 type WorkflowSidebarTabsStore = {
 	tabOpen: WorkflowSidebarTabs;
 	setTabOpen: (state: WorkflowSidebarTabs) => void;

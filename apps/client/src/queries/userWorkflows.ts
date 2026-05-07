@@ -3,7 +3,7 @@ import type {
 	PartialWorkflowNode,
 	WorkflowNode,
 } from "@nodebase/shared";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import { useReactFlow } from "@xyflow/react";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,7 @@ import {
 	updateNodesPositionApi,
 	updateWorkflowNodeApi,
 	updateWorkflowNodeConnApi,
+	workflowExecutionLogsApi,
 } from "@/apis/userWorkflow";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useSSE } from "@/hooks/useSSE";
@@ -148,5 +149,17 @@ export const useExecuteWorkflow = () => {
 		onError: (error) => {
 			toast.error(getErrorMessage(error));
 		},
+	});
+};
+
+export const useWorkflowLogs = (workflowId: string) => {
+	return useInfiniteQuery({
+		queryKey: ["workflow-logs", { workflowId }],
+		queryFn: ({ pageParam }: { pageParam: number }) =>
+			workflowExecutionLogsApi(workflowId, pageParam),
+
+		initialPageParam: 1,
+		getNextPageParam: (lastPage, allPages) =>
+			lastPage.hasNextPage ? allPages.length + 1 : undefined,
 	});
 };

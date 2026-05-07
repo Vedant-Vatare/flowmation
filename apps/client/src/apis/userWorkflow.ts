@@ -4,6 +4,7 @@ import type {
 	PartialWorkflowNode,
 	UserWorkflow,
 	WorkflowConnection,
+	WorkflowExecution,
 	WorkflowNode,
 } from "@nodebase/shared";
 import api from "./axios";
@@ -127,5 +128,17 @@ export const executeWorkflowApi = async (
 		`/workflows/run/${workflowId}`,
 		payload,
 	);
+	return response.data;
+};
+
+export const workflowExecutionLogsApi = async (
+	workflowId: string,
+	page: number,
+) => {
+	const response = await api.get<{
+		logs: WorkflowExecution[];
+		hasNextPage: boolean;
+	}>(`/executions/${workflowId}?page=${page}`);
+
 	return response.data;
 };
