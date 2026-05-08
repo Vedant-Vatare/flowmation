@@ -174,11 +174,18 @@ const NodeEditorTab = () => {
 		);
 	}
 
+	if (!selectedNode) {
+		return (
+			<p className="text-sm text-muted-foreground">Select a node to edit</p>
+		);
+	}
+
 	return <NodeEditor key={selectedNode.id} node={selectedNode} />;
 };
 
-export const WorkflowEditorSidebar = () => {
-	const { tabOpen, setTabOpen } = useWorkflowSidbarTabsStore();
+export const WorkflowEditorSidebar = memo(() => {
+	const tabOpen = useWorkflowSidbarTabsStore((s) => s.tabOpen);
+	const setTabOpen = useWorkflowSidbarTabsStore((s) => s.setTabOpen);
 
 	return (
 		<Sidebar
@@ -213,4 +220,4 @@ export const WorkflowEditorSidebar = () => {
 			</SidebarContent>
 		</Sidebar>
 	);
-};
+});
