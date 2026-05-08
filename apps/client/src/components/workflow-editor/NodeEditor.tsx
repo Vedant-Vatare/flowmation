@@ -57,55 +57,60 @@ function allRequiredFilled(
 		});
 }
 
-function useIsVisible(
-	field: NodeParameters,
-	allValues: Record<string, unknown>,
-): boolean {
-	if (!field.dependsOn?.length) return true;
-	return field.dependsOn.every(({ parameter, values }) =>
-		values.includes(allValues[parameter]),
-	);
-}
+export const NodeField = memo(
+	({ field, register, control, currentNodeId }: NodeFieldProps) => {
+		const depNames = useMemo(
+			() => field.dependsOn?.map((d) => d.parameter) || ["__none__"],
+			[field.dependsOn],
+		);
 
-export const NodeField = ({
-	field,
-	register,
-	control,
-	allValues,
-	currentNodeId,
-}: NodeFieldProps & { allValues: Record<string, unknown> }) => {
-	const visible = useIsVisible(field, allValues);
-	if (!visible) return null;
+		const watchedValues = useWatch({
+			control,
+			name: depNames,
+		});
 
-	const shared = { field, register, control, currentNodeId };
+		const visible = useMemo(() => {
+			if (!field.dependsOn?.length) return true;
+			return field.dependsOn.every((dep, index) => {
+				const val = Array.isArray(watchedValues)
+					? watchedValues[index]
+					: watchedValues;
+				return dep.values.includes(val);
+			});
+		}, [field.dependsOn, watchedValues]);
 
-	switch (field.type as NodePropertyType) {
-		case "input":
-			return <InputField {...shared} />;
-		case "number":
-			return <NumberField {...shared} />;
-		case "textarea":
-			return <TextareaField {...shared} />;
-		case "boolean":
-			return <BooleanField {...shared} />;
-		case "checkbox":
-			return <CheckboxField {...shared} />;
-		case "radio":
-			return <RadioField {...shared} />;
-		case "dropdown":
-			return <DropdownField {...shared} />;
-		case "date":
-			return <DateField {...shared} />;
-		case "date-time":
-			return <DateTimeField {...shared} />;
-		case "array":
-			return <ArrayField {...shared} />;
-		case "key-value":
-			return <KeyValueField {...shared} />;
-		default:
-			return <InputField {...shared} />;
-	}
-};
+		if (!visible) return null;
+
+		const shared = { field, register, control, currentNodeId };
+
+		switch (field.type as NodePropertyType) {
+			case "input":
+				return <InputField {...shared} />;
+			case "number":
+				return <NumberField {...shared} />;
+			case "textarea":
+				return <TextareaField {...shared} />;
+			case "boolean":
+				return <BooleanField {...shared} />;
+			case "checkbox":
+				return <CheckboxField {...shared} />;
+			case "radio":
+				return <RadioField {...shared} />;
+			case "dropdown":
+				return <DropdownField {...shared} />;
+			case "date":
+				return <DateField {...shared} />;
+			case "date-time":
+				return <DateTimeField {...shared} />;
+			case "array":
+				return <ArrayField {...shared} />;
+			case "key-value":
+				return <KeyValueField {...shared} />;
+			default:
+				return <InputField {...shared} />;
+		}
+	},
+);
 
 const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const { workflowId } = Route.useParams();
@@ -169,6 +174,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 					ref={nodeNameRef}
 					className={cn("outline-none", isDuplicateName && "shake")}
 					onInput={deboucedCheckDuplicate}
+					suppressContentEditableWarning={true}
 				>
 					{node.data.name}
 				</span>
@@ -212,7 +218,6 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const { register, control, watch } = useForm<Record<string, unknown>>({
 		defaultValues,
-		mode: "onChange",
 	});
 
 	const [editorStatus, setEditorStatus] = useState<
@@ -256,7 +261,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				},
 			);
 		},
-		[node, updateNode, workflowId],
+		[node.data.parameters, node.id, node.data.task, updateNode, workflowId],
 	);
 
 	const debouncedSave = useDebounce(doSave, () => node.id);
@@ -271,8 +276,6 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		});
 		return () => subscription.unsubscribe();
 	}, [watch, debouncedSave]);
-
-	const allValues = useWatch({ control }) as Record<string, unknown>;
 
 	return (
 		<div className="flex flex-col  w-full bg-background shadow-sm">
@@ -302,7 +305,6 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 							field={param}
 							register={register}
 							control={control}
-							allValues={allValues}
 							currentNodeId={node.id}
 						/>
 					))

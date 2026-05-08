@@ -23,10 +23,7 @@ import {
 } from "@/apis/userWorkflow";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useSSE } from "@/hooks/useSSE";
-import {
-	useWorkflowExecutionStore,
-	useWorkflowStore,
-} from "@/store/workflow/useWorkflowStore";
+import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
 export const useCreateUserWorkflowQuery = () =>
@@ -44,12 +41,14 @@ export const useWorkflowNodesQuery = (workflowId: string) =>
 	useQuery({
 		queryKey: ["workflow-nodes", { workflowId }],
 		queryFn: () => getWorkflowNodes(workflowId),
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 
 export const useWorkflowConnectionsQuery = (workflowId: string) =>
 	useQuery({
 		queryKey: ["workflow-connections", { workflowId }],
 		queryFn: () => getWorkflowConnections(workflowId),
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 
 export const useAddWorkflowNode = () =>
@@ -65,7 +64,6 @@ export const useDeleteWorkflowNode = () =>
 
 export const useUpdateWorkflowNode = () => {
 	const { setNodes } = useReactFlow<WorkflowCanvasNode>();
-	const setSelectedNode = useWorkflowStore((s) => s.setSelectedNode);
 
 	return useMutation({
 		mutationFn: ({
@@ -80,26 +78,20 @@ export const useUpdateWorkflowNode = () => {
 
 			const { id: nodeId, parameters, name, config } = variables.node;
 
-			const patchData = (data: WorkflowCanvasNode["data"]) => ({
-				...data,
-				...(name && { name }),
-				...(parameters && { parameters }),
-				...(config && { config }),
-			});
-
 			setNodes((nds) =>
-				nds.map((n) =>
-					n.id === nodeId ? { ...n, data: patchData(n.data) } : n,
-				),
+				nds.map((n) => {
+					if (n.id !== nodeId) return n;
+					return {
+						...n,
+						data: {
+							...n.data,
+							...(name && { name }),
+							...(parameters && { parameters }),
+							...(config && { config }),
+						},
+					};
+				}),
 			);
-
-			const selected = useWorkflowStore.getState().selectedNode;
-			if (selected?.id === nodeId) {
-				setSelectedNode({
-					...selected,
-					data: patchData(selected.data),
-				} as WorkflowCanvasNode);
-			}
 		},
 	});
 };

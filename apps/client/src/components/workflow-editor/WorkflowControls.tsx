@@ -10,12 +10,10 @@ import type { NodeIdsWithPosition } from "@nodebase/shared";
 import {
 	ControlButton,
 	Controls,
-	useNodesState,
 	useReactFlow,
 	useViewport,
 } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useUpdateNodesPositions } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 
@@ -23,8 +21,7 @@ export function WorkflowControls() {
 	const MAX_ZOOM = 150;
 	const MIN_ZOOM = 50;
 	const { workflowId } = Route.useParams();
-	const [nodes] = useNodesState<WorkflowCanvasNode>([]);
-	const { zoomIn, zoomOut, fitView, setViewport } = useReactFlow();
+	const { zoomIn, zoomOut, fitView, setViewport, getNodes } = useReactFlow();
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const [zoom, setZoom] = useState(100);
@@ -115,7 +112,7 @@ export function WorkflowControls() {
 			[],
 		);
 		const changedNodes = nodesWithPosition.filter((node) => {
-			const n = nodes.find((n) => n.id === node.id);
+			const n = getNodes().find((n) => n.id === node.id);
 			if (!n) return false;
 			return (
 				Math.round(n.position.x) !== node.positionX ||
@@ -124,7 +121,7 @@ export function WorkflowControls() {
 		});
 		if (changedNodes.length === 0) return;
 		updateNodesPositions({ workflowId, nodes: changedNodes });
-	}, [applyLayout, nodes, workflowId, updateNodesPositions]);
+	}, [applyLayout, getNodes, workflowId, updateNodesPositions]);
 
 	// Update zoom display when viewport changes (external zoom)
 	useEffect(() => {
