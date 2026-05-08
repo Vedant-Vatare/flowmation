@@ -2,10 +2,14 @@ import { Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ShineBorder } from "@/components/ui/shine-border";
-import { useExecuteWorkflow } from "@/queries/userWorkflows";
+import {
+	useExecuteWorkflow,
+	useWorkflowNodesQuery,
+} from "@/queries/userWorkflows";
+import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import {
 	useWorkflowExecutionStore,
-	useWorkflowStore,
+	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 
 const getTriggerExecutionType = (
@@ -16,23 +20,29 @@ const getTriggerExecutionType = (
 };
 
 export const WorkflowExecuteButton = () => {
-	const triggerNodes = useWorkflowStore((s) => s.triggerNodes);
-	const isSelectingTriggerForExecution = useWorkflowStore(
-		(s) => s.isSelectingTriggerForExecution,
+	const { workflowId } = Route.useParams();
+	const { data: workflowNodes } = useWorkflowNodesQuery(workflowId);
+
+	const isSelectingTrigger = useWorkflowTriggerStore(
+		(s) => s.isSelectingTrigger,
 	);
-	const setIsSelectingTriggerForExecution = useWorkflowStore(
-		(s) => s.setIsSelectingTriggerForExecution,
+	const setIsSelectingTrigger = useWorkflowTriggerStore(
+		(s) => s.setIsSelectingTrigger,
 	);
-	const requestExecutionTriggerFocus = useWorkflowStore(
-		(s) => s.requestExecutionTriggerFocus,
+	const requestTriggerFocus = useWorkflowTriggerStore(
+		(s) => s.requestTriggerFocus,
 	);
 	const clearExecutionUpdates = useWorkflowExecutionStore(
 		(s) => s.clearExecutionUpdates,
 	);
+
 	const { mutate: executeWorkflow } = useExecuteWorkflow();
 
 	const handleExecute = () => {
+		const triggerNodes =
+			workflowNodes?.filter((n) => n.type === "trigger") ?? [];
 		clearExecutionUpdates();
+
 		if (triggerNodes.length === 0) {
 			toast.info("Add a trigger node in canvas to execute workflow.");
 			return;
@@ -46,12 +56,12 @@ export const WorkflowExecuteButton = () => {
 				triggerNodeId: trigger.id,
 				triggerType: getTriggerExecutionType(trigger.task),
 			});
-			setIsSelectingTriggerForExecution(false);
+			setIsSelectingTrigger(false);
 			return;
 		}
 
-		setIsSelectingTriggerForExecution(!isSelectingTriggerForExecution);
-		requestExecutionTriggerFocus();
+		setIsSelectingTrigger(!isSelectingTrigger);
+		requestTriggerFocus();
 	};
 
 	return (
@@ -60,7 +70,7 @@ export const WorkflowExecuteButton = () => {
 			borderWidth={2}
 			duration={3.5}
 			color="hsl(var(--primary))"
-			disabled={isSelectingTriggerForExecution}
+			disabled={isSelectingTrigger}
 		>
 			<Button
 				size="sm"

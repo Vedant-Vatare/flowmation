@@ -8,13 +8,12 @@ import { cn } from "@/lib/utils";
 import { useExecuteWorkflow } from "@/queries/userWorkflows";
 import {
 	useWorkflowExecutionStore,
-	useWorkflowStore,
+	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 import { withAlpha } from "@/utils/colors";
 
 const getTriggerType = (task: string): "trigger" | "webhook" | "schedule" => {
 	if (task.includes("webhook")) return "webhook";
-
 	return "trigger";
 };
 
@@ -26,16 +25,24 @@ export const WorkflowNode = memo(
 		const Icon = ui.icon;
 		const bg = withAlpha(ui.background ?? "#6366f1", 0.2);
 		const border = ui.background ?? "#6366f1";
+
 		const [executionState, setExecutionState] =
 			useState<ExecutionStateType>(null);
-		const { showExecutionUpdates, nodeExecutionUpdates } =
-			useWorkflowExecutionStore();
-		const isSelectingTriggerForExecution = useWorkflowStore(
-			(s) => s.isSelectingTriggerForExecution,
+
+		const showExecutionUpdates = useWorkflowExecutionStore(
+			(s) => s.showExecutionUpdates,
 		);
-		const setIsSelectingTriggerForExecution = useWorkflowStore(
-			(s) => s.setIsSelectingTriggerForExecution,
+		const currentNodeUpdate = useWorkflowExecutionStore(
+			(s) => s.nodeExecutionUpdates[data.id],
 		);
+
+		const isSelectingTrigger = useWorkflowTriggerStore(
+			(s) => s.isSelectingTrigger,
+		);
+		const setIsSelectingTrigger = useWorkflowTriggerStore(
+			(s) => s.setIsSelectingTrigger,
+		);
+
 		const { mutate: executeWorkflow, isPending } = useExecuteWorkflow();
 		const isTrigger = data.type === "trigger";
 
@@ -44,11 +51,9 @@ export const WorkflowNode = memo(
 				setExecutionState(null);
 				return;
 			}
-			const CurrentNodeUpdate = nodeExecutionUpdates[data.id];
-
-			if (!CurrentNodeUpdate) return;
-			setExecutionState(CurrentNodeUpdate.type);
-		}, [showExecutionUpdates, data.id, nodeExecutionUpdates]);
+			if (!currentNodeUpdate) return;
+			setExecutionState(currentNodeUpdate.type);
+		}, [showExecutionUpdates, currentNodeUpdate]);
 
 		const getStateClass = () => {
 			switch (executionState) {
@@ -65,28 +70,25 @@ export const WorkflowNode = memo(
 
 		return (
 			<div
-				style={{
-					background: bg,
-					borderColor: border,
-				}}
+				style={{ background: bg, borderColor: border }}
 				className={cn(
 					`workflow-node group relative min-w-32 h-28 max-w-max rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-200 border hover:scale-105 cursor-grab ${getStateClass()}`,
 				)}
 			>
-				{isTrigger && isSelectingTriggerForExecution ? (
+				{isTrigger && isSelectingTrigger ? (
 					<button
 						type="button"
 						disabled={isPending}
-						onClick={(event) => {
-							event.stopPropagation();
+						onClick={(e) => {
+							e.stopPropagation();
 							executeWorkflow({
 								workflowId: data.workflowId,
 								triggerNodeId: data.id,
 								triggerType: getTriggerType(data.task),
 							});
-							setIsSelectingTriggerForExecution(false);
+							setIsSelectingTrigger(false);
 						}}
-						className="absolute flex text-center w-max -left-full top-1/2 -translate-y-1/2 size-8 rounded-full border border-border bg-[#f2f2f2] text-[#222] items-center justify-center shadow-sm  hover:text-accent-foreground transition-colors p-2 gap-1.5 hover:cursor-pointer"
+						className="absolute flex text-center w-max -left-full top-1/2 -translate-y-1/2 size-8 rounded-full border border-border bg-[#f2f2f2] text-[#222] items-center justify-center shadow-sm hover:text-accent-foreground transition-colors p-2 gap-1.5 hover:cursor-pointer"
 						title="Execute from this trigger"
 					>
 						<HugeiconsIcon icon={Zap} className="text-xs" size={20} />
@@ -182,5 +184,3 @@ export const WorkflowNode = memo(
 		);
 	},
 );
-
-WorkflowNode.displayName = "WorkflowNode";

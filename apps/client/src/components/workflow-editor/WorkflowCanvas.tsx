@@ -33,7 +33,10 @@ import {
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
-import { useWorkflowStore } from "@/store/workflow/useWorkflowStore";
+import {
+	useWorkflowStore,
+	useWorkflowTriggerStore,
+} from "@/store/workflow/useWorkflowStore";
 import {
 	getNodeColorByTask,
 	toCanvasEdges,
@@ -41,7 +44,6 @@ import {
 } from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import Loader from "../ui/Loader";
-import { useSidebar } from "../ui/sidebar";
 import { WorkflowControls } from "./WorkflowControls";
 import { WorkflowNode } from "./WorkflowNodes";
 
@@ -66,14 +68,10 @@ const WorkflowCanvas = () => {
 		[],
 	);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
-	const setTabOpen = useWorkflowSidbarTabsStore.getState().setTabOpen;
-	const selectedNode = useWorkflowStore((s) => s.selectedNode);
-	const setSelectedNode = useWorkflowStore((s) => s.setSelectedNode);
-	const setTriggerNodes = useWorkflowStore((s) => s.setTriggerNodes);
-	const executionTriggerFocusRequestKey = useWorkflowStore(
-		(s) => s.executionTriggerFocusRequestKey,
+
+	const triggerFocusRequestKey = useWorkflowTriggerStore(
+		(s) => s.triggerFocusRequestKey,
 	);
-	const { setOpen } = useSidebar();
 
 	const { fitView } = useReactFlow();
 
@@ -83,20 +81,12 @@ const WorkflowCanvas = () => {
 	}, [workflowNodes, setNodes]);
 
 	useEffect(() => {
-		const triggers = nodes
-			.filter((node) => node.data.type === "trigger")
-			.map((node) => ({
-				id: node.id,
-				workflowId: node.data.workflowId,
-				task: node.data.task,
-				name: node.data.name,
-			}));
-
-		setTriggerNodes(triggers);
-	}, [nodes, setTriggerNodes]);
+		if (!workflowConnections) return;
+		setEdges(toCanvasEdges(workflowConnections));
+	}, [workflowConnections, setEdges]);
 
 	useEffect(() => {
-		if (!executionTriggerFocusRequestKey) return;
+		if (!triggerFocusRequestKey) return;
 		const triggerIds = nodes
 			.filter((node) => node.data.type === "trigger")
 			.map((node) => node.id);
@@ -109,33 +99,32 @@ const WorkflowCanvas = () => {
 			duration: 350,
 			maxZoom: 1,
 		});
-	}, [executionTriggerFocusRequestKey, nodes, fitView]);
-
-	useEffect(() => {
-		if (!workflowConnections) return;
-		setEdges(toCanvasEdges(workflowConnections));
-	}, [workflowConnections, setEdges]);
+	}, [triggerFocusRequestKey, nodes, fitView]);
 
 	const handleNodeClick = (node: WorkflowCanvasNode) => {
-		setOpen(true);
-		setSelectedNode(node);
-		setTabOpen("editor");
+		useWorkflowSidbarTabsStore.getState().setSidebarOpen(true);
+		useWorkflowStore.getState().setSelectedNode(node);
+		useWorkflowSidbarTabsStore.getState().setTabOpen("editor");
 	};
 
-	const onConnect = useCallback(
-		(connection: Connection) => {
-			if (!connection.sourceHandle || !connection.targetHandle) return null;
-			setEdges((eds) => addEdge(connection, eds));
-			createNewConnection({
-				id: crypto.randomUUID(),
-				workflowId: workflowId,
-				sourceId: connection.source,
-				targetId: connection.target,
-				sourcePort: connection.sourceHandle,
-				targetPort: connection.targetHandle,
+	const saveNodePosition = useCallback(
+		(canvasNode: WorkflowCanvasNode) => {
+			updateNode({
+				workflowId,
+				node: {
+					id: canvasNode.id,
+					task: canvasNode.data.task,
+					positionX: Math.round(canvasNode.position.x),
+					positionY: Math.round(canvasNode.position.y),
+				},
 			});
 		},
-		[setEdges, createNewConnection, workflowId],
+		[updateNode, workflowId],
+	);
+
+	const debouncedSaveNode = useDebounce(
+		saveNodePosition,
+		(node: WorkflowCanvasNode) => node.id,
 	);
 
 	const isConnectionChanged = useCallback(
@@ -150,6 +139,22 @@ const WorkflowCanvas = () => {
 		[],
 	);
 
+	const onConnect = useCallback(
+		(connection: Connection) => {
+			if (!connection.sourceHandle || !connection.targetHandle) return null;
+			setEdges((eds) => addEdge(connection, eds));
+			createNewConnection({
+				id: crypto.randomUUID(),
+				workflowId,
+				sourceId: connection.source,
+				targetId: connection.target,
+				sourcePort: connection.sourceHandle,
+				targetPort: connection.targetHandle,
+			});
+		},
+		[setEdges, createNewConnection, workflowId],
+	);
+
 	const onReconnect = useCallback(
 		(oldEdge: Edge, newConnection: Connection) => {
 			if (
@@ -162,7 +167,7 @@ const WorkflowCanvas = () => {
 			setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
 			updateConnection({
 				id: oldEdge.id,
-				workflowId: workflowId,
+				workflowId,
 				sourceId: newConnection.source,
 				targetId: newConnection.target,
 				sourcePort: newConnection.sourceHandle,
@@ -185,30 +190,50 @@ const WorkflowCanvas = () => {
 		(deletedNodes: WorkflowCanvasNode[]) => {
 			for (const canvasNode of deletedNodes) {
 				deleteNode({ id: canvasNode.data.id, workflowId });
-				if (selectedNode?.id === canvasNode.id) setSelectedNode(null);
+				const selectedNode = useWorkflowStore.getState().selectedNode;
+				if (selectedNode?.id === canvasNode.id) {
+					useWorkflowStore.getState().setSelectedNode(null);
+				}
 			}
 		},
-		[deleteNode, workflowId, setSelectedNode, selectedNode?.id],
+		[deleteNode, workflowId],
 	);
 
-	const saveNodePosition = useCallback(
-		(canvasNode: WorkflowCanvasNode) => {
-			updateNode({
-				workflowId,
-				node: {
-					id: canvasNode.id,
-					task: canvasNode.data.task,
-					positionX: Math.round(canvasNode.position.x),
-					positionY: Math.round(canvasNode.position.y),
-				},
+	const onNodeDragStop = useCallback(
+		(_e: React.MouseEvent<Element, MouseEvent>, node: WorkflowCanvasNode) => {
+			const currentNodes = nodes;
+			const resolvedPositions = resolveCollisions([...currentNodes], {
+				maxIterations: 50,
+				overlapThreshold: 0.5,
+				margin: 20,
 			});
-		},
-		[updateNode, workflowId],
-	);
 
-	const debouncedSaveNode = useDebounce(
-		saveNodePosition,
-		(node: WorkflowCanvasNode) => node.id,
+			setNodes(resolvedPositions);
+
+			const finalNode = resolvedPositions.find((n) => n.id === node.id) ?? node;
+			debouncedSaveNode(finalNode as WorkflowCanvasNode);
+
+			const changedNodes = resolvedPositions
+				.filter((n) => {
+					const original = currentNodes.find((on) => on.id === n.id);
+					return (
+						original &&
+						(Math.round(original.position.x) !== Math.round(n.position.x) ||
+							Math.round(original.position.y) !== Math.round(n.position.y))
+					);
+				})
+				.filter((n) => n.id !== node.id)
+				.map((n) => ({
+					id: n.id,
+					positionX: Math.round(n.position.x),
+					positionY: Math.round(n.position.y),
+				}));
+
+			if (changedNodes.length > 0) {
+				updateNodesPositions({ workflowId, nodes: changedNodes });
+			}
+		},
+		[updateNodesPositions, setNodes, workflowId, nodes, debouncedSaveNode],
 	);
 
 	if (nodesLoading || connectionsLoading) {
@@ -229,42 +254,10 @@ const WorkflowCanvas = () => {
 			}}
 			maxZoom={2}
 			minZoom={0.5}
-			onNodesChange={onNodesChange}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
 			onNodesDelete={onNodesDelete}
-			onNodeDragStop={(_e, node) => {
-				const resolvedPositions = resolveCollisions([...nodes], {
-					maxIterations: 50,
-					overlapThreshold: 0.5,
-					margin: 20,
-				});
-
-				setNodes(resolvedPositions);
-
-				const finalNode =
-					resolvedPositions.find((n) => n.id === node.id) || node;
-				debouncedSaveNode(finalNode);
-
-				const changedNodes = resolvedPositions
-					.filter((n) => {
-						const original = nodes.find((on) => on.id === n.id);
-						return (
-							original &&
-							(Math.round(original.position.x) !== Math.round(n.position.x) ||
-								Math.round(original.position.y) !== Math.round(n.position.y))
-						);
-					})
-					.filter((n) => n.id !== node.id)
-					.map((n) => ({
-						id: n.id,
-						positionX: Math.round(n.position.x),
-						positionY: Math.round(n.position.y),
-					}));
-
-				if (changedNodes.length > 0) {
-					updateNodesPositions({ workflowId, nodes: changedNodes });
-				}
-			}}
+			onNodeDragStop={onNodeDragStop}
+			onNodesChange={onNodesChange}
 			onEdgesChange={onEdgesChange}
 			onEdgesDelete={onEdgesDelete}
 			onConnect={onConnect}

@@ -2,23 +2,16 @@ import type { NodeExecutionUpdate } from "@nodebase/shared";
 import { create } from "zustand";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 
-type WorkflowTriggerNode = {
-	id: string;
-	workflowId: string;
-	task: string;
-	name: string;
-};
-
 type WorkflowStore = {
 	selectedNode: WorkflowCanvasNode | null;
 	setSelectedNode: (node: WorkflowCanvasNode | null) => void;
-	clearSelectedNode: () => void;
-	triggerNodes: WorkflowTriggerNode[];
-	setTriggerNodes: (nodes: WorkflowTriggerNode[]) => void;
-	isSelectingTriggerForExecution: boolean;
-	setIsSelectingTriggerForExecution: (value: boolean) => void;
-	executionTriggerFocusRequestKey: number;
-	requestExecutionTriggerFocus: () => void;
+};
+
+type WorkflowTriggerStore = {
+	isSelectingTrigger: boolean;
+	setIsSelectingTrigger: (value: boolean) => void;
+	triggerFocusRequestKey: number;
+	requestTriggerFocus: () => void;
 };
 
 type WorkflowExecutionStore = {
@@ -32,20 +25,16 @@ type WorkflowExecutionStore = {
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
 	selectedNode: null,
 	setSelectedNode: (node) => set({ selectedNode: node }),
-	clearSelectedNode: () => set({ selectedNode: null }),
+}));
 
-	triggerNodes: [],
-	setTriggerNodes: (nodes) => set({ triggerNodes: nodes }),
+export const useWorkflowTriggerStore = create<WorkflowTriggerStore>((set) => ({
+	isSelectingTrigger: false,
+	setIsSelectingTrigger: (value) => set({ isSelectingTrigger: value }),
 
-	isSelectingTriggerForExecution: false,
-	setIsSelectingTriggerForExecution: (value) =>
-		set({ isSelectingTriggerForExecution: value }),
-
-	executionTriggerFocusRequestKey: 0,
-	requestExecutionTriggerFocus: () =>
+	triggerFocusRequestKey: 0,
+	requestTriggerFocus: () =>
 		set((state) => ({
-			executionTriggerFocusRequestKey:
-				state.executionTriggerFocusRequestKey + 1,
+			triggerFocusRequestKey: state.triggerFocusRequestKey + 1,
 		})),
 }));
 
