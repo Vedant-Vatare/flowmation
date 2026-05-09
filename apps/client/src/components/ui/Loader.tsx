@@ -1,10 +1,3 @@
-// Loader.jsx
-// Full-screen (or full-container) loading overlay using the Mono spinner.
-// Props:
-//   label    — string shown below spinner     (default: "Loading")
-//   fullPage — fills the entire viewport      (default: true)
-//   bg       — background color               (default: "#111111")
-
 const styles = `
   @keyframes spin-mono {
     to { transform: rotate(360deg); }

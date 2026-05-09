@@ -46,7 +46,7 @@ export type WorkflowNodeData = Pick<
 export type WorkflowCanvasNode = Node<WorkflowNodeData>;
 
 export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
-	"event.click": {
+	"action.click": {
 		name: "Click",
 		icon: ClickIcon,
 		background: "#0496FF",

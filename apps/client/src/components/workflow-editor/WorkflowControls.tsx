@@ -21,6 +21,7 @@ export function WorkflowControls() {
 	const MAX_ZOOM = 150;
 	const MIN_ZOOM = 50;
 	const { workflowId } = Route.useParams();
+
 	const { zoomIn, zoomOut, fitView, setViewport, getNodes } = useReactFlow();
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
@@ -31,6 +32,11 @@ export function WorkflowControls() {
 	const zoomRef = useRef(100);
 	const inputRef = useRef<HTMLInputElement>(null);
 
+	const viewportRef = useRef(viewport);
+	useEffect(() => {
+		viewportRef.current = viewport;
+	}, [viewport]);
+
 	const handleFitView = useCallback(() => {
 		fitView({ duration: 250, padding: 0.2 });
 	}, [fitView]);
@@ -40,33 +46,28 @@ export function WorkflowControls() {
 			const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomLevel));
 			const zoomValue = clampedZoom / 100;
 
-			// Get current viewport center
-			const x = viewport.x || 0;
-			const y = viewport.y || 0;
+			const x = viewportRef.current.x || 0;
+			const y = viewportRef.current.y || 0;
 
 			setViewport({ x, y, zoom: zoomValue }, { duration: 0 });
 			setZoom(clampedZoom);
 			setZoomInput(clampedZoom.toString());
 			zoomRef.current = clampedZoom;
 		},
-		[viewport, setViewport],
+		[setViewport],
 	);
 
 	const handleZoomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
-		// Only allow numbers
-		if (/^\d*$/.test(value) && value !== "") {
-			const numValue = parseInt(value, 10);
+		if (/^\d*$/.test(value)) {
 			setZoomInput(value);
-			// Apply zoom in real-time as user types
-			applyZoom(numValue);
 		}
 	};
 
-	const handleZoomInputBlur = () => {
+	const handleZoomInputBlur = useCallback(() => {
 		const value = parseInt(zoomInput, 10);
 
-		if (Number.isNaN(value) || value === 0) {
+		if (Number.isNaN(value) || zoomInput === "") {
 			setZoomInput(zoomRef.current.toString());
 			setIsEditing(false);
 			return;
@@ -75,57 +76,68 @@ export function WorkflowControls() {
 		const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value));
 		applyZoom(clampedZoom);
 		setIsEditing(false);
-	};
+	}, [zoomInput, applyZoom]);
 
-	const handleZoomInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === "Enter") {
-			handleZoomInputBlur();
-		} else if (e.key === "Escape") {
-			setZoomInput(zoomRef.current.toString());
-			setIsEditing(false);
-		} else if (e.key === "ArrowUp") {
-			e.preventDefault();
-			const newValue = Math.min(MAX_ZOOM, parseInt(zoomInput, 10) + 10 || 100);
-			setZoomInput(newValue.toString());
-			applyZoom(newValue);
-		} else if (e.key === "ArrowDown") {
-			e.preventDefault();
-			const newValue = Math.max(MIN_ZOOM, parseInt(zoomInput, 10) - 10 || 100);
-			setZoomInput(newValue.toString());
-			applyZoom(newValue);
-		}
-	};
+	const handleZoomInputKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLInputElement>) => {
+			if (e.key === "Enter") {
+				handleZoomInputBlur();
+			} else if (e.key === "Escape") {
+				setZoomInput(zoomRef.current.toString());
+				setIsEditing(false);
+			} else if (e.key === "ArrowUp") {
+				e.preventDefault();
+				const newValue = Math.min(
+					MAX_ZOOM,
+					(parseInt(zoomInput, 10) || zoomRef.current) + 10,
+				);
+				setZoomInput(newValue.toString());
+				applyZoom(newValue);
+			} else if (e.key === "ArrowDown") {
+				e.preventDefault();
+				const newValue = Math.max(
+					MIN_ZOOM,
+					(parseInt(zoomInput, 10) || zoomRef.current) - 10,
+				);
+				setZoomInput(newValue.toString());
+				applyZoom(newValue);
+			}
+		},
+		[zoomInput, applyZoom, handleZoomInputBlur],
+	);
 
 	const handleApplyLayout = useCallback(async () => {
+		const nodesBefore = getNodes().reduce<
+			Record<string, { x: number; y: number }>
+		>((acc, n) => {
+			acc[n.id] = { x: Math.round(n.position.x), y: Math.round(n.position.y) };
+			return acc;
+		}, {});
+
 		const formatedCanvas = await applyLayout();
 		if (!formatedCanvas) return;
 
-		const nodesWithPosition = formatedCanvas.nodes.reduce(
-			(acc: NodeIdsWithPosition, curr) => {
-				acc.push({
-					id: curr.id,
-					positionX: Math.round(curr.position.x),
-					positionY: Math.round(curr.position.y),
-				});
+		const changedNodes = formatedCanvas.nodes.reduce<NodeIdsWithPosition>(
+			(acc, curr) => {
+				const before = nodesBefore[curr.id];
+				const newX = Math.round(curr.position.x);
+				const newY = Math.round(curr.position.y);
+				if (!before || before.x !== newX || before.y !== newY) {
+					acc.push({ id: curr.id, positionX: newX, positionY: newY });
+				}
 				return acc;
 			},
 			[],
 		);
-		const changedNodes = nodesWithPosition.filter((node) => {
-			const n = getNodes().find((n) => n.id === node.id);
-			if (!n) return false;
-			return (
-				Math.round(n.position.x) !== node.positionX ||
-				Math.round(n.position.y) !== node.positionY
-			);
-		});
+
 		if (changedNodes.length === 0) return;
 		updateNodesPositions({ workflowId, nodes: changedNodes });
 	}, [applyLayout, getNodes, workflowId, updateNodesPositions]);
 
-	// Update zoom display when viewport changes (external zoom)
 	useEffect(() => {
 		const currentZoom = Math.round((viewport.zoom || 1) * 100);
+		if (currentZoom === zoomRef.current) return;
+
 		setZoom(currentZoom);
 		if (!isEditing) {
 			setZoomInput(currentZoom.toString());
@@ -145,8 +157,8 @@ export function WorkflowControls() {
 				gap: "0.5rem",
 				alignItems: "center",
 				flexDirection: "row",
-				bottom: "4rem",
-				left: "1.5rem",
+				bottom: "1.75rem",
+				left: "0.75rem",
 				height: "2rem",
 			}}
 		>

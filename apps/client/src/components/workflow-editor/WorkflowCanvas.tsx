@@ -245,6 +245,7 @@ const WorkflowCanvas = () => {
 			nodes={nodes}
 			edges={edges}
 			nodeTypes={nodeTypes}
+			proOptions={{ hideAttribution: true }}
 			fitView={false}
 			fitViewOptions={{
 				duration: 250,
@@ -280,8 +281,8 @@ const WorkflowCanvas = () => {
 					background: "hsl(var(--card))",
 					border: "1px solid hsl(var(--border))",
 					borderRadius: "12px",
-					bottom: "3rem",
-					right: "0.5rem",
+					bottom: "1rem",
+					right: "0.75rem",
 				}}
 				maskColor="hsl(var(--background) / 0.6)"
 				nodeColor={(n) => getNodeColorByTask((n.data as WorkflowNodeData).task)}
