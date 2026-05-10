@@ -18,18 +18,7 @@ import {
 } from "@/components/ui/table";
 import { useWorkflowLogs } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
-
-const formatRelativeTime = (date: Date | string) => {
-	if (!date) return "-";
-	const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-	const diff = (new Date(date).getTime() - Date.now()) / 1000;
-
-	if (Math.abs(diff) < 60) return "just now";
-	if (Math.abs(diff) < 3600) return rtf.format(Math.round(diff / 60), "minute");
-	if (Math.abs(diff) < 86400)
-		return rtf.format(Math.round(diff / 3600), "hour");
-	return rtf.format(Math.round(diff / 86400), "day");
-};
+import { formatRelativeTime } from "@/utils/datetime";
 
 type StatusFilter = "all" | "success" | "failed" | "running";
 
