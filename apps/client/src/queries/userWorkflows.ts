@@ -13,6 +13,7 @@ import {
 	deleteWorkflowConnApi,
 	deleteWorkflowNodeApi,
 	executeWorkflowApi,
+	executionLogs,
 	getUserWorkflowsApi,
 	getWorkflowConnections,
 	getWorkflowNodes,
@@ -149,6 +150,17 @@ export const useWorkflowLogs = (workflowId: string) => {
 		queryKey: ["workflow-logs", { workflowId }],
 		queryFn: ({ pageParam }: { pageParam: number }) =>
 			workflowExecutionLogsApi(workflowId, pageParam),
+
+		initialPageParam: 1,
+		getNextPageParam: (lastPage, allPages) =>
+			lastPage.hasNextPage ? allPages.length + 1 : undefined,
+	});
+};
+
+export const useExecutionLogs = () => {
+	return useInfiniteQuery({
+		queryKey: ["execution-logs"],
+		queryFn: ({ pageParam }: { pageParam: number }) => executionLogs(pageParam),
 
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, allPages) =>

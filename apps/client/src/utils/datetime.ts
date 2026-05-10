@@ -10,7 +10,7 @@ export const formatRelativeTime = (date: Date | string) => {
 	return rtf.format(Math.round(diff / 86400), "day");
 };
 
-export function formatTime(date: Date | undefined): string {
+export function formatTime(date: Date | undefined | null): string {
 	if (!date) return "—";
 	return new Date(date).toLocaleTimeString([], {
 		hour: "2-digit",
@@ -20,8 +20,8 @@ export function formatTime(date: Date | undefined): string {
 }
 
 export function getDurationDiff(
-	startedAt: Date | undefined,
-	completedAt: Date | undefined,
+	startedAt: Date | undefined | null,
+	completedAt: Date | undefined | null,
 ): string | null {
 	if (!startedAt || !completedAt) return null;
 	const ms = new Date(completedAt).getTime() - new Date(startedAt).getTime();

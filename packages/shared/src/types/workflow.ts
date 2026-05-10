@@ -98,3 +98,12 @@ export type WorkflowExecution = {
 	completedAt: Date | null;
 	result: string | null;
 };
+
+export type ExecutionLog = {
+	id: string;
+	workflowId: string;
+	workflowName: string | null;
+	status: "running" | "success" | "failed" | "cancelled";
+	executedAt: Date;
+	completedAt: Date | null;
+};

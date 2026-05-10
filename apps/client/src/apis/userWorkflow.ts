@@ -1,5 +1,6 @@
 import type {
 	ExecuteWorkflowRequest,
+	ExecutionLog,
 	NodeIdsWithPosition,
 	PartialWorkflowNode,
 	UserWorkflow,
@@ -139,6 +140,15 @@ export const workflowExecutionLogsApi = async (
 		logs: WorkflowExecution[];
 		hasNextPage: boolean;
 	}>(`/executions/${workflowId}?page=${page}`);
+
+	return response.data;
+};
+
+export const executionLogs = async (page: number) => {
+	const response = await api.get<{
+		logs: ExecutionLog[];
+		hasNextPage: boolean;
+	}>(`/executions/logs?page=${page}`);
 
 	return response.data;
 };
