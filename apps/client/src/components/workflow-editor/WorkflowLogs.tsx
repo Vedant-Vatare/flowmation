@@ -25,7 +25,7 @@ type StatusFilter = "all" | "success" | "failed" | "running";
 const getStatusColor = (status: string) => {
 	switch (status) {
 		case "success":
-			return "bg-[#166534] text-[#a7f3d0] border-transparent rounded-md";
+			return "bg-success text-success-foreground border-transparent rounded-md";
 		case "failed":
 			return "bg-destructive/15 text-destructive border-transparent rounded-md";
 		case "running":

@@ -24,7 +24,6 @@ export const useSSE = () => {
 					if (executionUpdate.type.startsWith("node:")) {
 						const nodeUpdate = executionUpdate as NodeExecutionUpdate;
 						addExecutionUpdate(nodeUpdate);
-						console.log("Node update received:", nodeUpdate);
 					}
 
 					if (executionUpdate.type === "workflow:completed") {

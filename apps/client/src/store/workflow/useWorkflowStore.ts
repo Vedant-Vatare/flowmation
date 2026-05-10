@@ -14,10 +14,34 @@ type WorkflowTriggerStore = {
 	requestTriggerFocus: () => void;
 };
 
+// preserving the startedAt field instead of replacing when type is node:completed
+export type NodeExectionWithTime =
+	| {
+			type: "node:started";
+			workflowNodeId: string;
+			task: string;
+			startedAt: Date;
+	  }
+	| {
+			type: "node:completed";
+			workflowNodeId: string;
+			task: string;
+			output: unknown;
+			startedAt: Date;
+			completedAt: Date;
+	  }
+	| {
+			type: "node:failed";
+			workflowNodeId: string;
+			task: string;
+			error: string;
+			startedAt: Date;
+	  };
+
 type WorkflowExecutionStore = {
 	showExecutionUpdates: boolean;
 	setShowExecutionUpdates: (state: boolean) => void;
-	nodeExecutionUpdates: Record<string, NodeExecutionUpdate>;
+	nodeExecutionUpdates: Record<string, NodeExectionWithTime>;
 	addNodeExecutionUpdate: (executionUpdate: NodeExecutionUpdate) => void;
 	clearExecutionUpdates: () => void;
 };
@@ -46,12 +70,28 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 
 		nodeExecutionUpdates: {},
 		addNodeExecutionUpdate: (executionUpdate: NodeExecutionUpdate) =>
-			set((state) => ({
-				nodeExecutionUpdates: {
-					...state.nodeExecutionUpdates,
-					[executionUpdate.nodeId]: executionUpdate,
-				},
-			})),
+			set((state) => {
+				const existing =
+					state.nodeExecutionUpdates[executionUpdate.workflowNodeId];
+
+				// get startedAt value from existing update or from current update
+				const startedAt =
+					existing?.type === "node:started"
+						? existing.startedAt
+						: executionUpdate.type === "node:started"
+							? executionUpdate.startedAt
+							: undefined;
+
+				return {
+					nodeExecutionUpdates: {
+						...state.nodeExecutionUpdates,
+						[executionUpdate.workflowNodeId]: {
+							...executionUpdate,
+							...(startedAt ? { startedAt } : {}),
+						} as NodeExectionWithTime,
+					},
+				};
+			}),
 
 		clearExecutionUpdates: () => {
 			set({ showExecutionUpdates: false, nodeExecutionUpdates: {} });
