@@ -48,18 +48,21 @@ export type ExecuteWorkflowRequest = {
 export type NodeExecutionUpdate =
 	| {
 			type: "node:started";
-			nodeId: string;
+			workflowNodeId: string;
+			task: string;
 			startedAt: Date;
 	  }
 	| {
 			type: "node:completed";
-			nodeId: string;
+			workflowNodeId: string;
+			task: string;
 			output: unknown;
 			completedAt: Date;
 	  }
 	| {
 			type: "node:failed";
-			nodeId: string;
+			workflowNodeId: string;
+			task: string;
 			error: string;
 	  };
 
