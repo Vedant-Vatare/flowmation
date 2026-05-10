@@ -79,7 +79,7 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 
 		return res.status(200).json({
 			message: "workflow logs fetched successfully",
-			logs: workflowLogs,
+			logs: workflowLogs.slice(0, limit),
 			hasNextPage,
 		});
 	} catch (e) {
@@ -89,4 +89,37 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 		if (dbError?.code === "22P02")
 			throw createHttpError.NotFound("workflow not found");
 	}
+};
+
+export const getExecutionLogs = async (req: Request, res: Response) => {
+	const userId = res.locals.userId;
+	const page = Number(req.query.page) || 1;
+	const limit = 15;
+	const skip = (page - 1) * limit;
+
+	const logs = await db
+		.select({
+			id: workflowExecutionTable.id,
+			workflowId: workflowExecutionTable.workflowId,
+			workflowName: userWorkflowsTable.name,
+			status: workflowExecutionTable.status,
+			executedAt: workflowExecutionTable.executedAt,
+			completedAt: workflowExecutionTable.completedAt,
+		})
+		.from(workflowExecutionTable)
+		.leftJoin(
+			userWorkflowsTable,
+			eq(workflowExecutionTable.workflowId, userWorkflowsTable.id),
+		)
+		.where(eq(workflowExecutionTable.userId, userId))
+		.orderBy(desc(workflowExecutionTable.executedAt))
+		.limit(limit + 1)
+		.offset(skip);
+
+	const hasNextPage = logs.length > limit;
+
+	return res.status(200).json({
+		logs: logs.slice(0, limit),
+		hasNextPage,
+	});
 };
