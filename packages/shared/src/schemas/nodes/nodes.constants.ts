@@ -10,6 +10,7 @@ import {
 	clickNodeSchema,
 	cronJobNodeSchema,
 	inputNodeSchema,
+	webhookNodeSchema,
 } from "./trigger.nodes.js";
 
 export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
@@ -20,5 +21,6 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.input", inputNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
 	["trigger.click", clickNodeSchema],
+	["trigger.webhook", webhookNodeSchema],
 	["action.condition", conditionalNodeSchema],
 ]);

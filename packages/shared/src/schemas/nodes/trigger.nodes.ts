@@ -100,3 +100,9 @@ export const inputNodeSchema = baseTriggerNodeSchema.extend({
 		]),
 	),
 });
+
+export const webhookNodeSchema = baseTriggerNodeSchema.extend({
+	task: z.literal("trigger.webhook"),
+	type: z.literal("trigger"),
+	parameters: z.tuple([]),
+});

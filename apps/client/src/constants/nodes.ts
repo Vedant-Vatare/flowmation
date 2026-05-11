@@ -10,6 +10,7 @@ import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
+import WebhookIcon from "@/assets/icons/nodes/webhook.svg?react";
 
 export type NodeUI = {
 	name: string;
@@ -57,6 +58,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: ScheduleIcon,
 		background: "#F72585",
 		color: "#ffffff",
+	},
+	"trigger.webhook": {
+		name: "Webhook",
+		icon: WebhookIcon,
+		background: "#0F9D6E",
+		color: "#fff",
 	},
 	"trigger.input": {
 		name: "Input Trigger",
