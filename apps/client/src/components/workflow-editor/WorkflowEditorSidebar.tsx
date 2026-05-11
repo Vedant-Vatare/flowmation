@@ -25,7 +25,7 @@ import {
 } from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { NodeEditor } from "./NodeEditor";
+import { NodeEditor } from "./node-editor/NodeEditor";
 import { WorkflowLogs } from "./WorkflowLogs";
 
 const NodeItem = ({

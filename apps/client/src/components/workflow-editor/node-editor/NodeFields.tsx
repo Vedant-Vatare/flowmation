@@ -7,15 +7,15 @@ import {
 	Controller,
 	type UseFormRegister,
 } from "react-hook-form";
-import { Checkbox } from "../ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Checkbox } from "../../ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import {
 	Select,
 	SelectContent,
 	SelectItem,
 	SelectTrigger,
 	SelectValue,
-} from "../ui/select";
+} from "../../ui/select";
 import { ExpressionInput } from "./ExpressionInput";
 
 export type NodeFieldProps = {

@@ -1,7 +1,7 @@
 import { ReactFlowProvider } from "@xyflow/react";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import WorkflowCanvas from "@/components/workflow-editor/canvas/WorkflowCanvas";
 import { LiveExecutionLogs } from "@/components/workflow-editor/LiveExecutionPanel";
-import WorkflowCanvas from "@/components/workflow-editor/WorkflowCanvas";
 import { WorkflowEditorSidebar } from "@/components/workflow-editor/WorkflowEditorSidebar";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
 

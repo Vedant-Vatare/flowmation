@@ -373,7 +373,6 @@ const PanelSettings = memo(
 const PanelHeader = memo(
 	({
 		allEntries,
-		filteredCount,
 		statusFilter,
 		display,
 		onStatusFilterChange,

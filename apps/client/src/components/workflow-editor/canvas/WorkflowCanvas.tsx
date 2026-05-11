@@ -19,6 +19,7 @@ import {
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
 
+import Loader from "@/components/ui/Loader";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import {
@@ -43,7 +44,6 @@ import {
 	toCanvasNodes,
 } from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
-import Loader from "../ui/Loader";
 import { WorkflowControls } from "./WorkflowControls";
 import { WorkflowNode } from "./WorkflowNodes";
 

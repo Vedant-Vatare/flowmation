@@ -14,7 +14,7 @@ import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import {
 	ArrayField,
 	BooleanField,
@@ -296,7 +296,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			<div className="flex flex-col">
 				{node.data.parameters.length === 0 ? (
 					<p className="px-3 py-4 text-xs text-muted-foreground text-center italic">
-						No parameters to configure.
+						No configurations are required.
 					</p>
 				) : (
 					node.data.parameters.map((param) => (
