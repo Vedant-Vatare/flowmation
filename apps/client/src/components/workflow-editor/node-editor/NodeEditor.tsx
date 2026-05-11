@@ -29,6 +29,7 @@ import {
 	RadioField,
 	TextareaField,
 } from "./NodeFields";
+import { NodeConfig } from "./nodeConfig";
 
 function allRequiredFilled(
 	params: NodeParameters[],
@@ -294,21 +295,11 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			</div>
 
 			<div className="flex flex-col">
-				{node.data.parameters.length === 0 ? (
-					<p className="px-3 py-4 text-xs text-muted-foreground text-center italic">
-						No configurations are required.
-					</p>
-				) : (
-					node.data.parameters.map((param) => (
-						<NodeField
-							key={param.name}
-							field={param}
-							register={register}
-							control={control}
-							currentNodeId={node.id}
-						/>
-					))
-				)}
+				<NodeConfig
+					nodeData={node.data}
+					register={register}
+					control={control}
+				/>
 			</div>
 		</div>
 	);
