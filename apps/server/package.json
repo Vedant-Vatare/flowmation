@@ -16,6 +16,7 @@
 	"packageManager": "pnpm@10.28.1",
 	"dependencies": {
 		"@nodebase/db": "workspace:*",
+		"@nodebase/redis": "workspace:*",
 		"@nodebase/shared": "workspace:*",
 		"@nodebase/queue": "workspace:*",
 		"@types/multer": "^2.0.0",
