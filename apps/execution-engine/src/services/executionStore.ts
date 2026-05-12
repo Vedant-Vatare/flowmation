@@ -1,4 +1,4 @@
-import { redis } from "@/config/redis.js";
+import { redis } from "@nodebase/redis";
 
 export const storeNodeOutput = async (
 	executionId: string,
