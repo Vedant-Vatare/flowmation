@@ -172,6 +172,9 @@ importers:
       '@nodebase/queue':
         specifier: workspace:*
         version: link:../../packages/queue
+      '@nodebase/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@nodebase/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -332,6 +335,19 @@ importers:
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
+
+  packages/redis:
+    dependencies:
+      ioredis:
+        specifier: ^5.10.1
+        version: 5.10.1
+    devDependencies:
+      '@nodebase/ts-config':
+        specifier: workspace:*
+        version: link:../ts-config
+      '@types/node':
+        specifier: ^25.0.10
+        version: 25.6.0
 
   packages/shared:
     dependencies:
