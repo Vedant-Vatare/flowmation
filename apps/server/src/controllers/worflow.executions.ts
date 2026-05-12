@@ -35,13 +35,14 @@ export const executeWorkflow = async (req: Request, res: Response) => {
 	if (!userWorkflow) {
 		throw createHttpError.NotFound("workflow was not found");
 	}
-	const executionId = await enqueueWorkflow(
+	const executionId = await enqueueWorkflow({
 		workflowId,
-		res.locals.userId,
+		userId: res.locals.userId,
 		triggerNodeId,
 		triggerType,
+		triggerData: req.body ?? [],
 		liveUpdates,
-	);
+	});
 
 	return res.status(201).json({
 		message: "workflow execution started successfully",

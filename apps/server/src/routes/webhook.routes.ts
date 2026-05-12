@@ -4,8 +4,6 @@ import createHttpError from "http-errors";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
 export const webhook = async (req: Request, res: Response) => {
-	console.log("in webhook controller");
-
 	const webhookId = req.params.webhookId as string;
 
 	if (!webhookId) throw createHttpError.BadRequest("webhookId was invalid");
@@ -25,15 +23,13 @@ export const webhook = async (req: Request, res: Response) => {
 	if (!result?.userId || !result?.workflowId)
 		return createHttpError.NotFound("invalid webhook URL");
 
-	const executionId = await enqueueWorkflow(
-		result.workflowId,
-		result.userId,
-		webhookId,
-		"webhook",
-		undefined,
-	);
-
-	console.log({ executionId });
+	await enqueueWorkflow({
+		workflowId: result.workflowId,
+		userId: result.userId,
+		triggerNodeId: webhookId,
+		triggerType: "webhook",
+		triggerData: req.body ?? null,
+	});
 
 	return res.status(201).json({
 		message: "workflow execution started successfully",

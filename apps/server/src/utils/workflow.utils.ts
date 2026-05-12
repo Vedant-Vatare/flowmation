@@ -7,15 +7,18 @@ import {
 import { addWorkflowInQueue, type WorkflowTriggerType } from "@nodebase/queue";
 import createHttpError from "http-errors";
 
-export const enqueueWorkflow = async (
-	workflowId: string,
-	userId: string,
-	triggerNodeId: string,
-	triggerType: WorkflowTriggerType,
-	liveUpdates: boolean | undefined,
-) => {
+type ExecutionData = {
+	workflowId: string;
+	userId: string;
+	triggerNodeId: string;
+	triggerType: WorkflowTriggerType;
+	triggerData: unknown;
+	liveUpdates?: boolean;
+};
+
+export const enqueueWorkflow = async (ExecutionData: ExecutionData) => {
 	const workflowData = await db.query.userWorkflowsTable.findFirst({
-		where: eq(userWorkflowsTable.id, workflowId),
+		where: eq(userWorkflowsTable.id, ExecutionData.workflowId),
 		with: {
 			nodes: true,
 			connections: true,
@@ -23,14 +26,15 @@ export const enqueueWorkflow = async (
 	});
 	if (!workflowData) throw createHttpError.NotFound("Workflow not found");
 
-	if (workflowData.userId !== userId) throw createHttpError.Unauthorized();
+	if (workflowData.userId !== ExecutionData.userId)
+		throw createHttpError.Unauthorized();
 
 	const [workflowExecution] = await db
 		.insert(workflowExecutionTable)
 		.values({
-			workflowId: workflowId,
+			workflowId: ExecutionData.workflowId,
 			status: "running",
-			userId: userId,
+			userId: ExecutionData.userId,
 		})
 		.returning({ id: workflowExecutionTable.id });
 
@@ -40,14 +44,10 @@ export const enqueueWorkflow = async (
 		);
 
 	await addWorkflowInQueue({
-		workflowId: workflowId,
-		userId,
 		executionId: workflowExecution.id,
 		nodes: workflowData.nodes,
 		connections: workflowData.connections,
-		triggerNodeId,
-		triggerType,
-		liveUpdates: liveUpdates,
+		...ExecutionData,
 	});
 	return workflowExecution.id;
 };
