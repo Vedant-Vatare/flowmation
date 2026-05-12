@@ -166,6 +166,10 @@ const handleWorkflowTrigger = async (
   should continue executing */
 
 	const nodeExecution = await executeTriggerNode(triggerNode, job);
+	if (!nodeExecution?.success) {
+		console.log("trigger node execution error:", nodeExecution?.message);
+		throw new UnrecoverableError("failed to execute trigger node");
+	}
 
 	await recordNodeCompletion(
 		{

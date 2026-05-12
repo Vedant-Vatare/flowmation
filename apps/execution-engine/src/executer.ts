@@ -72,11 +72,13 @@ export const executeTriggerNode = async (
 			return { success: true };
 		case "trigger.input":
 			return inputNodeExecutor(triggerNode as InputNode);
+		case "trigger.webhook":
+			return { success: true, output: job.data.triggerData };
 		default:
 			return {
 				success: false,
 				skipCurrentExecution: true,
-				message: `trigger node with given task does not exist: ${triggerNode.task}`,
+				message: `trigger node does not exist: ${triggerNode.task}`,
 			};
 	}
 };
