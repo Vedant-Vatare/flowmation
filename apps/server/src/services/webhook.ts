@@ -3,11 +3,13 @@ import createHttpError from "http-errors";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
 type WebhookExecution = {
+	executionId?: string;
 	webhookId: string;
 	webhookData: unknown;
 	liveUpdates?: boolean;
 };
 export const webhookExecution = async ({
+	executionId,
 	webhookId,
 	webhookData,
 	liveUpdates,
@@ -23,11 +25,13 @@ export const webhookExecution = async ({
 			userWorkflowsTable,
 			eq(userWorkflowsTable.id, workflowNodesTable.workflowId),
 		);
+	console.log({ result, webhookId, executionId });
 
 	if (!result?.userId || !result?.workflowId)
 		throw createHttpError.NotFound("invalid webhook URL");
 
-	const executionId = await enqueueWorkflow({
+	const workflowExecutionid = await enqueueWorkflow({
+		executionId,
 		workflowId: result.workflowId,
 		userId: result.userId,
 		triggerNodeId: webhookId,
@@ -35,5 +39,5 @@ export const webhookExecution = async ({
 		triggerData: webhookData ?? null,
 		liveUpdates,
 	});
-	return { success: true, executionId };
+	return { success: true, executionId: workflowExecutionid };
 };

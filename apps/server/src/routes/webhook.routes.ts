@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
 	registerTestWebhook,
+	testWebhook,
 	webhook,
 } from "@/controllers/webhooks.controller.js";
 import { asyncHandler } from "@/utils/api.utils.js";
@@ -8,6 +9,8 @@ import { asyncHandler } from "@/utils/api.utils.js";
 const router = Router() as Router;
 
 router.post("/test/register/:webhookId", asyncHandler(registerTestWebhook));
+
+router.post("/test/:webhookId", testWebhook);
 
 router.post("/:webhookId", asyncHandler(webhook));
 

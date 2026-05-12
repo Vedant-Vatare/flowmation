@@ -8,5 +8,5 @@ export const storeTestWebhook = async (
 };
 
 export const getTestWebhook = async (webhookId: string) => {
-	return await redis.get(`webhook:${webhookId}`);
+	return (await redis.getdel(`webhook:${webhookId}`)) ?? undefined;
 };
