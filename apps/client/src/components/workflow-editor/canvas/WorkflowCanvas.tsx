@@ -44,6 +44,7 @@ import {
 	toCanvasNodes,
 } from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
+import { TestWebhook } from "../TestWebhook";
 import { WorkflowControls } from "./WorkflowControls";
 import { WorkflowNode } from "./WorkflowNodes";
 
@@ -95,8 +96,9 @@ const WorkflowCanvas = () => {
 
 		fitView({
 			nodes: triggerIds.map((id) => ({ id })),
-			padding: 0.45,
-			duration: 350,
+			padding: 0.75,
+			duration: 250,
+			minZoom: 1,
 			maxZoom: 1,
 		});
 	}, [triggerFocusRequestKey, nodes, fitView]);
@@ -301,6 +303,7 @@ const WorkflowCanvasLayout = () => {
 				initialAutoLayout={false}
 				initialNodeDimensions={{ width: 128, height: 112 }}
 			>
+				<TestWebhook />
 				<WorkflowCanvas />
 			</LayoutProvider>
 		</div>

@@ -7,6 +7,12 @@ type WorkflowStore = {
 	setSelectedNode: (node: WorkflowCanvasNode | null) => void;
 };
 
+type TestWebhookData = { isActive: boolean; webhookId: string | null };
+type WebhookStore = {
+	testWebhook: TestWebhookData;
+	setTestWebhook: (state: TestWebhookData) => void;
+};
+
 type WorkflowTriggerStore = {
 	isSelectingTrigger: boolean;
 	setIsSelectingTrigger: (value: boolean) => void;
@@ -49,6 +55,11 @@ type WorkflowExecutionStore = {
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
 	selectedNode: null,
 	setSelectedNode: (node) => set({ selectedNode: node }),
+}));
+
+export const useWebhookStore = create<WebhookStore>((set) => ({
+	testWebhook: { isActive: false, webhookId: null },
+	setTestWebhook: (state) => set({ testWebhook: state }),
 }));
 
 export const useWorkflowTriggerStore = create<WorkflowTriggerStore>((set) => ({

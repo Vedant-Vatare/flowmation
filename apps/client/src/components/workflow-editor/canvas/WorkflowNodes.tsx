@@ -4,18 +4,13 @@ import type { NodeExecutionUpdate } from "@nodebase/shared";
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import type { WorkflowNodeData } from "@/constants/nodes";
+import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
-import { useExecuteWorkflow } from "@/queries/userWorkflows";
 import {
 	useWorkflowExecutionStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 import { withAlpha } from "@/utils/colors";
-
-const getTriggerType = (task: string): "trigger" | "webhook" | "schedule" => {
-	if (task.includes("webhook")) return "webhook";
-	return "trigger";
-};
 
 type ExecutionStateType = NodeExecutionUpdate["type"] | null;
 
@@ -43,7 +38,7 @@ export const WorkflowNode = memo(
 			(s) => s.setIsSelectingTrigger,
 		);
 
-		const { mutate: executeWorkflow, isPending } = useExecuteWorkflow();
+		const { executeTriggerNode, isPending } = useTestWorkflowExecution();
 		const isTrigger = data.type === "trigger";
 
 		useEffect(() => {
@@ -81,11 +76,7 @@ export const WorkflowNode = memo(
 						disabled={isPending}
 						onClick={(e) => {
 							e.stopPropagation();
-							executeWorkflow({
-								workflowId: data.workflowId,
-								triggerNodeId: data.id,
-								triggerType: getTriggerType(data.task),
-							});
+							executeTriggerNode(data);
 							setIsSelectingTrigger(false);
 						}}
 						className="absolute flex text-center w-max -left-full top-1/2 -translate-y-1/2 size-8 rounded-full border border-border bg-[#f2f2f2] text-[#222] items-center justify-center shadow-sm hover:text-accent-foreground transition-colors p-2 gap-1.5 hover:cursor-pointer"

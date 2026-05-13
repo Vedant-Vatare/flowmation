@@ -3,7 +3,13 @@ import type {
 	PartialWorkflowNode,
 	WorkflowNode,
 } from "@nodebase/shared";
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+	queryOptions,
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import { useReactFlow } from "@xyflow/react";
 import { toast } from "sonner";
 import {
@@ -27,6 +33,13 @@ import { initiateSSEConnection } from "@/services/sse";
 import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
+export const workflowNodesOptions = (workflowId: string) =>
+	queryOptions({
+		queryKey: ["workflow-nodes", { workflowId }],
+		queryFn: () => getWorkflowNodes(workflowId),
+		staleTime: Number.POSITIVE_INFINITY,
+	});
+
 export const useCreateUserWorkflowQuery = () =>
 	useMutation({
 		mutationFn: createUserWorkflowApi,
@@ -39,11 +52,7 @@ export const useUserWorkflowQuery = () =>
 	});
 
 export const useWorkflowNodesQuery = (workflowId: string) =>
-	useQuery({
-		queryKey: ["workflow-nodes", { workflowId }],
-		queryFn: () => getWorkflowNodes(workflowId),
-		staleTime: Number.POSITIVE_INFINITY,
-	});
+	useQuery(workflowNodesOptions(workflowId));
 
 export const useWorkflowConnectionsQuery = (workflowId: string) =>
 	useQuery({
@@ -52,16 +61,31 @@ export const useWorkflowConnectionsQuery = (workflowId: string) =>
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 
-export const useAddWorkflowNode = () =>
-	useMutation({
+export const useAddWorkflowNode = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
 		mutationFn: (node: WorkflowNode) => addWorkflowNodeApi(node),
+		onSuccess: (data, { workflowId }) =>
+			queryClient.setQueryData(
+				workflowNodesOptions(workflowId).queryKey,
+				(old) => [...(old ?? []), data],
+			),
 	});
+};
 
-export const useDeleteWorkflowNode = () =>
-	useMutation({
+export const useDeleteWorkflowNode = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
 		mutationFn: ({ id, workflowId }: { id: string; workflowId: string }) =>
 			deleteWorkflowNodeApi(id, workflowId),
+		onSuccess: (_, { id, workflowId }) => {
+			queryClient.setQueryData(
+				workflowNodesOptions(workflowId).queryKey,
+				(old) => old?.filter((n) => n.id !== id),
+			);
+		},
 	});
+};
 
 export const useUpdateWorkflowNode = () => {
 	const { setNodes } = useReactFlow<WorkflowCanvasNode>();
