@@ -23,7 +23,7 @@ import {
 	workflowExecutionLogsApi,
 } from "@/apis/userWorkflow";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
-import { useSSE } from "@/hooks/useSSE";
+import { initiateSSEConnection } from "@/services/sse";
 import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
@@ -118,7 +118,6 @@ export const useUpdateNodesPositions = () =>
 	});
 
 export const useExecuteWorkflow = () => {
-	const { createSSEConnection } = useSSE();
 	const setShowExecutionUpdates = useWorkflowExecutionStore(
 		(s) => s.setShowExecutionUpdates,
 	);
@@ -136,7 +135,7 @@ export const useExecuteWorkflow = () => {
 			}),
 		onSuccess: (data) => {
 			toast.success("Workflow execution started");
-			createSSEConnection(data.executionId);
+			initiateSSEConnection(data.executionId);
 			setShowExecutionUpdates(true);
 		},
 		onError: (error) => {

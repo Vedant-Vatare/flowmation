@@ -28,18 +28,21 @@ const authenticateUser = async ({
 };
 
 const checkWorkflowStatus = async (executionId: string, userId: string) => {
-	const userWorkflowExecution = await db.query.workflowExecutionTable.findFirst(
-		{
-			where: and(
-				eq(workflowExecutionTable.id, executionId),
-				or(eq(workflowExecutionTable.status, "running")),
-				eq(workflowExecutionTable.userId, userId),
-			),
-		},
-	);
+	try {
+		const userWorkflowExecution =
+			await db.query.workflowExecutionTable.findFirst({
+				where: and(
+					eq(workflowExecutionTable.id, executionId),
+					or(eq(workflowExecutionTable.status, "running")),
+					eq(workflowExecutionTable.userId, userId),
+				),
+			});
 
-	if (!userWorkflowExecution) {
-		return new Response("Workflow not found", { status: 404 });
+		if (!userWorkflowExecution) {
+			return new Response("Workflow not found", { status: 404 });
+		}
+	} catch (_e: unknown) {
+		return new Response("invalid executionId", { status: 400 });
 	}
 };
 
