@@ -1,5 +1,5 @@
 import type { ExecutionEventType, ExecutionUpdate } from "@nodebase/shared";
-import { sseClients } from "@/services/sseServer.js";
+import { eventBuffers, sseClients } from "@/services/sseServer.js";
 
 export const broadcastExecutionUpdate = (
 	jobData: {
@@ -9,8 +9,6 @@ export const broadcastExecutionUpdate = (
 	executionUpdate: ExecutionUpdate,
 ) => {
 	if (!jobData.liveUpdates) return null;
-	const controller = sseClients.get(jobData.executionId);
-	if (!controller) return;
 
 	const eventType: ExecutionEventType = executionUpdate.type.startsWith(
 		"workflow:",
@@ -18,9 +16,19 @@ export const broadcastExecutionUpdate = (
 		? "workflow-update"
 		: "node-update";
 
-	controller.enqueue(
-		`event: ${eventType}\n` + `data: ${JSON.stringify(executionUpdate)}\n\n`,
-	);
+	const update =
+		`event: ${eventType}\n` + `data: ${JSON.stringify(executionUpdate)}\n\n`;
+
+	const controller = sseClients.get(jobData.executionId);
+
+	if (!controller) {
+		const buf = eventBuffers.get(jobData.executionId) ?? [];
+		buf.push(update);
+		eventBuffers.set(jobData.executionId, buf);
+		return;
+	}
+
+	controller.enqueue(update);
 
 	if (
 		executionUpdate.type === "workflow:completed" ||

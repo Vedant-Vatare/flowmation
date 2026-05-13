@@ -50,6 +50,7 @@ export const sseClients = new Map<
 	string,
 	Bun.ReadableStreamController<unknown>
 >();
+export const eventBuffers = new Map<string, string[]>();
 
 Bun.serve({
 	port: process.env.SSE_SERVER_PORT,
@@ -97,6 +98,11 @@ Bun.serve({
 
 				const stream = new ReadableStream({
 					start(controller) {
+						const pendingUpdates = eventBuffers.get(executionId) ?? [];
+						for (const update of pendingUpdates) {
+							controller.enqueue(update);
+						}
+
 						sseClients.set(executionId, controller);
 
 						controller.enqueue(

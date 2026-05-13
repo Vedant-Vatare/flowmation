@@ -1,6 +1,17 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import type { ExecutionUpdate, NodeExecutionUpdate } from "@nodebase/shared";
-import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
+import {
+	useWebhookStore,
+	useWorkflowExecutionStore,
+} from "@/store/workflow/useWorkflowStore";
+
+const cleanupTestWebhookStatus = () => {
+	const testWebhook = useWebhookStore.getState().testWebhook;
+	const setTestWebhook = useWebhookStore.getState().setTestWebhook;
+
+	if (testWebhook.isActive)
+		setTestWebhook({ isActive: false, webhookId: null });
+};
 
 export const initiateSSEConnection = (
 	executionId: string,
@@ -47,10 +58,12 @@ export const initiateSSEConnection = (
 				if (executionUpdate.type === "workflow:completed") {
 					console.log("Workflow completed");
 					controller.abort();
+					cleanupTestWebhookStatus();
 				}
 				if (executionUpdate.type === "workflow:failed") {
 					console.log("Workflow failed:", executionUpdate);
 					controller.abort();
+					cleanupTestWebhookStatus();
 				}
 			} catch (error) {
 				console.error("Failed to parse SSE message:", error, msg.data);
