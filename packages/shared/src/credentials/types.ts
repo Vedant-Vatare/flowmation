@@ -1,5 +1,3 @@
-export type CredentialType = "oauth2" | "apiKey" | "basic";
-
 export interface OAuth2CredentialDef {
 	type: "oauth2";
 	name: string;

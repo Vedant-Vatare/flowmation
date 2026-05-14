@@ -111,7 +111,8 @@ export const baseNodeSchema = z.object({
 			label: "default",
 		},
 	]),
-	credentials: nodeCredentialSchema.optional(),
+	credentialProvider: z.string().optional(),
+	credentialId: z.uuid().nullable(),
 	settings: baseNodeSettingsSchema.optional(),
 });
 

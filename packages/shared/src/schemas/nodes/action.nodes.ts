@@ -166,3 +166,34 @@ export const waitingNodeSchema = baseNodeSchema.extend({
 		]),
 	),
 });
+
+export const gmailNodeSchema = baseNodeSchema.extend({
+	task: z.literal("action.gmail"),
+	type: z.literal("action"),
+	credentialProvider: z.literal("google"),
+	parameters: z.array(
+		z.discriminatedUnion("name", [
+			nodeParameterSchema.extend({
+				label: z.literal("To"),
+				name: z.literal("to"),
+				type: z.literal("input"),
+				value: z.string(),
+				required: z.boolean(),
+			}),
+			nodeParameterSchema.extend({
+				label: z.literal("Subject"),
+				name: z.literal("subject"),
+				type: z.literal("input"),
+				value: z.string(),
+				required: z.boolean(),
+			}),
+			nodeParameterSchema.extend({
+				label: z.literal("Body"),
+				name: z.literal("body"),
+				type: z.literal("textarea"),
+				value: z.string(),
+				required: z.boolean(),
+			}),
+		]),
+	),
+});

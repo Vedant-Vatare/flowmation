@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { baseNodeSchema, nodeCredentialSchema } from "./nodes/index.js";
+import { baseNodeSchema } from "./nodes/index.js";
 
 const workflowStatusEnum = z.enum([
 	"active",
@@ -48,16 +48,9 @@ export const workflowNodeSchema = baseNodeSchema.extend({
 	id: z.uuid().default(() => crypto.randomUUID()),
 	workflowId: z.uuid(),
 	nodeId: z.uuid(),
-	description: z.string().nullable().optional(),
 	positionX: z.number(),
 	positionY: z.number(),
-	credentials: nodeCredentialSchema.nullable().optional(),
-	inputPorts: z
-		.array(z.object({ name: z.string(), label: z.string() }))
-		.default([{ name: "default", label: "Default" }]),
-	outputPorts: z
-		.array(z.object({ name: z.string(), label: z.string() }))
-		.default([{ name: "default", label: "Default" }]),
+	credentialId: z.uuid().nullable(),
 });
 
 export const partialWorkflowNodeSchema = workflowNodeSchema.partial();

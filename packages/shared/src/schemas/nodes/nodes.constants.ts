@@ -1,5 +1,6 @@
 import type z from "zod";
 import {
+	gmailNodeSchema,
 	httpNodeSchema,
 	mergeDataNodeSchema,
 	waitingNodeSchema,
@@ -17,6 +18,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.http", httpNodeSchema],
 	["action.merge", mergeDataNodeSchema],
 	["action.wait", waitingNodeSchema],
+	["action.gmail", gmailNodeSchema],
 	["action.set_variable", setVariableNodeSchema],
 	["trigger.input", inputNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
