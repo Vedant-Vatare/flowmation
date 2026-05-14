@@ -1,6 +1,6 @@
 {
-  "id": "5cddd46c-80af-406d-88ac-6c8345d63829",
-  "prevId": "93e77d9d-ba69-451f-834e-772f1988bd95",
+  "id": "c8f03ea1-9294-4518-9279-9817e68c39be",
+  "prevId": "89ae4a34-c1ac-4e94-be26-72630a59b949",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -271,7 +271,7 @@
           "name": "description",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "parameters": {
           "name": "parameters",
@@ -296,6 +296,13 @@
           "type": "jsonb[]",
           "primaryKey": false,
           "notNull": false
+        },
+        "config": {
+          "name": "config",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
         }
       },
       "indexes": {},

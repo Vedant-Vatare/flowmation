@@ -3,8 +3,8 @@ import {
 	CREDENTIALS_TYPE,
 	EXECUTION_STATUSES,
 	NODE_EXECUTION_STATUSES,
-	type NodeConfig,
 	type NodeParameters,
+	type NodeSettings,
 	WORKFLOW_STATUSES,
 } from "@nodebase/shared";
 
@@ -69,7 +69,7 @@ export const nodesTable = pgTable("nodes", {
 	name: varchar({ length: 255 }).unique().notNull(),
 	type: nodeTypeEnum().notNull(),
 	task: varchar({ length: 255 }).unique().notNull(),
-	description: text().notNull(),
+	description: text(),
 	parameters: jsonb().$type<NodeParameters[]>().notNull(),
 	credentialProvider: varchar("credential_provider", { length: 255 }),
 	outputPorts: jsonb("output_ports")
@@ -78,6 +78,7 @@ export const nodesTable = pgTable("nodes", {
 	inputPorts: jsonb("input_ports")
 		.$type<{ name: string; label: string }>()
 		.array(),
+	settings: jsonb("config").$type<NodeSettings>().default({}).notNull(),
 });
 
 export const userWorkflowsTable = pgTable(
@@ -117,7 +118,7 @@ export const workflowNodesTable = pgTable(
 		credentialId: uuid("credential_id").references(() => credentialsTable.id, {
 			onDelete: "set null",
 		}),
-		config: jsonb("config").$type<NodeConfig>().default({}).notNull(),
+		settings: jsonb("config").$type<NodeSettings>().default({}).notNull(),
 		parameters: jsonb().$type<NodeParameters[]>().notNull().default([]),
 		outputPorts: jsonb("output_ports")
 			.$type<{ name: string; label: string }[]>()

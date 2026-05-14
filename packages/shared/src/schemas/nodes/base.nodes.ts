@@ -26,7 +26,7 @@ export const nodeCredentialSchema = z.object({
 	type: nodeCredentialsEnum,
 });
 
-export const NodeConfigSchema = z
+export const NodeSettingsSchema = z
 	.object({
 		hasExpressions: z.boolean().optional(),
 		retryCount: z.number().int().min(0).max(3).optional(),
@@ -98,7 +98,7 @@ export const baseNodeSchema = z.object({
 	description: z.string().nullable(),
 	type: nodeTypesSchema,
 	parameters: z.array(nodeParameterSchema),
-	config: NodeConfigSchema,
+	settings: NodeSettingsSchema,
 	outputPorts: z.array(nodeOutputPortsSchema).default([
 		{
 			name: "default",
@@ -113,7 +113,6 @@ export const baseNodeSchema = z.object({
 	]),
 	credentialProvider: z.string().optional(),
 	credentialId: z.uuid().nullable(),
-	settings: baseNodeSettingsSchema.optional(),
 });
 
 export const updateBaseNodeSchema = baseNodeSchema.partial();

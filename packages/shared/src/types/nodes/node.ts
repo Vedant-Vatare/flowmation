@@ -2,7 +2,7 @@ import type z from "zod";
 import type {
 	anyNodeValueSchema,
 	baseNodeSchema,
-	NodeConfigSchema,
+	NodeSettingsSchema,
 	nodeCredentialSchema,
 	nodeParameterSchema,
 	nodePropertyTypeSchema,
@@ -22,7 +22,7 @@ export type anyNodeValue = z.infer<typeof anyNodeValueSchema>;
 
 export type NodeCredentials = z.infer<typeof nodeCredentialSchema>;
 
-export type NodeConfig = z.infer<typeof NodeConfigSchema>;
+export type NodeSettings = z.infer<typeof NodeSettingsSchema>;
 
 export type NodePropertyType = z.infer<typeof nodePropertyTypeSchema>;
 
