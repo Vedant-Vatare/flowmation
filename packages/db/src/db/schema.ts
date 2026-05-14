@@ -33,6 +33,27 @@ export const nodeExecutionStatusEnum = pgEnum(
 
 export const nodeTypeEnum = pgEnum("nodesEnum", ["action", "trigger"]);
 
+export const credentialsTable = pgTable("credentials", {
+	id: uuid().defaultRandom().primaryKey(),
+	userId: uuid("user_id")
+		.references(() => usersTable.id, { onDelete: "cascade" })
+		.notNull(),
+	provider: varchar({ length: 255 }).notNull(), // e.g., 'google', 'openai', 'github'
+	name: varchar({ length: 255 }).notNull(), // user-defined label
+	type: varchar({ length: 50 }).notNull(), // 'oauth2' | 'apiKey'
+	
+	// oauth2 fields
+	accessToken: text("access_token"),
+	refreshToken: text("refresh_token"),
+	expiresAt: timestamp("expires_at", { withTimezone: true }),
+	
+	// apiKey fields
+	fields: jsonb("fields").$type<Record<string, string>>(),
+	
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+});
+
 export const usersTable = pgTable("users", {
 	id: uuid().defaultRandom().primaryKey(),
 	email: varchar({ length: 255 }).notNull().unique(),
@@ -50,6 +71,7 @@ export const nodesTable = pgTable("nodes", {
 	description: text().notNull(),
 	parameters: jsonb().$type<NodeParameters[]>().notNull(),
 	credentials: jsonb().$type<NodeCredentials>(),
+	credentialProvider: varchar("credential_provider", { length: 255 }),
 	outputPorts: jsonb("output_ports")
 		.$type<{ name: string; label: string }>()
 		.array(),
@@ -93,6 +115,7 @@ export const workflowNodesTable = pgTable(
 		task: varchar({ length: 255 }).notNull(),
 		description: text(),
 		credentials: jsonb().$type<NodeCredentials>(),
+		credentialId: uuid("credential_id").references(() => credentialsTable.id, { onDelete: "set null" }),
 		config: jsonb("config").$type<NodeConfig>().default({}).notNull(),
 		parameters: jsonb().$type<NodeParameters[]>().notNull().default([]),
 		outputPorts: jsonb("output_ports")
@@ -188,6 +211,17 @@ export const nodeExecutionTable = pgTable(
 	],
 );
 
+export const credentialsRelations = relations(
+	credentialsTable,
+	({ one, many }) => ({
+		user: one(usersTable, {
+			fields: [credentialsTable.userId],
+			references: [usersTable.id],
+		}),
+		workflowNodes: many(workflowNodesTable),
+	}),
+);
+
 export const userWorkflowsRelations = relations(
 	userWorkflowsTable,
 	({ many }) => ({
@@ -203,6 +237,10 @@ export const workflowNodesRelations = relations(
 		workflow: one(userWorkflowsTable, {
 			fields: [workflowNodesTable.workflowId],
 			references: [userWorkflowsTable.id],
+		}),
+		credential: one(credentialsTable, {
+			fields: [workflowNodesTable.credentialId],
+			references: [credentialsTable.id],
 		}),
 	}),
 );
