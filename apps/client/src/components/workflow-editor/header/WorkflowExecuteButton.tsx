@@ -2,27 +2,18 @@ import { Play } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ShineBorder } from "@/components/ui/shine-border";
-import {
-	useExecuteWorkflow,
-	useWorkflowNodesQuery,
-} from "@/queries/userWorkflows";
+import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
+import { useWorkflowNodesQuery } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import {
 	useWorkflowExecutionStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 
-const getTriggerExecutionType = (
-	task: string,
-): "trigger" | "webhook" | "schedule" => {
-	if (task.includes("webhook")) return "webhook";
-	return "trigger";
-};
-
 export const WorkflowExecuteButton = () => {
 	const { workflowId } = Route.useParams();
 	const { data: workflowNodes } = useWorkflowNodesQuery(workflowId);
-
+	const { executeTriggerNode } = useTestWorkflowExecution();
 	const isSelectingTrigger = useWorkflowTriggerStore(
 		(s) => s.isSelectingTrigger,
 	);
@@ -35,8 +26,6 @@ export const WorkflowExecuteButton = () => {
 	const clearExecutionUpdates = useWorkflowExecutionStore(
 		(s) => s.clearExecutionUpdates,
 	);
-
-	const { mutate: executeWorkflow } = useExecuteWorkflow();
 
 	const handleExecute = () => {
 		const triggerNodes =
@@ -51,11 +40,7 @@ export const WorkflowExecuteButton = () => {
 		if (triggerNodes.length === 1) {
 			const trigger = triggerNodes[0];
 			if (!trigger) return;
-			executeWorkflow({
-				workflowId: trigger.workflowId,
-				triggerNodeId: trigger.id,
-				triggerType: getTriggerExecutionType(trigger.task),
-			});
+			executeTriggerNode(trigger);
 			setIsSelectingTrigger(false);
 			return;
 		}

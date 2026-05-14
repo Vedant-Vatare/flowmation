@@ -7,15 +7,15 @@ import {
 
 const cleanupTestWebhookStatus = () => {
 	const testWebhook = useWebhookStore.getState().testWebhook;
-	const setTestWebhook = useWebhookStore.getState().setTestWebhook;
+	const clearTestWebhook = useWebhookStore.getState().clearTestWebhook;
 
-	if (testWebhook.isActive)
-		setTestWebhook({ isActive: false, webhookId: null });
+	if (testWebhook.isActive) clearTestWebhook();
 };
 
 export const initiateSSEConnection = (
 	executionId: string,
 	maxTimeMs?: number,
+	onStart?: () => void,
 ) => {
 	const addExecutionUpdate =
 		useWorkflowExecutionStore.getState().addNodeExecutionUpdate;
@@ -35,6 +35,7 @@ export const initiateSSEConnection = (
 		async onopen(response: Response) {
 			if (response.ok) {
 				console.log("Connected to SSE server", response.status);
+				if (onStart) onStart();
 				return;
 			}
 			if (response.status === 404) {

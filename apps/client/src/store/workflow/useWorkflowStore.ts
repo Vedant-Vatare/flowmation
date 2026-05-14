@@ -11,6 +11,7 @@ type TestWebhookData = { isActive: boolean; webhookId: string | null };
 type WebhookStore = {
 	testWebhook: TestWebhookData;
 	setTestWebhook: (state: TestWebhookData) => void;
+	clearTestWebhook: () => void;
 };
 
 type WorkflowTriggerStore = {
@@ -60,6 +61,8 @@ export const useWorkflowStore = create<WorkflowStore>((set) => ({
 export const useWebhookStore = create<WebhookStore>((set) => ({
 	testWebhook: { isActive: false, webhookId: null },
 	setTestWebhook: (state) => set({ testWebhook: state }),
+	clearTestWebhook: () =>
+		set({ testWebhook: { isActive: false, webhookId: null } }),
 }));
 
 export const useWorkflowTriggerStore = create<WorkflowTriggerStore>((set) => ({

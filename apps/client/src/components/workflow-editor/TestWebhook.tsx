@@ -7,7 +7,7 @@ import { Button } from "../ui/button";
 
 export const TestWebhook = () => {
 	const testWebhook = useWebhookStore((s) => s.testWebhook);
-	const setTestWebhook = useWebhookStore((s) => s.setTestWebhook);
+	const clearTestWebhook = useWebhookStore((s) => s.clearTestWebhook);
 	const [timeRemain, setTimeRemain] = useState(1000 * 60 * 2);
 	const [copied, setCopied] = useState(false);
 
@@ -31,9 +31,9 @@ export const TestWebhook = () => {
 
 	useEffect(() => {
 		if (timeRemain === 0 && testWebhook.isActive) {
-			setTestWebhook({ isActive: false, webhookId: null });
+			clearTestWebhook();
 		}
-	}, [timeRemain, testWebhook.isActive, setTestWebhook]);
+	}, [timeRemain, testWebhook.isActive, clearTestWebhook]);
 
 	const handleCopy = () => {
 		const url = `${import.meta.env.VITE_API_URL}/webhooks/test/${testWebhook.webhookId}`;
@@ -79,7 +79,7 @@ export const TestWebhook = () => {
 					</Button>
 
 					<div className="flex items-center gap-2 border-l border-sidebar-border pl-3 pr-4 h-5">
-						<div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+						<div className="w-1.5 h-1.5 rounded-full bg-success-foreground animate-pulse" />
 						<span className="text-xs font-mono text-sidebar-foreground/70 tabular-nums">
 							{formattedTime}
 						</span>

@@ -13,14 +13,19 @@ export const useRegisterTestWebhook = () => {
 		(s) => s.setShowExecutionUpdates,
 	);
 	const setTestWebhook = useWebhookStore((s) => s.setTestWebhook);
+	const clearTestWebhook = useWebhookStore((s) => s.clearTestWebhook);
+
+	const onExecutionStart = () => {
+		toast.success("Workflow execution started");
+		clearTestWebhook();
+	};
 
 	return useMutation({
 		mutationFn: registerTestWebhookApi,
 		onSuccess: (executionId, webhookId) => {
-			toast.success("Workflow execution started");
-			initiateSSEConnection(executionId, 1000 * 60 * 2);
 			setTestWebhook({ isActive: true, webhookId });
 			setShowExecutionUpdates(true);
+			initiateSSEConnection(executionId, 1000 * 60 * 2, onExecutionStart);
 		},
 		onError: (error) => {
 			toast.error(getErrorMessage(error));

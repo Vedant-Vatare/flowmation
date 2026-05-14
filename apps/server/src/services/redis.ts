@@ -4,7 +4,7 @@ export const storeTestWebhook = async (
 	webhookId: string,
 	executionId: string,
 ) => {
-	return await redis.set(`webhook:${webhookId}`, executionId, "EX", 60 * 5);
+	return await redis.set(`webhook:${webhookId}`, executionId, "EX", 60 * 2);
 };
 
 export const getTestWebhook = async (webhookId: string) => {
