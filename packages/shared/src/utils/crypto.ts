@@ -5,7 +5,9 @@ const ALGORITHM = "aes-256-gcm";
 export const encrypt = (text: string): string => {
 	const key = process.env.ENCRYPTION_KEY;
 	if (!key || key.length !== 32) {
-		throw new Error("ENCRYPTION_KEY environment variable must be 32 characters long");
+		throw new Error(
+			"ENCRYPTION_KEY environment variable must be 32 characters long",
+		);
 	}
 
 	const iv = crypto.randomBytes(16);
@@ -21,7 +23,9 @@ export const encrypt = (text: string): string => {
 export const decrypt = (encryptedText: string): string => {
 	const key = process.env.ENCRYPTION_KEY;
 	if (!key || key.length !== 32) {
-		throw new Error("ENCRYPTION_KEY environment variable must be 32 characters long");
+		throw new Error(
+			"ENCRYPTION_KEY environment variable must be 32 characters long",
+		);
 	}
 
 	const parts = encryptedText.split(":");

@@ -42,7 +42,7 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 				description: node.description,
 				type: node.type,
 				parameters: node.parameters,
-				credentials: node.credentials ?? null,
+				credentialId: node.credentialId ?? null,
 				config: node.config,
 				positionX: node.positionX ?? null,
 				positionY: node.positionY ?? null,
