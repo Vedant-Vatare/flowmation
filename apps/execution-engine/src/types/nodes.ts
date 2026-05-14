@@ -1,6 +1,7 @@
 import type {
 	conditionalNodeSchema,
 	cronJobNodeSchema,
+	gmailNodeSchema,
 	httpNodeSchema,
 	mergeDataNodeSchema,
 	waitingNodeSchema,
@@ -25,3 +26,4 @@ export type WaitNode = z.infer<typeof waitingNodeSchema>;
 export type CronNode = z.infer<typeof cronJobNodeSchema>;
 export type ConditionNode = z.infer<typeof conditionalNodeSchema>;
 export type MergeNode = z.infer<typeof mergeDataNodeSchema>;
+export type GmailNode = z.infer<typeof gmailNodeSchema>;
