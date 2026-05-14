@@ -1,8 +1,9 @@
 import {
+	CREDENTIALS_PROVIDER,
+	CREDENTIALS_TYPE,
 	EXECUTION_STATUSES,
 	NODE_EXECUTION_STATUSES,
 	type NodeConfig,
-	type NodeCredentials,
 	type NodeParameters,
 	WORKFLOW_STATUSES,
 } from "@nodebase/shared";
@@ -33,23 +34,23 @@ export const nodeExecutionStatusEnum = pgEnum(
 
 export const nodeTypeEnum = pgEnum("nodesEnum", ["action", "trigger"]);
 
+export const credentialTypesEnum = pgEnum("credentialTypes", CREDENTIALS_TYPE);
+export const credentialProviderEnum = pgEnum(
+	"credentialProvider",
+	CREDENTIALS_PROVIDER,
+);
 export const credentialsTable = pgTable("credentials", {
 	id: uuid().defaultRandom().primaryKey(),
 	userId: uuid("user_id")
 		.references(() => usersTable.id, { onDelete: "cascade" })
 		.notNull(),
-	provider: varchar({ length: 255 }).notNull(), // e.g., 'google', 'openai', 'github'
-	name: varchar({ length: 255 }).notNull(), // user-defined label
-	type: varchar({ length: 50 }).notNull(), // 'oauth2' | 'apiKey'
-	
-	// oauth2 fields
+	type: credentialTypesEnum().notNull(),
+	provider: credentialProviderEnum().notNull(),
+	name: varchar({ length: 255 }).notNull(),
 	accessToken: text("access_token"),
 	refreshToken: text("refresh_token"),
 	expiresAt: timestamp("expires_at", { withTimezone: true }),
-	
-	// apiKey fields
 	fields: jsonb("fields").$type<Record<string, string>>(),
-	
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 	updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
@@ -70,7 +71,6 @@ export const nodesTable = pgTable("nodes", {
 	task: varchar({ length: 255 }).unique().notNull(),
 	description: text().notNull(),
 	parameters: jsonb().$type<NodeParameters[]>().notNull(),
-	credentials: jsonb().$type<NodeCredentials>(),
 	credentialProvider: varchar("credential_provider", { length: 255 }),
 	outputPorts: jsonb("output_ports")
 		.$type<{ name: string; label: string }>()
@@ -114,8 +114,9 @@ export const workflowNodesTable = pgTable(
 		type: nodeTypeEnum().notNull(),
 		task: varchar({ length: 255 }).notNull(),
 		description: text(),
-		credentials: jsonb().$type<NodeCredentials>(),
-		credentialId: uuid("credential_id").references(() => credentialsTable.id, { onDelete: "set null" }),
+		credentialId: uuid("credential_id").references(() => credentialsTable.id, {
+			onDelete: "set null",
+		}),
 		config: jsonb("config").$type<NodeConfig>().default({}).notNull(),
 		parameters: jsonb().$type<NodeParameters[]>().notNull().default([]),
 		outputPorts: jsonb("output_ports")
@@ -146,7 +147,6 @@ export const workflowConnectionsTable = pgTable(
 		targetId: uuid("target_id")
 			.references(() => workflowNodesTable.id, { onDelete: "cascade" })
 			.notNull(),
-		// schema.ts
 		sourcePort: varchar("source_port", { length: 255 })
 			.notNull()
 			.default("default"),

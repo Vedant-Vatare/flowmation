@@ -1,9 +1,107 @@
 {
-  "id": "93e77d9d-ba69-451f-834e-772f1988bd95",
-  "prevId": "5d13e0eb-b49b-4dfe-9647-12d8b141d9d1",
+  "id": "5cddd46c-80af-406d-88ac-6c8345d63829",
+  "prevId": "93e77d9d-ba69-451f-834e-772f1988bd95",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.credentials": {
+      "name": "credentials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "credentialTypes",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider": {
+          "name": "provider",
+          "type": "credentialProvider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "access_token": {
+          "name": "access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refresh_token": {
+          "name": "refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fields": {
+          "name": "fields",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "credentials_user_id_users_id_fk": {
+          "name": "credentials_user_id_users_id_fk",
+          "tableFrom": "credentials",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.node_executions": {
       "name": "node_executions",
       "schema": "",
@@ -181,9 +279,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "credentials": {
-          "name": "credentials",
-          "type": "jsonb",
+        "credential_provider": {
+          "name": "credential_provider",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false
         },
@@ -680,9 +778,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "credentials": {
-          "name": "credentials",
-          "type": "jsonb",
+        "credential_id": {
+          "name": "credential_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -758,6 +856,19 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "workflow_nodes_credential_id_credentials_id_fk": {
+          "name": "workflow_nodes_credential_id_credentials_id_fk",
+          "tableFrom": "workflow_nodes",
+          "tableTo": "credentials",
+          "columnsFrom": [
+            "credential_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -777,6 +888,23 @@
     }
   },
   "enums": {
+    "public.credentialProvider": {
+      "name": "credentialProvider",
+      "schema": "public",
+      "values": [
+        "google",
+        "github",
+        "openai"
+      ]
+    },
+    "public.credentialTypes": {
+      "name": "credentialTypes",
+      "schema": "public",
+      "values": [
+        "apiKey",
+        "oauth"
+      ]
+    },
     "public.execution_status": {
       "name": "execution_status",
       "schema": "public",
