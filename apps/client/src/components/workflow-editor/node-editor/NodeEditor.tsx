@@ -251,7 +251,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 						id: node.id,
 						task: node.data.task,
 						parameters: updatedParams,
-						config: {
+						settings: {
 							hasExpressions: containsExpressions,
 						},
 					},

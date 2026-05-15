@@ -50,7 +50,7 @@ export const workflowNodeSchema = baseNodeSchema.extend({
 	nodeId: z.uuid(),
 	positionX: z.number(),
 	positionY: z.number(),
-	credentialId: z.uuid().nullable(),
+	credentialId: z.string().uuid().nullable().optional(),
 });
 
 export const partialWorkflowNodeSchema = workflowNodeSchema.partial();

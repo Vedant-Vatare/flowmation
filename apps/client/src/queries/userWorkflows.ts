@@ -98,23 +98,15 @@ export const useUpdateWorkflowNode = () => {
 			workflowId: string;
 			node: PartialWorkflowNode;
 		}) => updateWorkflowNodeApi({ node, workflowId }),
-		onSuccess: (_, variables) => {
+		onSuccess: (data, variables) => {
 			if (!variables.node.id) return;
 
-			const { id: nodeId, parameters, name, config } = variables.node;
+			const { id: nodeId, ...nodeUpdates } = data;
 
 			setNodes((nds) =>
 				nds.map((n) => {
 					if (n.id !== nodeId) return n;
-					return {
-						...n,
-						data: {
-							...n.data,
-							...(name && { name }),
-							...(parameters && { parameters }),
-							...(config && { config }),
-						},
-					};
+					return { ...n, data: { ...n.data, ...nodeUpdates } };
 				}),
 			);
 		},

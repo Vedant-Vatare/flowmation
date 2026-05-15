@@ -112,7 +112,6 @@ export const baseNodeSchema = z.object({
 		},
 	]),
 	credentialProvider: z.string().optional(),
-	credentialId: z.uuid().nullable(),
 });
 
 export const updateBaseNodeSchema = baseNodeSchema.partial();
