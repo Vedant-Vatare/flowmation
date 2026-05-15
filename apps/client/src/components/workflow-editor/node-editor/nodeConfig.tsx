@@ -24,7 +24,7 @@ const NodeParameters = ({ nodeData, register, control }: NodeConfig) => {
 const checkNodeConfigs = (nodeData: WorkflowNodeData): boolean => {
 	if (nodeData.parameters.length > 0) return true;
 
-	if (nodeData.credentials && Object.keys(nodeData.credentials).length > 0)
+	if (nodeData.credentialProvider)
 		return true;
 
 	if (nodeData.settings && Object.keys(nodeData.settings).length > 0)

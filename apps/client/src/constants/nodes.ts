@@ -3,6 +3,7 @@ import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
+import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
@@ -34,11 +35,11 @@ export type WorkflowNodeData = Pick<
 	| "type"
 	| "description"
 	| "parameters"
-	| "config"
 	| "inputPorts"
 	| "outputPorts"
 	| "workflowId"
-	| "credentials"
+	| "credentialProvider"
+	| "credentialId"
 	| "settings"
 	| "positionX"
 	| "positionY"
@@ -106,6 +107,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: MergeIcon,
 		background: "#3d348b",
 		color: "#ffffff",
+	},
+	"action.gmail": {
+		name: "Gmail",
+		icon: GmailIcon,
+		background: "#e5e5e5",
+		color: "green",
 	},
 };
 
