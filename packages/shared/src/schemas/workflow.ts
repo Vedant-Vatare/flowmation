@@ -44,14 +44,16 @@ export const executeWorkflowSchema = z.object({
 	triggerType: workflowTriggerTypeEnum,
 });
 
-export const workflowNodeSchema = baseNodeSchema.extend({
-	id: z.uuid().default(() => crypto.randomUUID()),
-	workflowId: z.uuid(),
-	nodeId: z.uuid(),
-	positionX: z.number(),
-	positionY: z.number(),
-	credentialId: z.string().uuid().nullable().optional(),
-});
+export const workflowNodeSchema = baseNodeSchema
+	.omit({ credentialProvider: true })
+	.extend({
+		id: z.uuid().default(() => crypto.randomUUID()),
+		workflowId: z.uuid(),
+		nodeId: z.uuid(),
+		positionX: z.number(),
+		positionY: z.number(),
+		credentialId: z.uuid().nullable(),
+	});
 
 export const partialWorkflowNodeSchema = workflowNodeSchema.partial();
 

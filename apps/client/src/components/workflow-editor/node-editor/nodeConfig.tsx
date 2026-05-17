@@ -1,5 +1,7 @@
 import type { Control, UseFormRegister } from "react-hook-form";
 import type { WorkflowNodeData } from "@/constants/nodes";
+import { useNodeCredentialProvider } from "@/hooks/nodes";
+import { NodeCredentials } from "./NodeCredentials";
 import { NodeField } from "./NodeEditor";
 import { NodeInfo, nodesWithInfo } from "./NodeInfoSection";
 
@@ -21,11 +23,13 @@ const NodeParameters = ({ nodeData, register, control }: NodeConfig) => {
 	));
 };
 
-const checkNodeConfigs = (nodeData: WorkflowNodeData): boolean => {
+const checkNodeConfigs = (
+	nodeData: WorkflowNodeData,
+	credentialprovider: string | undefined,
+): boolean => {
 	if (nodeData.parameters.length > 0) return true;
 
-	if (nodeData.credentialProvider)
-		return true;
+	if (credentialprovider) return true;
 
 	if (nodeData.settings && Object.keys(nodeData.settings).length > 0)
 		return true;
@@ -37,7 +41,9 @@ const checkNodeConfigs = (nodeData: WorkflowNodeData): boolean => {
 };
 
 export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
-	const hasConfigs = checkNodeConfigs(nodeData);
+	const getCredentialProvider = useNodeCredentialProvider();
+	const credentialprovider = getCredentialProvider(nodeData.task);
+	const hasConfigs = checkNodeConfigs(nodeData, credentialprovider);
 
 	if (!hasConfigs) {
 		return (
@@ -50,6 +56,7 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	return (
 		<>
 			<NodeInfo nodeData={nodeData} />
+			<NodeCredentials nodeData={nodeData} control={control} />
 			<NodeParameters
 				nodeData={nodeData}
 				register={register}

@@ -14,12 +14,12 @@ declare module "@tanstack/react-router" {
 		router: typeof router;
 	}
 }
+export const queryClient = new QueryClient();
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("root element is not defined");
 
 if (!rootElement.innerHTML) {
-	const queryClient = new QueryClient();
 	const root = ReactDOM.createRoot(rootElement);
 	root.render(
 		<StrictMode>

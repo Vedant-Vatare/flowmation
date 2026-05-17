@@ -38,7 +38,6 @@ export type WorkflowNodeData = Pick<
 	| "inputPorts"
 	| "outputPorts"
 	| "workflowId"
-	| "credentialProvider"
 	| "credentialId"
 	| "settings"
 	| "positionX"

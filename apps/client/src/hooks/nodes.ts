@@ -1,5 +1,5 @@
 import type { BaseNode } from "@nodebase/shared";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useAllNodesQuery } from "@/queries/nodes";
 
 export function useSortedNodes():
@@ -22,3 +22,13 @@ export function useSortedNodes():
 		return { actions, triggers };
 	}, [nodes]);
 }
+
+export const useNodeCredentialProvider = () => {
+	const { data: allNodes } = useAllNodesQuery();
+	return useCallback(
+		(nodeTask: string) => {
+			return allNodes?.find((n) => n.task === nodeTask)?.credentialProvider;
+		},
+		[allNodes],
+	);
+};
