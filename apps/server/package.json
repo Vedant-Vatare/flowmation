@@ -16,13 +16,14 @@
 	"packageManager": "pnpm@10.28.1",
 	"dependencies": {
 		"@nodebase/db": "workspace:*",
+		"@nodebase/queue": "workspace:*",
 		"@nodebase/redis": "workspace:*",
 		"@nodebase/shared": "workspace:*",
-		"@nodebase/queue": "workspace:*",
 		"@types/multer": "^2.0.0",
 		"@types/pg": "^8.16.0",
 		"bcryptjs": "^3.0.3",
 		"cloudinary": "^2.9.0",
+		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.6",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
@@ -35,6 +36,7 @@
 	},
 	"devDependencies": {
 		"@nodebase/ts-config": "workspace:*",
+		"@types/cookie-parser": "^1.4.10",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/http-errors": "^2.0.5",

@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { credentialsTable, db, eq } from "@nodebase/db";
 import {
 	CREDENTIALS_PROVIDER,
@@ -28,6 +29,7 @@ export const getCredentials = async (_req: Request, res: Response) => {
 export const connectOAuth = async (req: Request, res: Response) => {
 	const provider = req.params.provider as string;
 	const userId = res.locals.userId as string;
+	const isPopup = req.query.source === "popup";
 
 	const credentialDefinition = credentialRegistry[provider];
 
@@ -42,10 +44,30 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		);
 	}
 
-	const redirectUri = `${process.env.API_URL}/api/v1/credentials/oauth/${provider}/callback`;
+	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
 
-	const stateObj = { userId, nonce: crypto.randomUUID() };
-	const state = Buffer.from(JSON.stringify(stateObj)).toString("base64");
+	const stateObj = { userId, nonce: crypto.randomBytes(16).toString("hex") };
+	const state = Buffer.from(JSON.stringify(stateObj)).toString("base64url");
+	const codeVerifier = crypto.randomBytes(32).toString("base64url");
+	const codeChallenge = crypto
+		.createHash("sha256")
+		.update(codeVerifier)
+		.digest("base64url");
+
+	const cookieOptions = {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		maxAge: 10 * 60 * 1000,
+	};
+	console.log({ redirectUri });
+
+	res.cookie(`oauth_${provider}_state`, state, cookieOptions);
+	res.cookie(`oauth_${provider}_verifier`, codeVerifier, cookieOptions);
+	res.cookie(
+		`oauth_${provider}_isPopup`,
+		isPopup ? "true" : "false",
+		cookieOptions,
+	);
 
 	const params = new URLSearchParams({
 		client_id: clientId,
@@ -57,6 +79,8 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		access_type: "offline",
 		prompt: "consent",
 		state: state,
+		code_challenge: codeChallenge,
+		code_challenge_method: "S256",
 	});
 
 	return res.redirect(`${credentialDefinition.authUrl}?${params.toString()}`);
@@ -66,6 +90,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 	const provider = req.params.provider as CredentialProvider;
 	const { code, state } = req.query;
 	const def = credentialRegistry[provider];
+
 	if (!def || def.type !== "oauth2") {
 		throw createHttpError.BadRequest("Invalid OAuth provider");
 	}
@@ -79,7 +104,22 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("Missing code or state");
 	}
 
-	const stateStr = Buffer.from(state, "base64").toString("utf8");
+	const savedState = req.cookies[`oauth_${provider}_state`];
+	const codeVerifier = req.cookies[`oauth_${provider}_verifier`];
+	const isPopup = req.cookies[`oauth_${provider}_isPopup`] === "true";
+
+	if (!savedState || state !== savedState) {
+		throw createHttpError.BadRequest("Invalid OAuth state.");
+	}
+	if (!codeVerifier) {
+		throw createHttpError.BadRequest("Missing PKCE code verifier.");
+	}
+
+	res.clearCookie(`oauth_${provider}_state`);
+	res.clearCookie(`oauth_${provider}_verifier`);
+	res.clearCookie(`oauth_${provider}_isPopup`);
+
+	const stateStr = Buffer.from(state, "base64url").toString("utf8");
 	const stateObj = JSON.parse(stateStr);
 	const userId = stateObj.userId;
 
@@ -90,7 +130,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 
 	const clientId = process.env[`${provider.toUpperCase()}_CLIENT_ID`];
 	const clientSecret = process.env[`${provider.toUpperCase()}_CLIENT_SECRET`];
-	const redirectUri = `${process.env.API_URL}/api/v1/credentials/oauth/${provider}/callback`;
+	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
 
 	if (!clientId || !clientSecret) {
 		throw createHttpError.InternalServerError(
@@ -110,6 +150,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 			code,
 			redirect_uri: redirectUri,
 			grant_type: "authorization_code",
+			code_verifier: codeVerifier,
 		}),
 	});
 
@@ -138,6 +179,15 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
 		expiresAt,
 	});
+
+	if (isPopup) {
+		return res.send(`
+			<script>
+				window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: '${provider}' }, '*');
+				window.close();
+			</script>
+		`);
+	}
 
 	return res.redirect(
 		`${process.env.CLIENT_URL}/settings/credentials?connected=${provider}`,

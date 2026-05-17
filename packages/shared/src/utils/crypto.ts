@@ -2,16 +2,20 @@ import crypto from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
 
-export const encrypt = (text: string): string => {
+const getKey = (): Buffer => {
 	const key = process.env.ENCRYPTION_KEY;
-	if (!key || key.length !== 32) {
-		throw new Error(
-			"ENCRYPTION_KEY environment variable must be 32 characters long",
-		);
-	}
+	if (!key) throw new Error("ENCRYPTION_KEY is not set");
 
+	const buf = Buffer.from(key, "hex");
+	if (buf.byteLength !== 32) {
+		throw new Error("ENCRYPTION_KEY must be a 64-char hex string (32 bytes)");
+	}
+	return buf;
+};
+
+export const encrypt = (text: string): string => {
 	const iv = crypto.randomBytes(16);
-	const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(key), iv);
+	const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);
 
 	let encrypted = cipher.update(text, "utf8", "hex");
 	encrypted += cipher.final("hex");
@@ -21,13 +25,6 @@ export const encrypt = (text: string): string => {
 };
 
 export const decrypt = (encryptedText: string): string => {
-	const key = process.env.ENCRYPTION_KEY;
-	if (!key || key.length !== 32) {
-		throw new Error(
-			"ENCRYPTION_KEY environment variable must be 32 characters long",
-		);
-	}
-
 	const parts = encryptedText.split(":");
 	if (parts.length !== 3) {
 		throw new Error("Invalid encrypted text format");
@@ -44,7 +41,7 @@ export const decrypt = (encryptedText: string): string => {
 	const iv = Buffer.from(ivPart, "hex");
 	const authTag = Buffer.from(authTagPart, "hex");
 
-	const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(key), iv);
+	const decipher = crypto.createDecipheriv(ALGORITHM, getKey(), iv);
 	decipher.setAuthTag(authTag);
 
 	let decrypted = decipher.update(encryptedMessage, "hex", "utf8");
