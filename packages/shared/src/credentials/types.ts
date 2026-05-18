@@ -7,6 +7,7 @@ export interface OAuth2CredentialDef {
 	tokenUrl: string;
 	scopes: string[];
 	scopeSeparator?: string;
+	getAccountIdentifier?: (accessToken: string) => Promise<string | null>;
 }
 
 export interface ApiKeyCredentialDef {

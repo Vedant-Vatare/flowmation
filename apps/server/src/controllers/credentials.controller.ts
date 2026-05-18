@@ -170,10 +170,19 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		expiresAt = new Date(Date.now() + tokens.expires_in * 1000);
 	}
 
+	let accountIdentifier: string | null = null;
+	if (def.getAccountIdentifier) {
+		accountIdentifier = await def.getAccountIdentifier(tokens.access_token);
+	}
+
+	const credentialName = accountIdentifier
+		? `${accountIdentifier}`
+		: `${def.name} Account`;
+
 	await db.insert(credentialsTable).values({
 		userId: userId,
 		provider: provider,
-		name: `${def.displayName} Account`,
+		name: credentialName,
 		type: "oauth",
 		accessToken: encrypt(tokens.access_token),
 		refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
