@@ -171,7 +171,6 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.gmail"),
 	type: z.literal("action"),
 	credentialId: z.uuid().nullable(),
-	credentialProvider: z.literal("google"),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

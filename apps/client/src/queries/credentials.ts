@@ -5,5 +5,6 @@ export const useGetCredentials = () => {
 	return useQuery({
 		queryKey: ["credentials"],
 		queryFn: fetchCredentials,
+		staleTime: Number.POSITIVE_INFINITY,
 	});
 };

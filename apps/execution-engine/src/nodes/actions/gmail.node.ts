@@ -33,11 +33,7 @@ export const gmailNodeExecutor = async (
 			bodyText,
 		].join("\n");
 
-		const encodedMessage = Buffer.from(message)
-			.toString("base64")
-			.replace(/\+/g, "-")
-			.replace(/\//g, "_")
-			.replace(/=+$/, "");
+		const encodedMessage = Buffer.from(message).toString("base64url");
 
 		const response = await fetch(
 			"https://gmail.googleapis.com/gmail/v1/users/me/messages/send",

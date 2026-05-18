@@ -214,8 +214,9 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 					? param.value
 					: (param.default ?? "");
 		}
+		vals.credentialId = node.data.credentialId ?? "";
 		return vals;
-	}, [node.data.parameters]);
+	}, [node.data.parameters, node.data.credentialId]);
 
 	const { register, control, watch } = useForm<Record<string, unknown>>({
 		defaultValues,
@@ -251,6 +252,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 						id: node.id,
 						task: node.data.task,
 						parameters: updatedParams,
+						credentialId: (values.credentialId as string) || null,
 						settings: {
 							hasExpressions: containsExpressions,
 						},
