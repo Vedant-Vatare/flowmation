@@ -4,8 +4,8 @@ import {
 	CREDENTIALS_PROVIDER,
 	type CredentialProvider,
 	credentialRegistry,
-	encrypt,
 } from "@nodebase/shared";
+import { encrypt } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 

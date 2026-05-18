@@ -1,5 +1,6 @@
 import { credentialsTable, db, eq } from "@nodebase/db";
-import { credentialRegistry, decrypt, encrypt } from "@nodebase/shared";
+import { credentialRegistry } from "@nodebase/shared";
+import { decrypt, encrypt } from "@nodebase/shared/utils";
 
 export const getDecryptedCredential = async (credentialId: string) => {
 	const [credential] = await db
