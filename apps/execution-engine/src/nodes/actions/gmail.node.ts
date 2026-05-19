@@ -1,6 +1,25 @@
+import { UnrecoverableError } from "bullmq";
 import type { GmailNode, NodeExecutorOutput } from "@/types/nodes.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
+
+const createEmailMessage = (
+	to: string,
+	subject: string,
+	bodyText: string,
+	inReplyTo?: string,
+	references?: string,
+) => {
+	const headers = [
+		`To: ${to}`,
+		`Subject: ${subject}`,
+		"Content-Type: text/html; charset=utf-8",
+	];
+	if (inReplyTo) headers.push(`In-Reply-To: ${inReplyTo}`);
+	if (references) headers.push(`References: ${references}`);
+
+	return [...headers, "", bodyText].join("\r\n");
+};
 
 export const gmailNodeExecutor = async (
 	node: GmailNode,
@@ -20,39 +39,200 @@ export const gmailNodeExecutor = async (
 		}
 
 		const params = await getResolvedParams(node, executionId);
+		const operation = params.operation?.value as string;
 
-		const to = params.to.value;
-		const subject = params.subject.value;
-		const bodyText = params.body.value;
+		if (!operation)
+			throw new UnrecoverableError("gmail node operation is invalid");
 
-		const message = [
-			`To: ${to}`,
-			`Subject: ${subject}`,
-			"Content-Type: text/html; charset=utf-8",
-			"",
-			bodyText,
-		].join("\n");
+		if (operation === "send_email" || operation === "create_draft") {
+			const to = params.to?.value as string;
+			const subject = params.subject?.value as string;
+			const bodyText = params.body?.value as string;
 
-		const encodedMessage = Buffer.from(message).toString("base64url");
+			const message = createEmailMessage(to, subject, bodyText);
+			const encodedMessage = Buffer.from(message).toString("base64url");
 
-		const response = await fetch(
-			"https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
-			{
+			const endpoint =
+				operation === "send_email"
+					? "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
+					: "https://gmail.googleapis.com/gmail/v1/users/me/drafts";
+
+			const body =
+				operation === "send_email"
+					? { raw: encodedMessage }
+					: { message: { raw: encodedMessage } };
+
+			const response = await fetch(endpoint, {
 				method: "POST",
 				headers: {
 					Authorization: `Bearer ${credential.accessToken}`,
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ raw: encodedMessage }),
-			},
-		);
+				body: JSON.stringify(body),
+			});
 
-		const data = await response.json();
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
 
-		return {
-			success: response.ok,
-			output: data,
-		};
+		if (operation === "send_draft") {
+			const draftId = params.draftId?.value as string;
+			const response = await fetch(
+				"https://gmail.googleapis.com/gmail/v1/users/me/drafts/send",
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${credential.accessToken}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ id: draftId }),
+				},
+			);
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "search_emails") {
+			const query = params.query?.value as string | undefined;
+			const maxResults = params.maxResults?.value as
+				| number
+				| string
+				| undefined;
+
+			const url = new URL(
+				"https://gmail.googleapis.com/gmail/v1/users/me/messages",
+			);
+			if (query) url.searchParams.append("q", query);
+			if (maxResults) url.searchParams.append("maxResults", String(maxResults));
+
+			const response = await fetch(url.toString(), {
+				headers: { Authorization: `Bearer ${credential.accessToken}` },
+			});
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "add_label" || operation === "remove_label") {
+			const messageId = params.messageId?.value as string;
+			const labelIdsStr = params.labelIds?.value as string;
+			const labelIds = labelIdsStr
+				.split(",")
+				.map((l) => l.trim())
+				.filter(Boolean);
+
+			const body =
+				operation === "add_label"
+					? { addLabelIds: labelIds }
+					: { removeLabelIds: labelIds };
+
+			const response = await fetch(
+				`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/modify`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${credential.accessToken}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(body),
+				},
+			);
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "mark_read_unread") {
+			const messageId = params.messageId?.value as string;
+			const readStatus = params.readStatus?.value as string;
+
+			const body =
+				readStatus === "read"
+					? { removeLabelIds: ["UNREAD"] }
+					: { addLabelIds: ["UNREAD"] };
+
+			const response = await fetch(
+				`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}/modify`,
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${credential.accessToken}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(body),
+				},
+			);
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "reply_to_email") {
+			const messageId = params.messageId?.value as string;
+			const to = params.to?.value as string;
+			const subject = params.subject?.value as string;
+			const bodyText = params.body?.value as string;
+
+			if (!messageId) throw new UnrecoverableError("invalid message id");
+
+			const originalRes = await fetch(
+				`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=metadata&metadataHeaders=Message-ID&metadataHeaders=References`,
+				{ headers: { Authorization: `Bearer ${credential.accessToken}` } },
+			);
+
+			if (!originalRes.ok) {
+				return {
+					success: false,
+					message: "Could not fetch original message to reply to",
+				};
+			}
+			const originalData = (await originalRes.json()) as {
+				threadId: string;
+				payload?: {
+					headers?: { name: string; value: string }[];
+				};
+			};
+			const threadId = originalData.threadId;
+
+			let messageIdHeader = "";
+			let referencesHeader = "";
+
+			const headers = originalData.payload?.headers || [];
+			for (const h of headers) {
+				if (h.name.toLowerCase() === "message-id") messageIdHeader = h.value;
+				if (h.name.toLowerCase() === "references") referencesHeader = h.value;
+			}
+
+			const newReferences = referencesHeader
+				? `${referencesHeader} ${messageIdHeader}`
+				: messageIdHeader;
+
+			const message = createEmailMessage(
+				to,
+				subject,
+				bodyText,
+				messageIdHeader,
+				newReferences,
+			);
+			const encodedMessage = Buffer.from(message).toString("base64url");
+
+			const response = await fetch(
+				"https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${credential.accessToken}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						raw: encodedMessage,
+						threadId: threadId,
+					}),
+				},
+			);
+
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		return { success: false, message: `Unsupported operation: ${operation}` };
 	} catch (err) {
 		return {
 			success: false,

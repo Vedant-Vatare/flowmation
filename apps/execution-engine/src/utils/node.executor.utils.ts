@@ -6,11 +6,11 @@ import { recordNodeCompletion } from "./workflow.updates.utils.js";
 type KeyValueEntry = Record<string, string>;
 
 export const getResolvedParams = async <T extends NodeParameters>(
-	node: { parameters: T[]; config?: { hasExpressions?: boolean } },
+	node: { parameters: T[]; settings: WorkflowNode["settings"] },
 	executionId: string,
 ) => {
 	const parameters = (
-		node.config?.hasExpressions
+		node.settings.hasExpressions
 			? await FormatParamsValueExpressions(node.parameters, executionId)
 			: node.parameters
 	) as T[];
