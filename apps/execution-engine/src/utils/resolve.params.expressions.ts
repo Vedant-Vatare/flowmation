@@ -81,15 +81,32 @@ async function resolveValue(
 }
 
 function coerce(val: unknown, type: NodePropertyType): unknown {
-	if (type === "input") return val === undefined ? "" : String(val);
+	if (type === "input") {
+		if (val === undefined || val === null) return "";
+		if (typeof val === "object") return val;
+		return String(val);
+	}
 	if (type === "boolean") return Boolean(val);
 	if (type === "number") return Number(val);
 	return val;
 }
 
 function getNestedValue(obj: unknown, path: string): unknown {
-	return path.split(".").reduce<unknown>((acc, key) => {
+	const keys = path.split(".").flatMap((segment) => {
+		const parts: (string | number)[] = [];
+		const bracketRegex = /([^[]+)|\[(\d+)\]/g;
+		let match: RegExpExecArray | null;
+
+		// biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop
+		while ((match = bracketRegex.exec(segment)) !== null) {
+			if (match[1] !== undefined) parts.push(match[1]);
+			else if (match[2] !== undefined) parts.push(Number(match[2]));
+		}
+		return parts;
+	});
+
+	return keys.reduce<unknown>((acc, key) => {
 		if (acc === null || acc === undefined) return undefined;
-		return (acc as Record<string, unknown>)[key];
+		return (acc as Record<string | number, unknown>)[key];
 	}, obj);
 }
