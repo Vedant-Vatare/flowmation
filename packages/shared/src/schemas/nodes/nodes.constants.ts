@@ -1,11 +1,12 @@
 import type z from "zod";
 import {
-	gmailNodeSchema,
 	httpNodeSchema,
 	mergeDataNodeSchema,
 	waitingNodeSchema,
 } from "./action.nodes.js";
 import { conditionalNodeSchema } from "./control.nodes.js";
+import { githubNodeSchema } from "./integrations/github.schema.js";
+import { gmailNodeSchema } from "./integrations/gmail.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -19,6 +20,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.merge", mergeDataNodeSchema],
 	["action.wait", waitingNodeSchema],
 	["action.gmail", gmailNodeSchema],
+	["action.github", githubNodeSchema],
 	["action.set_variable", setVariableNodeSchema],
 	["trigger.input", inputNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
