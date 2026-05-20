@@ -1,22 +1,25 @@
 import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
-import type { InputNode, WorkflowNode } from "@nodebase/shared";
-import type { Job } from "bullmq";
-import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
-import { gmailNodeExecutor } from "./nodes/actions/gmail.node.js";
-import { httpNodeExecutor } from "./nodes/actions/http.node.js";
-import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
-import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
-import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
-import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
 import type {
 	ConditionNode,
 	CronNode,
 	GmailNode,
 	HttpNode,
+	InputNode,
 	MergeNode,
+	WaitNode,
+	WorkflowNode,
+} from "@nodebase/shared";
+import type { Job } from "bullmq";
+import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
+import { httpNodeExecutor } from "./nodes/actions/http.node.js";
+import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
+import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
+import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
+import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
+import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
+import type {
 	NodeExecutorOutput,
 	TriggerNodeExecutorOutput,
-	WaitNode,
 } from "./types/nodes.js";
 import { checkRequiredParameters } from "./utils/node.executor.utils.js";
 
@@ -48,7 +51,6 @@ export const executeNode = ({
 			);
 		case "action.gmail":
 			return gmailNodeExecutor(node as GmailNode, executionId);
-
 		default:
 			return {
 				success: false,

@@ -1,5 +1,6 @@
+import type { GmailNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { GmailNode, NodeExecutorOutput } from "@/types/nodes.js";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 

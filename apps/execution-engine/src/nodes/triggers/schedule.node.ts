@@ -1,7 +1,8 @@
 import type { WorkflowJobPayload } from "@nodebase/queue";
+import type { CronNode } from "@nodebase/shared";
 import type { Job } from "bullmq";
 import { scheduleWorkflow } from "@/services/scheduler.js";
-import type { CronNode, TriggerNodeExecutorOutput } from "@/types/nodes.js";
+import type { TriggerNodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const scheduleNodeExecutor = async (

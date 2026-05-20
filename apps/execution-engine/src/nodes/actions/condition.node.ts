@@ -1,4 +1,5 @@
-import type { ConditionNode, NodeExecutorOutput } from "@/types/nodes.js";
+import type { ConditionNode } from "@nodebase/shared";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 function isSameType(a: unknown, b: unknown) {

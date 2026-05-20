@@ -1,4 +1,5 @@
-import type { NodeExecutorOutput, WaitNode } from "@/types/nodes.js";
+import type { WaitNode } from "@nodebase/shared";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const waitNodeExecutor = async (

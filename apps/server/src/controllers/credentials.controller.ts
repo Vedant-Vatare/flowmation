@@ -59,7 +59,6 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		secure: process.env.NODE_ENV === "production",
 		maxAge: 10 * 60 * 1000,
 	};
-	console.log({ redirectUri });
 
 	res.cookie(`oauth_${provider}_state`, state, cookieOptions);
 	res.cookie(`oauth_${provider}_verifier`, codeVerifier, cookieOptions);

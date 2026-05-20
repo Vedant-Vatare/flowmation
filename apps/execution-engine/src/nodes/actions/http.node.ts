@@ -1,4 +1,5 @@
-import type { HttpNode, NodeExecutorOutput } from "@/types/nodes.js";
+import type { HttpNode } from "@nodebase/shared";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const httpNodeExecutor = async (

@@ -1,6 +1,6 @@
-import type { NodeParameters } from "@nodebase/shared";
+import type { MergeNode, NodeParameters } from "@nodebase/shared";
 import { getNodesOutputsByName } from "@/services/executionStore.js";
-import type { MergeNode, NodeExecutorOutput } from "@/types/nodes.js";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
 
 type MergeMode = "combine" | "append";
 
