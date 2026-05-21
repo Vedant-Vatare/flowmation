@@ -134,6 +134,13 @@
       "when": 1778771324871,
       "tag": "0018_fuzzy_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1779382413739,
+      "tag": "0019_exotic_thunderball",
+      "breakpoints": true
     }
   ]
 }

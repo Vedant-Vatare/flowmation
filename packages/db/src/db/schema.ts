@@ -1,5 +1,4 @@
 import {
-	CREDENTIALS_PROVIDER,
 	CREDENTIALS_TYPE,
 	EXECUTION_STATUSES,
 	NODE_EXECUTION_STATUSES,
@@ -35,17 +34,14 @@ export const nodeExecutionStatusEnum = pgEnum(
 export const nodeTypeEnum = pgEnum("nodesEnum", ["action", "trigger"]);
 
 export const credentialTypesEnum = pgEnum("credentialTypes", CREDENTIALS_TYPE);
-export const credentialProviderEnum = pgEnum(
-	"credentialProvider",
-	CREDENTIALS_PROVIDER,
-);
+
 export const credentialsTable = pgTable("credentials", {
 	id: uuid().defaultRandom().primaryKey(),
 	userId: uuid("user_id")
 		.references(() => usersTable.id, { onDelete: "cascade" })
 		.notNull(),
 	type: credentialTypesEnum().notNull(),
-	provider: credentialProviderEnum().notNull(),
+	provider: varchar({ length: 255 }).notNull(),
 	name: varchar({ length: 255 }).notNull(),
 	accessToken: text("access_token"),
 	refreshToken: text("refresh_token"),
@@ -78,7 +74,7 @@ export const nodesTable = pgTable("nodes", {
 	inputPorts: jsonb("input_ports")
 		.$type<{ name: string; label: string }>()
 		.array(),
-	settings: jsonb("config").$type<NodeSettings>().default({}).notNull(),
+	settings: jsonb("settings").$type<NodeSettings>().default({}).notNull(),
 });
 
 export const userWorkflowsTable = pgTable(
