@@ -110,7 +110,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 	if (!savedState || state !== savedState) {
 		throw createHttpError.BadRequest("Invalid OAuth state.");
 	}
-	if (!codeVerifier) {
+	if (def.pkce && !codeVerifier) {
 		throw createHttpError.BadRequest("Missing PKCE code verifier.");
 	}
 
@@ -136,21 +136,38 @@ export const oauthCallback = async (req: Request, res: Response) => {
 			`Missing credentials for ${provider}`,
 		);
 	}
+	const tokenContentType =
+		def.tokenContentType === "json"
+			? "application/json"
+			: "application/x-www-form-urlencoded";
+
+	const headers: Record<string, string> = {
+		Accept: "application/json",
+		"Content-Type": tokenContentType,
+	};
+
+	if (def.authMethod === "basic") {
+		headers.Authorization = `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`;
+	}
+
+	const bodyParams: Record<string, string> = {
+		grant_type: "authorization_code",
+		code,
+		redirect_uri: redirectUri,
+		...(def.authMethod === "body" && {
+			client_id: clientId,
+			client_secret: clientSecret,
+		}),
+		...(def.pkce && codeVerifier && { code_verifier: codeVerifier }),
+	};
 
 	const tokenResponse = await fetch(def.tokenUrl, {
 		method: "POST",
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded",
-			Accept: "application/json",
-		},
-		body: new URLSearchParams({
-			client_id: clientId,
-			client_secret: clientSecret,
-			code,
-			redirect_uri: redirectUri,
-			grant_type: "authorization_code",
-			code_verifier: codeVerifier,
-		}),
+		headers,
+		body:
+			def.tokenContentType === "json"
+				? JSON.stringify(bodyParams)
+				: new URLSearchParams(bodyParams),
 	});
 
 	if (!tokenResponse.ok) {
