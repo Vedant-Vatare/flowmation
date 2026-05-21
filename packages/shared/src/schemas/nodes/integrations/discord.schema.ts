@@ -4,7 +4,6 @@ import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 export const discordNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.discord"),
 	type: z.literal("action"),
-	credentialId: z.uuid().nullable(),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

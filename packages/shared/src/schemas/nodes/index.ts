@@ -3,6 +3,7 @@ export * from "./base.nodes.js";
 export * from "./control.nodes.js";
 export * from "./integrations/github.schema.js";
 export * from "./integrations/gmail.schema.js";
+export * from "./integrations/notion.schema.js";
 export * from "./nodes.constants.js";
 export * from "./transform.nodes.js";
 export * from "./trigger.nodes.js";

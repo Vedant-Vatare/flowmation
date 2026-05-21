@@ -8,6 +8,7 @@ import type {
 	HttpNode,
 	InputNode,
 	MergeNode,
+	NotionNode,
 	WaitNode,
 	WorkflowNode,
 } from "@nodebase/shared";
@@ -17,6 +18,7 @@ import { httpNodeExecutor } from "./nodes/actions/http.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
+import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
@@ -59,6 +61,9 @@ export const executeNode = ({
 			return githubNodeExecutor(node as GitHubNode, executionId);
 		case "action.discord":
 			return discordNodeExecutor(node as DiscordNode, executionId);
+		case "action.notion":
+			return notionNodeExecutor(node as NotionNode, executionId);
+
 		default:
 			return {
 				success: false,

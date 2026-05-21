@@ -266,12 +266,11 @@ export const DropdownField = ({
 	field,
 	control,
 }: Pick<NodeFieldProps, "field" | "control">) => {
-	const options =
-		(field.options as {
-			label: string;
-			value: string;
-			groupLabel?: string;
-		}[]) ?? [];
+	const options: {
+		label: string;
+		value: unknown;
+		groupLabel?: string;
+	}[] = field.options ?? [];
 
 	const groupedOptions = useMemo(() => {
 		const groups: Record<string, typeof options> = {};

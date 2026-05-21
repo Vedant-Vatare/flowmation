@@ -1,0 +1,155 @@
+import type { NotionNode } from "@nodebase/shared";
+import { UnrecoverableError } from "bullmq";
+import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import { getResolvedParams } from "@/utils/node.executor.utils.js";
+
+const NOTION_API = "https://api.notion.com/v1";
+const NOTION_VERSION = "2022-06-28";
+
+const buildTitleProperty = (title: string) => ({
+	title: {
+		title: [{ type: "text" as const, text: { content: title } }],
+	},
+});
+
+const buildParagraphBlock = (content: string) => ({
+	object: "block" as const,
+	type: "paragraph" as const,
+	paragraph: {
+		rich_text: [{ type: "text" as const, text: { content } }],
+	},
+});
+
+const mergeProperties = (
+	title: string,
+	propertiesJson?: string,
+): Record<string, unknown> => {
+	const base = buildTitleProperty(title);
+	if (!propertiesJson) return base;
+	try {
+		const extra = JSON.parse(propertiesJson);
+		return { ...base, ...extra };
+	} catch {
+		return base;
+	}
+};
+
+export const notionNodeExecutor = async (
+	node: NotionNode,
+	executionId: string,
+): Promise<NodeExecutorOutput> => {
+	if (!node.credentialId) {
+		return {
+			success: false,
+			message: "Credential ID is missing for Notion node",
+		};
+	}
+
+	try {
+		const credential = await getDecryptedCredential(node.credentialId);
+		if (credential.type !== "oauth2" || !credential.accessToken) {
+			return {
+				success: false,
+				message: "Invalid credential format for Notion",
+			};
+		}
+
+		const params = await getResolvedParams(node, executionId);
+		const operation = params.operation?.value as string;
+
+		if (!operation)
+			throw new UnrecoverableError("Notion node operation is invalid");
+
+		const headers: Record<string, string> = {
+			Authorization: `Bearer ${credential.accessToken}`,
+			"Content-Type": "application/json",
+			"Notion-Version": NOTION_VERSION,
+		};
+
+		if (operation === "create_database_row") {
+			const databaseId = params.databaseId?.value as string;
+			const title = params.title?.value as string;
+			const properties = params.properties?.value as string | undefined;
+
+			if (!databaseId) throw new UnrecoverableError("databaseId is required");
+			if (!title) throw new UnrecoverableError("title is required");
+
+			const body = {
+				parent: { type: "database_id" as const, database_id: databaseId },
+				properties: mergeProperties(title, properties),
+			};
+
+			const response = await fetch(`${NOTION_API}/pages`, {
+				method: "POST",
+				headers,
+				body: JSON.stringify(body),
+			});
+
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "create_page") {
+			const parentPageId = params.parentPageId?.value as string;
+			const title = params.title?.value as string;
+			const content = params.content?.value as string | undefined;
+
+			if (!parentPageId)
+				throw new UnrecoverableError("parentPageId is required");
+			if (!title) throw new UnrecoverableError("title is required");
+
+			const body: Record<string, unknown> = {
+				parent: { type: "page_id" as const, page_id: parentPageId },
+				properties: buildTitleProperty(title),
+			};
+
+			if (content) {
+				body.children = [buildParagraphBlock(content)];
+			}
+
+			const response = await fetch(`${NOTION_API}/pages`, {
+				method: "POST",
+				headers,
+				body: JSON.stringify(body),
+			});
+
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		if (operation === "append_blocks") {
+			const blockId = params.pageId?.value as string;
+			const content = params.content?.value as string | undefined;
+
+			if (!blockId) throw new UnrecoverableError("blockId/pageId is required");
+
+			if (!content) {
+				return { success: true, output: { message: "No content to append" } };
+			}
+
+			const body = {
+				children: [buildParagraphBlock(content)],
+			};
+
+			const response = await fetch(`${NOTION_API}/blocks/${blockId}/children`, {
+				method: "PATCH",
+				headers,
+				body: JSON.stringify(body),
+			});
+
+			const data = await response.json();
+			return { success: response.ok, output: data };
+		}
+
+		return { success: false, message: `Unsupported operation: ${operation}` };
+	} catch (err) {
+		return {
+			success: false,
+			message:
+				err instanceof Error
+					? err.message
+					: "Something went wrong in Notion node",
+		};
+	}
+};

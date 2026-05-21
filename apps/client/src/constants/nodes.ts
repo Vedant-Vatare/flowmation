@@ -9,6 +9,7 @@ import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
+import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
@@ -125,6 +126,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Discord",
 		icon: DiscordIcon,
 		background: "#5865F2",
+		color: "#ffffff",
+	},
+	"action.notion": {
+		name: "Notion",
+		icon: NotionIcon,
+		background: "#FFFEFC",
 		color: "#ffffff",
 	},
 };

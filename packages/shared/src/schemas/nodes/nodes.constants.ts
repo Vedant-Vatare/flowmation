@@ -8,6 +8,7 @@ import { conditionalNodeSchema } from "./control.nodes.js";
 import { discordNodeSchema } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema } from "./integrations/github.schema.js";
 import { gmailNodeSchema } from "./integrations/gmail.schema.js";
+import { notionNodeSchema } from "./integrations/notion.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -30,4 +31,5 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.gmail", gmailNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.discord", discordNodeSchema],
+	["action.notion", notionNodeSchema],
 ]);
