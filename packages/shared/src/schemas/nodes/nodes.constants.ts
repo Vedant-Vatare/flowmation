@@ -5,6 +5,7 @@ import {
 	waitingNodeSchema,
 } from "./action.nodes.js";
 import { conditionalNodeSchema } from "./control.nodes.js";
+import { discordNodeSchema } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema } from "./integrations/github.schema.js";
 import { gmailNodeSchema } from "./integrations/gmail.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
@@ -16,15 +17,17 @@ import {
 } from "./trigger.nodes.js";
 
 export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
+	["trigger.click", clickNodeSchema],
+	["trigger.input", inputNodeSchema],
 	["action.http", httpNodeSchema],
-	["action.merge", mergeDataNodeSchema],
 	["action.wait", waitingNodeSchema],
+	["action.set_variable", setVariableNodeSchema],
+	["trigger.cron", cronJobNodeSchema],
+	["action.condition", conditionalNodeSchema],
+	["action.merge", mergeDataNodeSchema],
+	["trigger.webhook", webhookNodeSchema],
+	["action.github", gitHubNodeSchema],
 	["action.gmail", gmailNodeSchema],
 	["action.github", gitHubNodeSchema],
-	["action.set_variable", setVariableNodeSchema],
-	["trigger.input", inputNodeSchema],
-	["trigger.cron", cronJobNodeSchema],
-	["trigger.click", clickNodeSchema],
-	["trigger.webhook", webhookNodeSchema],
-	["action.condition", conditionalNodeSchema],
+	["action.discord", discordNodeSchema],
 ]);

@@ -60,7 +60,6 @@ export const nodeParameterOptionsSchema = z.object({
 	groupLabel: z.string().toLowerCase().optional(),
 });
 
-
 export const nodeParameterSchema = z.object({
 	label: z.string(),
 	name: z.string(),
