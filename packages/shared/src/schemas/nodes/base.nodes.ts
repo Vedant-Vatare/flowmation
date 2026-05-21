@@ -54,6 +54,12 @@ export const parameterDependSchema = z.object({
 	parameter: z.string(),
 	values: z.array(z.unknown()),
 });
+export const nodeParameterOptionsSchema = z.object({
+	label: z.string(),
+	value: anyNodeValueSchema,
+	groupLabel: z.string().toLowerCase().optional(),
+});
+
 
 export const nodeParameterSchema = z.object({
 	label: z.string(),
@@ -62,14 +68,7 @@ export const nodeParameterSchema = z.object({
 	placeholder: z.string().optional(),
 	type: nodePropertyTypeSchema,
 	value: anyNodeValueSchema,
-	options: z
-		.array(
-			z.object({
-				label: z.string(),
-				value: anyNodeValueSchema,
-			}),
-		)
-		.optional(),
+	options: z.array(nodeParameterOptionsSchema).optional(),
 	default: anyNodeValueSchema.optional(),
 	required: z.boolean().optional(),
 	multiValued: z.boolean().optional(),

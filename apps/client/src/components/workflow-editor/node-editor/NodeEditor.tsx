@@ -281,22 +281,24 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	}, [watch, debouncedSave]);
 
 	return (
-		<div className="flex flex-col  w-full bg-background shadow-sm">
-			<NodeNameSection node={node} />
-			<div className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 h-1 mb-3">
-				{editorStatus === "saving" ? (
-					<span className="text-white/40 flex items-center gap-1">
-						<Loader2 className="h-3 w-3 animate-spin" />
-						Saving…
-					</span>
-				) : editorStatus === "missing" ? (
-					<span className="text-amber-400/70 truncate">
-						Required fields missing
-					</span>
-				) : null}
+		<div className="flex flex-col h-full w-full bg-background shadow-sm">
+			<div className="sticky top-0 z-10 bg-background">
+				<NodeNameSection node={node} />
+				<div className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 h-1 mb-3">
+					{editorStatus === "saving" ? (
+						<span className="text-white/40 flex items-center gap-1">
+							<Loader2 className="h-3 w-3 animate-spin" />
+							Saving…
+						</span>
+					) : editorStatus === "missing" ? (
+						<span className="text-amber-400/70 truncate">
+							Required fields missing
+						</span>
+					) : null}
+				</div>
 			</div>
 
-			<div className="flex flex-col">
+			<div className="flex flex-col pb-10">
 				<NodeConfig
 					nodeData={node.data}
 					register={register}
