@@ -1,6 +1,7 @@
 import type { GmailNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { handleResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
@@ -72,8 +73,7 @@ export const gmailNodeExecutor = async (
 				body: JSON.stringify(body),
 			});
 
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		if (operation === "send_draft") {
@@ -89,8 +89,7 @@ export const gmailNodeExecutor = async (
 					body: JSON.stringify({ id: draftId }),
 				},
 			);
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		if (operation === "search_emails") {
@@ -109,8 +108,7 @@ export const gmailNodeExecutor = async (
 			const response = await fetch(url.toString(), {
 				headers: { Authorization: `Bearer ${credential.accessToken}` },
 			});
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		if (operation === "add_label" || operation === "remove_label") {
@@ -137,8 +135,7 @@ export const gmailNodeExecutor = async (
 					body: JSON.stringify(body),
 				},
 			);
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		if (operation === "mark_read_unread") {
@@ -161,8 +158,7 @@ export const gmailNodeExecutor = async (
 					body: JSON.stringify(body),
 				},
 			);
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		if (operation === "reply_to_email") {
@@ -229,8 +225,7 @@ export const gmailNodeExecutor = async (
 				},
 			);
 
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response, "Gmail API request failed");
 		}
 
 		return { success: false, message: `Unsupported operation: ${operation}` };

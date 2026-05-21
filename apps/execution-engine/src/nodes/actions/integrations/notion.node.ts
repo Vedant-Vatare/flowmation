@@ -1,11 +1,24 @@
 import type { NotionNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { handleResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const NOTION_API = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
+
+const toNotionUUID = (input: string): string => {
+	if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input)) {
+		return input;
+	}
+	const hexMatch = input.match(/([0-9a-f]{32})/i);
+	const hex = hexMatch?.[1];
+	if (hex) {
+		return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+	}
+	return input;
+};
 
 const buildTitleProperty = (title: string) => ({
 	title: {
@@ -68,7 +81,7 @@ export const notionNodeExecutor = async (
 		};
 
 		if (operation === "create_database_row") {
-			const databaseId = params.databaseId?.value as string;
+			const databaseId = toNotionUUID((params.databaseId?.value as string) ?? "");
 			const title = params.title?.value as string;
 			const properties = params.properties?.value as string | undefined;
 
@@ -86,12 +99,11 @@ export const notionNodeExecutor = async (
 				body: JSON.stringify(body),
 			});
 
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response);
 		}
 
 		if (operation === "create_page") {
-			const parentPageId = params.parentPageId?.value as string;
+			const parentPageId = toNotionUUID((params.parentPageId?.value as string) ?? "");
 			const title = params.title?.value as string;
 			const content = params.content?.value as string | undefined;
 
@@ -114,12 +126,11 @@ export const notionNodeExecutor = async (
 				body: JSON.stringify(body),
 			});
 
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response);
 		}
 
 		if (operation === "append_blocks") {
-			const blockId = params.pageId?.value as string;
+			const blockId = toNotionUUID((params.pageId?.value as string) ?? "");
 			const content = params.content?.value as string | undefined;
 
 			if (!blockId) throw new UnrecoverableError("blockId/pageId is required");
@@ -138,8 +149,7 @@ export const notionNodeExecutor = async (
 				body: JSON.stringify(body),
 			});
 
-			const data = await response.json();
-			return { success: response.ok, output: data };
+			return handleResponse(response);
 		}
 
 		return { success: false, message: `Unsupported operation: ${operation}` };

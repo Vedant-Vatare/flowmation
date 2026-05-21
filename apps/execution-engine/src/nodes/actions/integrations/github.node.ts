@@ -1,5 +1,6 @@
 import type { GitHubNode } from "@nodebase/shared";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { handleResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
@@ -26,18 +27,6 @@ export const githubNodeExecutor = async (
 
 		const params = await getResolvedParams(node, executionId);
 		const operation = (params.operation?.value as string) || "get";
-
-		const handleResponse = async (response: Response) => {
-			const data = (await response.json().catch(() => ({}))) as any;
-			if (!response.ok) {
-				return {
-					success: false,
-					message: data.message || "GitHub API request failed",
-					output: data,
-				};
-			}
-			return { success: true, output: data };
-		};
 
 		const headers = {
 			Authorization: `Bearer ${credential.accessToken}`,
@@ -149,7 +138,7 @@ export const githubNodeExecutor = async (
 			const labels = parseList(params.labels?.value);
 			const assignees = parseList(params.assignees?.value);
 
-			const payload: any = {};
+			const payload: Record<string, string | string[]> = {};
 			if (title) payload.title = title;
 			if (body) payload.body = body;
 			if (state && state !== "all") payload.state = state;
