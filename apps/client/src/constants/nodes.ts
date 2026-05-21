@@ -3,6 +3,7 @@ import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
+import GitHubIcon from "@/assets/icons/nodes/github.svg?react";
 import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
@@ -112,6 +113,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: GmailIcon,
 		background: "#e5e5e5",
 		color: "green",
+	},
+	"action.github": {
+		name: "GitHub",
+		icon: GitHubIcon,
+		background: "#24292e",
+		color: "#ffffff",
 	},
 };
 

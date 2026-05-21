@@ -2,6 +2,7 @@ import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
 import type {
 	ConditionNode,
 	CronNode,
+	GitHubNode,
 	GmailNode,
 	HttpNode,
 	InputNode,
@@ -12,6 +13,7 @@ import type {
 import type { Job } from "bullmq";
 import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
+import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
@@ -51,6 +53,8 @@ export const executeNode = ({
 			);
 		case "action.gmail":
 			return gmailNodeExecutor(node as GmailNode, executionId);
+		case "action.github":
+			return githubNodeExecutor(node as GitHubNode, executionId);
 		default:
 			return {
 				success: false,
