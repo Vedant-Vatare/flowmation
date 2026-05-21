@@ -191,12 +191,16 @@ export const WorkflowEditorSidebar = memo(() => {
 		<Sidebar
 			side="right"
 			collapsible="offcanvas"
-			className="inset-y-auto  h-full"
+			className="top-(--main-header-height) h-(--main-content-level-height)"
 		>
 			<SidebarRail side="right" />
 			<SidebarContent className="pt-5">
-				<Tabs defaultValue="editor" value={tabOpen}>
-					<TabsList className="ml-2 px-2 py-1.5 gap-2 mb-1">
+				<Tabs
+					defaultValue="editor"
+					value={tabOpen}
+					className="flex flex-col flex-1 min-h-0"
+				>
+					<TabsList className="ml-2 px-2 py-1.5 gap-2 mb-1 shrink-0">
 						<TabsTrigger value="nodes" onClick={() => setTabOpen("nodes")}>
 							Nodes
 						</TabsTrigger>
@@ -207,13 +211,22 @@ export const WorkflowEditorSidebar = memo(() => {
 							Runs
 						</TabsTrigger>
 					</TabsList>
-					<TabsContent value="nodes">
+					<TabsContent
+						value="nodes"
+						className="flex-1 overflow-y-auto min-h-0 mt-0"
+					>
 						<Nodes />
 					</TabsContent>
-					<TabsContent value="editor">
+					<TabsContent
+						value="editor"
+						className="flex-1 overflow-y-auto min-h-0 mt-0 "
+					>
 						<NodeEditorTab />
 					</TabsContent>
-					<TabsContent value="runs">
+					<TabsContent
+						value="runs"
+						className="flex-1 overflow-y-auto min-h-0 mt-0"
+					>
 						<WorkflowLogs />
 					</TabsContent>
 				</Tabs>

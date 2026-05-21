@@ -117,7 +117,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	"action.github": {
 		name: "GitHub",
 		icon: GitHubIcon,
-		background: "#24292e",
+		background: "#2e3333",
 		color: "#ffffff",
 	},
 };

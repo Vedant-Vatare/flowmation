@@ -12,7 +12,9 @@ import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
 import {
 	Select,
 	SelectContent,
+	SelectGroup,
 	SelectItem,
+	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "../../ui/select";
@@ -264,7 +266,31 @@ export const DropdownField = ({
 	field,
 	control,
 }: Pick<NodeFieldProps, "field" | "control">) => {
-	const options = (field.options as { label: string; value: string }[]) ?? [];
+	const options =
+		(field.options as {
+			label: string;
+			value: string;
+			groupLabel?: string;
+		}[]) ?? [];
+
+	const groupedOptions = useMemo(() => {
+		const groups: Record<string, typeof options> = {};
+		const ungrouped: typeof options = [];
+
+		for (const opt of options) {
+			const label = opt.groupLabel;
+			if (label) {
+				if (!groups[label]) {
+					groups[label] = [];
+				}
+				groups[label].push(opt);
+			} else {
+				ungrouped.push(opt);
+			}
+		}
+
+		return { groups, ungrouped };
+	}, [options]);
 
 	return (
 		<FieldWrapper field={field}>
@@ -281,17 +307,39 @@ export const DropdownField = ({
 								placeholder={field.placeholder ?? "Select an option"}
 							/>
 						</SelectTrigger>
-						<SelectContent>
+						<SelectContent position="popper" className="px-2">
 							{options.length === 0 ? (
 								<div className="px-3 py-2 text-xs text-muted-foreground italic">
 									No options available
 								</div>
 							) : (
-								options.map((opt) => (
-									<SelectItem key={opt.value} value={opt.value}>
-										{opt.label}
-									</SelectItem>
-								))
+								<>
+									{groupedOptions.ungrouped.map((opt) => (
+										<SelectItem
+											key={String(opt.value)}
+											value={String(opt.value)}
+										>
+											{opt.label}
+										</SelectItem>
+									))}
+									{Object.entries(groupedOptions.groups).map(
+										([groupLabel, groupOptions]) => (
+											<SelectGroup key={groupLabel} className="my-0.5">
+												<SelectLabel className="capitalize relative right-2">
+													{groupLabel}
+												</SelectLabel>
+												{groupOptions.map((opt) => (
+													<SelectItem
+														key={String(opt.value)}
+														value={String(opt.value)}
+													>
+														{opt.label}
+													</SelectItem>
+												))}
+											</SelectGroup>
+										),
+									)}
+								</>
 							)}
 						</SelectContent>
 					</Select>

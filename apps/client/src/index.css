@@ -15,7 +15,8 @@
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-
+	--main-header-height: 3.5rem;
+	--main-content-level-height: calc(100svh - var(--main-header-height));
 	--radius: 0.625rem;
 
 	--background: oklch(0.99 0 0);
