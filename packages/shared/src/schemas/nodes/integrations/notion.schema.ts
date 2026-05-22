@@ -16,25 +16,29 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				label: z.literal("operation"),
 				type: z.literal("dropdown"),
 				value: z.string(),
-				default: z.literal("create_database_row"),
+				default: z.literal("get_page_content"),
 				required: z.boolean().default(true),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
 					.default([
-						{ label: "Create Database Row", value: "create_database_row" },
+						{ label: "Get Page Content", value: "get_page_content" },
 						{ label: "Create Page", value: "create_page" },
 						{ label: "Append to Page", value: "append_blocks" },
+						{ label: "Create Database Row", value: "create_database_row" },
 					]),
 			}),
 
 			nodeParameterSchema.extend({
-				name: z.literal("databaseId"),
-				label: z.literal("database ID"),
+				name: z.literal("pageId"),
+				label: z.literal("page ID"),
 				type: z.literal("input"),
 				value: z.string(),
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_database_row"] },
+					{
+						parameter: "operation",
+						values: ["append_blocks", "get_page_content"],
+					},
 				]),
 			}),
 
@@ -46,17 +50,6 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
 					{ parameter: "operation", values: ["create_page"] },
-				]),
-			}),
-
-			nodeParameterSchema.extend({
-				name: z.literal("pageId"),
-				label: z.literal("page ID"),
-				type: z.literal("input"),
-				value: z.string(),
-				required: z.boolean().default(true),
-				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["append_blocks"] },
 				]),
 			}),
 
@@ -85,6 +78,17 @@ export const notionNodeSchema = baseNodeSchema.extend({
 						parameter: "operation",
 						values: ["create_page", "append_blocks"],
 					},
+				]),
+			}),
+
+			nodeParameterSchema.extend({
+				name: z.literal("databaseId"),
+				label: z.literal("database ID"),
+				type: z.literal("input"),
+				value: z.string(),
+				required: z.boolean().default(true),
+				dependsOn: dependsOnSchema.default([
+					{ parameter: "operation", values: ["create_database_row"] },
 				]),
 			}),
 

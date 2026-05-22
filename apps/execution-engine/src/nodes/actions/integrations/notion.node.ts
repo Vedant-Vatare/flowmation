@@ -9,7 +9,11 @@ const NOTION_API = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
 
 const toNotionUUID = (input: string): string => {
-	if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input)) {
+	if (
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+			input,
+		)
+	) {
 		return input;
 	}
 	const hexMatch = input.match(/([0-9a-f]{32})/i);
@@ -26,13 +30,127 @@ const buildTitleProperty = (title: string) => ({
 	},
 });
 
-const buildParagraphBlock = (content: string) => ({
-	object: "block" as const,
-	type: "paragraph" as const,
-	paragraph: {
-		rich_text: [{ type: "text" as const, text: { content } }],
-	},
-});
+const textToNotionBlocks = (content: string) => {
+	const lines = content.split("\n").filter((line) => line.trim() !== "");
+
+	return lines.map((line) => {
+		if (line.startsWith("### "))
+			return {
+				object: "block" as const,
+				type: "heading_3" as const,
+				heading_3: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(4) } },
+					],
+				},
+			};
+		if (line.startsWith("## "))
+			return {
+				object: "block" as const,
+				type: "heading_2" as const,
+				heading_2: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(3) } },
+					],
+				},
+			};
+		if (line.startsWith("# "))
+			return {
+				object: "block" as const,
+				type: "heading_1" as const,
+				heading_1: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(2) } },
+					],
+				},
+			};
+
+		if (line.startsWith("- "))
+			return {
+				object: "block" as const,
+				type: "bulleted_list_item" as const,
+				bulleted_list_item: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(2) } },
+					],
+				},
+			};
+		if (/^\d+\. /.test(line))
+			return {
+				object: "block" as const,
+				type: "numbered_list_item" as const,
+				numbered_list_item: {
+					rich_text: [
+						{
+							type: "text" as const,
+							text: { content: line.replace(/^\d+\. /, "") },
+						},
+					],
+				},
+			};
+
+		if (line.startsWith("[ ] "))
+			return {
+				object: "block" as const,
+				type: "to_do" as const,
+				to_do: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(4) } },
+					],
+					checked: false,
+				},
+			};
+		if (line.startsWith("[x] ") || line.startsWith("[X] "))
+			return {
+				object: "block" as const,
+				type: "to_do" as const,
+				to_do: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(4) } },
+					],
+					checked: true,
+				},
+			};
+
+		if (line.startsWith("> "))
+			return {
+				object: "block" as const,
+				type: "quote" as const,
+				quote: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(2) } },
+					],
+				},
+			};
+
+		if (line.trim() === "---")
+			return {
+				object: "block" as const,
+				type: "divider" as const,
+				divider: {},
+			};
+
+		if (line.startsWith("`") && line.endsWith("`") && line.length > 2)
+			return {
+				object: "block" as const,
+				type: "code" as const,
+				code: {
+					rich_text: [
+						{ type: "text" as const, text: { content: line.slice(1, -1) } },
+					],
+					language: "plain text",
+				},
+			};
+
+		return {
+			object: "block" as const,
+			type: "paragraph" as const,
+			paragraph: {
+				rich_text: [{ type: "text" as const, text: { content: line } }],
+			},
+		};
+	});
+};
 
 const mergeProperties = (
 	title: string,
@@ -81,7 +199,9 @@ export const notionNodeExecutor = async (
 		};
 
 		if (operation === "create_database_row") {
-			const databaseId = toNotionUUID((params.databaseId?.value as string) ?? "");
+			const databaseId = toNotionUUID(
+				(params.databaseId?.value as string) ?? "",
+			);
 			const title = params.title?.value as string;
 			const properties = params.properties?.value as string | undefined;
 
@@ -103,7 +223,9 @@ export const notionNodeExecutor = async (
 		}
 
 		if (operation === "create_page") {
-			const parentPageId = toNotionUUID((params.parentPageId?.value as string) ?? "");
+			const parentPageId = toNotionUUID(
+				(params.parentPageId?.value as string) ?? "",
+			);
 			const title = params.title?.value as string;
 			const content = params.content?.value as string | undefined;
 
@@ -117,7 +239,7 @@ export const notionNodeExecutor = async (
 			};
 
 			if (content) {
-				body.children = [buildParagraphBlock(content)];
+				body.children = textToNotionBlocks(content);
 			}
 
 			const response = await fetch(`${NOTION_API}/pages`, {
@@ -140,7 +262,7 @@ export const notionNodeExecutor = async (
 			}
 
 			const body = {
-				children: [buildParagraphBlock(content)],
+				children: textToNotionBlocks(content),
 			};
 
 			const response = await fetch(`${NOTION_API}/blocks/${blockId}/children`, {
@@ -148,6 +270,19 @@ export const notionNodeExecutor = async (
 				headers,
 				body: JSON.stringify(body),
 			});
+
+			return handleResponse(response);
+		}
+
+		if (operation === "get_page_content") {
+			const pageId = toNotionUUID((params.pageId?.value as string) ?? "");
+
+			if (!pageId) throw new UnrecoverableError("pageId is required");
+
+			const response = await fetch(
+				`${NOTION_API}/blocks/${pageId}/children?page_size=100`,
+				{ headers },
+			);
 
 			return handleResponse(response);
 		}
