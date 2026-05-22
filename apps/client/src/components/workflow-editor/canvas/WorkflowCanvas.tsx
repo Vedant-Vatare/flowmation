@@ -1,6 +1,5 @@
 import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import {
-	addEdge,
 	Background,
 	type Connection,
 	ConnectionMode,
@@ -10,9 +9,7 @@ import {
 	type NodeTypes,
 	type OnEdgesDelete,
 	ReactFlow,
-	reconnectEdge,
-	useEdgesState,
-	useNodesState,
+	useNodes,
 	useReactFlow,
 } from "@xyflow/react";
 
@@ -65,16 +62,13 @@ const WorkflowCanvas = () => {
 	const { mutate: deleteConnection } = useDeleteWorkflowConn();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 
-	const [nodes, setNodes, onNodesChange] = useNodesState<WorkflowCanvasNode>(
-		[],
-	);
-	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+	const { fitView, getNodes, setNodes, setEdges } =
+		useReactFlow<WorkflowCanvasNode>();
+	const nodes = useNodes();
 
 	const triggerFocusRequestKey = useWorkflowTriggerStore(
 		(s) => s.triggerFocusRequestKey,
 	);
-
-	const { fitView } = useReactFlow();
 
 	useEffect(() => {
 		if (!workflowNodes) return;
@@ -85,6 +79,9 @@ const WorkflowCanvas = () => {
 		if (!workflowConnections) return;
 		setEdges(toCanvasEdges(workflowConnections));
 	}, [workflowConnections, setEdges]);
+
+	const canvasNodes = workflowNodes ? toCanvasNodes(workflowNodes) : [];
+	const canvasEdges = workflowConnections ? toCanvasEdges(workflowConnections) : [];
 
 	useEffect(() => {
 		if (!triggerFocusRequestKey) return;
@@ -143,8 +140,7 @@ const WorkflowCanvas = () => {
 
 	const onConnect = useCallback(
 		(connection: Connection) => {
-			if (!connection.sourceHandle || !connection.targetHandle) return null;
-			setEdges((eds) => addEdge(connection, eds));
+			if (!connection.sourceHandle || !connection.targetHandle) return;
 			createNewConnection({
 				id: crypto.randomUUID(),
 				workflowId,
@@ -154,7 +150,7 @@ const WorkflowCanvas = () => {
 				targetPort: connection.targetHandle,
 			});
 		},
-		[setEdges, createNewConnection, workflowId],
+		[createNewConnection, workflowId],
 	);
 
 	const onReconnect = useCallback(
@@ -164,9 +160,8 @@ const WorkflowCanvas = () => {
 				!newConnection.sourceHandle ||
 				!newConnection.targetHandle
 			)
-				return null;
+				return;
 
-			setEdges((eds) => reconnectEdge(oldEdge, newConnection, eds));
 			updateConnection({
 				id: oldEdge.id,
 				workflowId,
@@ -176,7 +171,7 @@ const WorkflowCanvas = () => {
 				targetPort: newConnection.targetHandle,
 			});
 		},
-		[setEdges, isConnectionChanged, workflowId, updateConnection],
+		[isConnectionChanged, workflowId, updateConnection],
 	);
 
 	const onEdgesDelete: OnEdgesDelete<Edge> = useCallback(
@@ -203,7 +198,7 @@ const WorkflowCanvas = () => {
 
 	const onNodeDragStop = useCallback(
 		(_e: React.MouseEvent<Element, MouseEvent>, node: WorkflowCanvasNode) => {
-			const currentNodes = nodes;
+			const currentNodes = getNodes();
 			const resolvedPositions = resolveCollisions([...currentNodes], {
 				maxIterations: 50,
 				overlapThreshold: 0.5,
@@ -235,17 +230,17 @@ const WorkflowCanvas = () => {
 				updateNodesPositions({ workflowId, nodes: changedNodes });
 			}
 		},
-		[updateNodesPositions, setNodes, workflowId, nodes, debouncedSaveNode],
+		[updateNodesPositions, workflowId, debouncedSaveNode, setNodes, getNodes],
 	);
 
 	if (nodesLoading || connectionsLoading) {
 		return <Loader fullPage={false} />;
 	}
 
-	return (
+		return (
 		<ReactFlow
-			nodes={nodes}
-			edges={edges}
+			defaultNodes={canvasNodes}
+			defaultEdges={canvasEdges}
 			nodeTypes={nodeTypes}
 			proOptions={{ hideAttribution: true }}
 			fitView={false}
@@ -260,8 +255,6 @@ const WorkflowCanvas = () => {
 			onNodeClick={(_e, node) => handleNodeClick(node)}
 			onNodesDelete={onNodesDelete}
 			onNodeDragStop={onNodeDragStop}
-			onNodesChange={onNodesChange}
-			onEdgesChange={onEdgesChange}
 			onEdgesDelete={onEdgesDelete}
 			onConnect={onConnect}
 			onReconnect={onReconnect}
