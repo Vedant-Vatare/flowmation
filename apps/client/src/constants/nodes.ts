@@ -13,6 +13,7 @@ import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
+import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
 import WebhookIcon from "@/assets/icons/nodes/webhook.svg?react";
 
@@ -22,6 +23,7 @@ export type NodeUI = {
 	color?: string;
 	background?: string;
 	fill?: string;
+	branded?: boolean;
 };
 
 export type PortDefinition = {
@@ -115,24 +117,34 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: GmailIcon,
 		background: "#e5e5e5",
 		color: "green",
+		branded: true,
 	},
 	"action.github": {
 		name: "GitHub",
 		icon: GitHubIcon,
 		background: "#2e3333",
 		color: "#ffffff",
+		branded: true,
 	},
 	"action.discord": {
 		name: "Discord",
 		icon: DiscordIcon,
 		background: "#5865F2",
 		color: "#ffffff",
+		branded: true,
 	},
 	"action.notion": {
 		name: "Notion",
 		icon: NotionIcon,
 		background: "#FFFEFC",
+		branded: true,
+	},
+	"action.slack": {
+		name: "Slack",
+		icon: SlackIcon,
+		background: "#E01E5A",
 		color: "#ffffff",
+		branded: true,
 	},
 };
 

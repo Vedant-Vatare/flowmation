@@ -44,13 +44,17 @@ const NodeItem = ({
 			className="flex gap-2 items-center w-full cursor-pointer"
 			onClick={onClick}
 		>
-			<Icon
-				className="h-6 w-6 p-1 rounded-sm shrink-0"
-				style={{
-					color: ui.color ?? "currentColor",
-					background: ui.background ?? "#21212A",
-				}}
-			/>
+			{ui.branded ? (
+				<Icon className="size-5 rounded-sm shrink-0" />
+			) : (
+				<Icon
+					className="size-5 p-0.5 rounded-sm shrink-0"
+					style={{
+						color: ui.color ?? "currentColor",
+						background: ui.background ?? "#21212A",
+					}}
+				/>
+			)}
 			<span className="capitalize">{node.name}</span>
 		</button>
 	);

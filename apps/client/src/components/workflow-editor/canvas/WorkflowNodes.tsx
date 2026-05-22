@@ -114,7 +114,7 @@ export const WorkflowNode = memo(
 					className="w-10 h-10 rounded-lg flex items-center justify-center"
 				>
 					<Icon
-						style={{ color: ui.color ?? "#ffffff" }}
+						style={ui.branded ? {} : { color: ui.color ?? "#ffffff" }}
 						className="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
 					/>
 				</div>

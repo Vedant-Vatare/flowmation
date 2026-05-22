@@ -115,7 +115,7 @@ export const NodeField = memo(
 
 const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const { workflowId } = Route.useParams();
-	const { icon: Icon, color, background } = node.data.ui;
+	const { icon: Icon, color, background, branded } = node.data.ui;
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [isDuplicateName, setIsDuplicateName] = useState(false);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
@@ -162,14 +162,18 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const deboucedCheckDuplicate = useDebounce(checkForDuplicate, undefined, 200);
 
 	return (
-		<div className="relative flex gap-3 py-2 my-2 items-center bg-muted p-1">
-			<Icon
-				className="h-6 w-6 p-1 rounded-sm shrink-0"
-				style={{
-					color: color ?? "currentColor",
-					background: background ?? "#21212A",
-				}}
-			/>
+		<div className="relative flex gap-3 py-2 my-2 pl-2.5 items-center bg-muted p-1">
+			{branded ? (
+				<Icon className="size-5 rounded-sm shrink-0" />
+			) : (
+				<Icon
+					className="size-5 p-0.5 rounded-sm shrink-0"
+					style={{
+						color: color ?? "currentColor",
+						background: background ?? "#21212A",
+					}}
+				/>
+			)}
 			<div className="flex flex-col min-w-0">
 				<span
 					ref={nodeNameRef}
