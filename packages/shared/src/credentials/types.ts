@@ -11,6 +11,7 @@ export type OAuth2CredentialDef = {
 	pkce?: boolean;
 	tokenContentType?: "json" | "form";
 	getAccountIdentifier?: (accessToken: string) => Promise<string | null>;
+	customAuthParams?: Record<string, string>;
 };
 
 export type ApiKeyCredentialDef = {

@@ -9,6 +9,7 @@ import type {
 	InputNode,
 	MergeNode,
 	NotionNode,
+	SlackNode,
 	WaitNode,
 	WorkflowNode,
 } from "@nodebase/shared";
@@ -19,6 +20,7 @@ import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.j
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
+import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
@@ -63,6 +65,8 @@ export const executeNode = ({
 			return discordNodeExecutor(node as DiscordNode, executionId);
 		case "action.notion":
 			return notionNodeExecutor(node as NotionNode, executionId);
+		case "action.slack":
+			return slackNodeExecutor(node as SlackNode, executionId);
 
 		default:
 			return {

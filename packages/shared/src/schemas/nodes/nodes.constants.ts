@@ -9,6 +9,7 @@ import { discordNodeSchema } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema } from "./integrations/github.schema.js";
 import { gmailNodeSchema } from "./integrations/gmail.schema.js";
 import { notionNodeSchema } from "./integrations/notion.schema.js";
+import { slackNodeSchema } from "./integrations/slack.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -32,4 +33,5 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.github", gitHubNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.notion", notionNodeSchema],
+	["action.slack", slackNodeSchema],
 ]);

@@ -72,15 +72,22 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		client_id: clientId,
 		redirect_uri: redirectUri,
 		response_type: "code",
-		scope: credentialDefinition.scopes.join(
-			credentialDefinition.scopeSeparator ?? " ",
-		),
 		access_type: "offline",
 		prompt: "consent",
 		state: state,
 		code_challenge: codeChallenge,
 		code_challenge_method: "S256",
+		...credentialDefinition.customAuthParams,
 	});
+
+	if (credentialDefinition.scopes.length > 0) {
+		params.set(
+			"scope",
+			credentialDefinition.scopes.join(
+				credentialDefinition.scopeSeparator ?? " ",
+			),
+		);
+	}
 
 	return res.redirect(`${credentialDefinition.authUrl}?${params.toString()}`);
 };
@@ -170,16 +177,31 @@ export const oauthCallback = async (req: Request, res: Response) => {
 				: new URLSearchParams(bodyParams),
 	});
 
-	if (!tokenResponse.ok) {
-		const err = await tokenResponse.text();
-		throw createHttpError.BadRequest(`Failed to exchange code: ${err}`);
+	const tokens = (await tokenResponse.json()) as {
+		ok?: boolean;
+		error?: string;
+		expires_in?: number;
+		access_token?: string;
+		refresh_token?: string;
+		authed_user?: {
+			access_token: string;
+		};
+	};
+
+	if (!tokenResponse.ok || tokens.ok === false) {
+		throw createHttpError.BadRequest(
+			`Failed to exchange code: ${tokens.error ?? JSON.stringify(tokens)}`,
+		);
 	}
 
-	const tokens = (await tokenResponse.json()) as {
-		expires_in: number;
-		access_token: string;
-		refresh_token: string;
-	};
+	let accessToken = tokens.access_token;
+	if (!accessToken && tokens.authed_user?.access_token) {
+		accessToken = tokens.authed_user.access_token;
+	}
+
+	if (!accessToken) {
+		throw createHttpError.BadRequest("No access token received from provider");
+	}
 
 	let expiresAt = null;
 	if (tokens.expires_in) {
@@ -188,7 +210,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 
 	let accountIdentifier: string | null = null;
 	if (def.getAccountIdentifier) {
-		accountIdentifier = await def.getAccountIdentifier(tokens.access_token);
+		accountIdentifier = await def.getAccountIdentifier(accessToken);
 	}
 
 	const credentialName = accountIdentifier
@@ -200,7 +222,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		provider: provider,
 		name: credentialName,
 		type: "oauth",
-		accessToken: encrypt(tokens.access_token),
+		accessToken: encrypt(accessToken),
 		refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
 		expiresAt,
 	});
