@@ -6,6 +6,7 @@ import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
 import GitHubIcon from "@/assets/icons/nodes/github.svg?react";
 import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
+import GoogleSheetsIcon from "@/assets/icons/nodes/google-sheets.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
@@ -111,6 +112,13 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: MergeIcon,
 		background: "#3d348b",
 		color: "#ffffff",
+	},
+	"action.google_sheets": {
+		name: "Google Sheets",
+		icon: GoogleSheetsIcon,
+		background: "#d4edda",
+		color: "#155724",
+		branded: true,
 	},
 	"action.gmail": {
 		name: "Gmail",

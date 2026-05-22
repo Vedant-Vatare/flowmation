@@ -2,6 +2,7 @@ export * from "./action.nodes.js";
 export * from "./base.nodes.js";
 export * from "./control.nodes.js";
 export * from "./integrations/discord.schema.js";
+export * from "./integrations/google-sheets.schema.js";
 export * from "./integrations/github.schema.js";
 export * from "./integrations/gmail.schema.js";
 export * from "./integrations/notion.schema.js";

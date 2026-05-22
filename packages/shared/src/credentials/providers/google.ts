@@ -7,12 +7,15 @@ export const googleCredential: OAuth2CredentialDef = {
 	icon: "google",
 	authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
 	tokenUrl: "https://oauth2.googleapis.com/token",
+	authMethod: "body",
+	pkce: true,
 	scopes: [
 		"https://www.googleapis.com/auth/gmail.send",
 		"https://www.googleapis.com/auth/gmail.readonly",
 		"https://www.googleapis.com/auth/gmail.compose",
 		"https://www.googleapis.com/auth/gmail.modify",
 		"https://www.googleapis.com/auth/userinfo.email",
+		"https://www.googleapis.com/auth/spreadsheets",
 	],
 	getAccountIdentifier: async (accessToken: string) => {
 		try {

@@ -8,6 +8,7 @@ import { conditionalNodeSchema } from "./control.nodes.js";
 import { discordNodeSchema } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema } from "./integrations/github.schema.js";
 import { gmailNodeSchema } from "./integrations/gmail.schema.js";
+import { googleSheetsNodeSchema } from "./integrations/google-sheets.schema.js";
 import { notionNodeSchema } from "./integrations/notion.schema.js";
 import { slackNodeSchema } from "./integrations/slack.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
@@ -30,6 +31,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.webhook", webhookNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.gmail", gmailNodeSchema],
+	["action.google_sheets", googleSheetsNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.notion", notionNodeSchema],
