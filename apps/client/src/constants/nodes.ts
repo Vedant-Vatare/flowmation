@@ -1,6 +1,7 @@
 import type { WorkflowNode } from "@nodebase/shared";
 import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
+import AiIcon from "@/assets/icons/nodes/ai.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
@@ -55,6 +56,12 @@ export type WorkflowNodeData = Pick<
 export type WorkflowCanvasNode = Node<WorkflowNodeData>;
 
 export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
+	"action.ai": {
+		name: "AI",
+		icon: AiIcon,
+		background: "#778da9",
+		color: "#ffffff",
+	},
 	"action.click": {
 		name: "Click",
 		icon: ClickIcon,
