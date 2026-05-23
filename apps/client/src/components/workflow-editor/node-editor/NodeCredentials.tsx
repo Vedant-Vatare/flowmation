@@ -13,6 +13,17 @@ import type { WorkflowNodeData } from "@/constants/nodes";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { useGetCredentials } from "@/queries/credentials";
 
+const truncateEmail = (name: string, maxLen = 28) => {
+	if (name.length <= maxLen) return name;
+	const atIndex = name.lastIndexOf("@");
+	if (atIndex === -1) return name.slice(0, maxLen) + "...";
+	const local = name.slice(0, atIndex);
+	const domain = name.slice(atIndex);
+	const available = maxLen - domain.length - 3;
+	if (available < 2) return name.slice(0, maxLen) + "...";
+	return local.slice(0, available) + "..." + domain;
+};
+
 export const NodeCredentials = memo(
 	({
 		nodeData,
@@ -51,6 +62,7 @@ export const NodeCredentials = memo(
 		const handleConnect = () => {
 			const apiUrl = import.meta.env.VITE_API_URL;
 			const token = localStorage.getItem("token");
+			const label = encodeURIComponent(nodeData.name);
 
 			const width = 600;
 			const height = 700;
@@ -60,7 +72,7 @@ export const NodeCredentials = memo(
 			);
 
 			window.open(
-				`${apiUrl}/credentials/oauth/${provider}/connect?source=popup&token=${token}`,
+				`${apiUrl}/credentials/oauth/${provider}/connect?source=popup&token=${token}&label=${label}`,
 				"oauth_popup",
 				`width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`,
 			);
@@ -90,8 +102,10 @@ export const NodeCredentials = memo(
 								</SelectTrigger>
 								<SelectContent>
 									{providerCredentials.map((cred) => (
-										<SelectItem key={cred.id} value={cred.id}>
-											{cred.name}
+										<SelectItem key={cred.id} value={cred.id} title={cred.name}>
+											<span className="truncate block max-w-[220px]">
+												{truncateEmail(cred.name)}
+											</span>
 										</SelectItem>
 									))}
 								</SelectContent>
