@@ -30,6 +30,8 @@ export const connectOAuth = async (req: Request, res: Response) => {
 	const provider = req.params.provider as string;
 	const userId = res.locals.userId as string;
 	const isPopup = req.query.source === "popup";
+	const label =
+		typeof req.query.label === "string" ? req.query.label.trim() : "";
 
 	const credentialDefinition = credentialRegistry[provider];
 
@@ -67,6 +69,9 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		isPopup ? "true" : "false",
 		cookieOptions,
 	);
+	if (label) {
+		res.cookie(`oauth_${provider}_label`, label, cookieOptions);
+	}
 
 	const params = new URLSearchParams({
 		client_id: clientId,
@@ -124,6 +129,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 	res.clearCookie(`oauth_${provider}_state`);
 	res.clearCookie(`oauth_${provider}_verifier`);
 	res.clearCookie(`oauth_${provider}_isPopup`);
+	res.clearCookie(`oauth_${provider}_label`);
 
 	const stateStr = Buffer.from(state, "base64url").toString("utf8");
 	const stateObj = JSON.parse(stateStr);
@@ -213,9 +219,12 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		accountIdentifier = await def.getAccountIdentifier(accessToken);
 	}
 
+	const savedLabel = req.cookies[`oauth_${provider}_label`] || "";
 	const credentialName = accountIdentifier
-		? `${accountIdentifier}`
-		: `${def.name} Account`;
+		? savedLabel
+			? `${savedLabel} - ${accountIdentifier}`
+			: accountIdentifier
+		: `${savedLabel || def.name} Account`;
 
 	await db.insert(credentialsTable).values({
 		userId: userId,

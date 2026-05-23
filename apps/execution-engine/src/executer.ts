@@ -5,6 +5,7 @@ import type {
 	DiscordNode,
 	GitHubNode,
 	GmailNode,
+	GoogleCalendarNode,
 	GoogleSheetsNode,
 	HttpNode,
 	InputNode,
@@ -20,6 +21,7 @@ import { httpNodeExecutor } from "./nodes/actions/http.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
+import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
@@ -61,6 +63,8 @@ export const executeNode = ({
 			);
 		case "action.gmail":
 			return gmailNodeExecutor(node as GmailNode, executionId);
+		case "action.google_calendar":
+			return googleCalendarNodeExecutor(node as GoogleCalendarNode, executionId);
 		case "action.google_sheets":
 			return googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId);
 		case "action.github":
