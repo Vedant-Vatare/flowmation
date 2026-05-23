@@ -1,6 +1,7 @@
 import type { GoogleSheetsNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
+import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
@@ -10,29 +11,6 @@ const parseValues = (raw: string): string[][] => {
 		.map((line) => line.trim())
 		.filter(Boolean)
 		.map((line) => line.split(",").map((cell) => cell.trim()));
-};
-
-const handleSheetsResponse = async (
-	response: Response,
-): Promise<NodeExecutorOutput> => {
-	const data = (await response.json().catch(() => ({}))) as Record<
-		string,
-		unknown
-	>;
-	if (!response.ok) {
-		const errorData = data.error as
-			| { message?: string; status?: number }
-			| undefined;
-		return {
-			success: false,
-			message:
-				errorData?.message ||
-				(data.message as string) ||
-				`Google Sheets API returned ${response.status}`,
-			output: data,
-		};
-	}
-	return { success: true, output: data };
 };
 
 export const googleSheetsNodeExecutor = async (
@@ -80,7 +58,7 @@ export const googleSheetsNodeExecutor = async (
 				headers: { Authorization: `Bearer ${credential.accessToken}` },
 			});
 
-			return handleSheetsResponse(response);
+			return handleGoogleAPIResponse(response);
 		}
 
 		if (operation === "update_values") {
@@ -107,7 +85,7 @@ export const googleSheetsNodeExecutor = async (
 				body: JSON.stringify({ values }),
 			});
 
-			return handleSheetsResponse(response);
+			return handleGoogleAPIResponse(response);
 		}
 
 		if (operation === "append_values") {
@@ -134,7 +112,7 @@ export const googleSheetsNodeExecutor = async (
 				body: JSON.stringify({ values }),
 			});
 
-			return handleSheetsResponse(response);
+			return handleGoogleAPIResponse(response);
 		}
 
 		return { success: false, message: `Unsupported operation: ${operation}` };
