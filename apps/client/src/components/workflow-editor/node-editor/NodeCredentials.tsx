@@ -1,7 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { memo, useEffect } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
@@ -11,17 +12,19 @@ import {
 } from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
-import { useGetCredentials } from "@/queries/credentials";
+import { useGetCredentials, useSaveApiKey } from "@/queries/credentials";
+
+const API_KEY_PROVIDERS = ["ai"];
 
 const truncateEmail = (name: string, maxLen = 28) => {
 	if (name.length <= maxLen) return name;
 	const atIndex = name.lastIndexOf("@");
-	if (atIndex === -1) return name.slice(0, maxLen) + "...";
+	if (atIndex === -1) return `${name.slice(0, maxLen)}...`;
 	const local = name.slice(0, atIndex);
 	const domain = name.slice(atIndex);
 	const available = maxLen - domain.length - 3;
-	if (available < 2) return name.slice(0, maxLen) + "...";
-	return local.slice(0, available) + "..." + domain;
+	if (available < 2) return `${name.slice(0, maxLen)}...`;
+	return `${local.slice(0, available)}...${domain}`;
 };
 
 export const NodeCredentials = memo(
@@ -35,12 +38,16 @@ export const NodeCredentials = memo(
 		const { icon: Icon } = nodeData.ui;
 		const getCredentialProvider = useNodeCredentialProvider();
 		const provider = getCredentialProvider(nodeData.task);
-		const queryClient = useQueryClient();
 		const {
 			data: credentials = [],
 			isLoading,
 			isFetching,
 		} = useGetCredentials();
+		const queryClient = useQueryClient();
+		const saveApiKeyMutation = useSaveApiKey();
+		const [apiKey, setApiKey] = useState("");
+		const [credName, setCredName] = useState("");
+		const [showForm, setShowForm] = useState(false);
 
 		useEffect(() => {
 			const handleMessage = (event: MessageEvent) => {
@@ -52,6 +59,28 @@ export const NodeCredentials = memo(
 			window.addEventListener("message", handleMessage);
 			return () => window.removeEventListener("message", handleMessage);
 		}, [queryClient]);
+
+		const isApiKeyProvider = provider
+			? API_KEY_PROVIDERS.includes(provider)
+			: false;
+
+		const handleSaveApiKey = useCallback(async () => {
+			if (!provider || !apiKey.trim()) return;
+			saveApiKeyMutation.mutate(
+				{
+					provider,
+					apiKey,
+					name: credName.trim() || `${provider} API Key`,
+				},
+				{
+					onSuccess: () => {
+						setApiKey("");
+						setCredName("");
+						setShowForm(false);
+					},
+				},
+			);
+		}, [provider, apiKey, credName, saveApiKeyMutation]);
 
 		if (!provider) return null;
 
@@ -81,8 +110,8 @@ export const NodeCredentials = memo(
 		if (isLoading || isFetching) return null;
 
 		return (
-			<div className="space-y-3 mb-6 px-1">
-				<div className="text-muted-foreground uppercase text-xs font-semibold tracking-wider">
+			<div className="flex flex-col gap-2 px-3 py-3 border-b border-border/50">
+				<div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none">
 					Credentials
 				</div>
 
@@ -95,7 +124,7 @@ export const NodeCredentials = memo(
 								value={(field.value as string) || ""}
 								onValueChange={field.onChange}
 							>
-								<SelectTrigger className="w-full">
+								<SelectTrigger className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
 									<SelectValue
 										placeholder={`Select a ${provider} account...`}
 									/>
@@ -103,7 +132,7 @@ export const NodeCredentials = memo(
 								<SelectContent>
 									{providerCredentials.map((cred) => (
 										<SelectItem key={cred.id} value={cred.id} title={cred.name}>
-											<span className="truncate block max-w-[220px]">
+											<span className="truncate block max-w-55">
 												{truncateEmail(cred.name)}
 											</span>
 										</SelectItem>
@@ -114,16 +143,70 @@ export const NodeCredentials = memo(
 					/>
 				)}
 
-				<Button
-					variant="outline"
-					size="icon-lg"
-					className="w-[95%] mx-auto mt-2 gap-2 flex items-center"
-					onClick={handleConnect}
-					type="button"
-				>
-					<Icon className="size-6 p-1 rounded-sm" />
-					Add {provider} Account
-				</Button>
+				{isApiKeyProvider ? (
+					showForm ? (
+						<div className="flex flex-col gap-2">
+							<Input
+								placeholder="Credential name"
+								value={credName}
+								onChange={(e) => setCredName(e.target.value)}
+								className="rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
+							/>
+							<Input
+								placeholder="sk-..."
+								value={apiKey}
+								onChange={(e) => setApiKey(e.target.value)}
+								type="password"
+								className="rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
+							/>
+							<div className="flex items-center gap-2 pt-1">
+								<Button
+									variant="secondary"
+									size="sm"
+									onClick={handleSaveApiKey}
+									disabled={saveApiKeyMutation.isPending || !apiKey.trim()}
+									type="button"
+								>
+									{saveApiKeyMutation.isPending ? "Saving..." : "Save"}
+								</Button>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => {
+										setShowForm(false);
+										setApiKey("");
+										setCredName("");
+									}}
+									type="button"
+								>
+									Cancel
+								</Button>
+							</div>
+						</div>
+					) : (
+						<Button
+							variant="outline"
+							size="sm"
+							className="gap-1.5 self-start"
+							onClick={() => setShowForm(true)}
+							type="button"
+						>
+							<Icon className="size-4" />
+							Add {provider} API Key
+						</Button>
+					)
+				) : (
+					<Button
+						variant="outline"
+						size="sm"
+						className="gap-1.5 self-start"
+						onClick={handleConnect}
+						type="button"
+					>
+						<Icon className="size-4" />
+						Add {provider} Account
+					</Button>
+				)}
 			</div>
 		);
 	},

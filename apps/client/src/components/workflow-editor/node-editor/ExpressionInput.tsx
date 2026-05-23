@@ -237,7 +237,6 @@ export const ExpressionInput = ({
 							...sharedStyle,
 							position: "relative",
 							zIndex: 1,
-							background: "transparent",
 							color: "inherit",
 							caretColor: "var(--foreground)",
 							resize: multiline ? "vertical" : undefined,
@@ -247,6 +246,7 @@ export const ExpressionInput = ({
 							"focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
 							"placeholder:text-muted-foreground",
 							"disabled:cursor-not-allowed disabled:opacity-50",
+							"bg-muted/50",
 							className,
 						].join(" ")}
 					/>

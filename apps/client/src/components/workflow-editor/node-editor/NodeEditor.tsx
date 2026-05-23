@@ -170,7 +170,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 					className="size-5 p-0.5 rounded-sm shrink-0"
 					style={{
 						color: color ?? "currentColor",
-						background: background ?? "#21212A",
+						...(background ? { background } : {}),
 					}}
 				/>
 			)}
@@ -288,21 +288,26 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		<div className="flex flex-col h-full w-full bg-background shadow-sm">
 			<div className="sticky top-0 z-10 bg-background">
 				<NodeNameSection node={node} />
-				<div className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 h-1 mb-3">
-					{editorStatus === "saving" ? (
-						<span className="text-white/40 flex items-center gap-1">
-							<Loader2 className="h-3 w-3 animate-spin" />
-							Saving…
-						</span>
-					) : editorStatus === "missing" ? (
-						<span className="text-amber-400/70 truncate">
-							Required fields missing
-						</span>
-					) : null}
-				</div>
+				{editorStatus !== "idle" && (
+					<div
+						className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 pb-2"
+						aria-live="polite"
+					>
+						{editorStatus === "saving" ? (
+							<span className="text-muted-foreground/70 flex items-center gap-1">
+								<Loader2 className="h-3 w-3 animate-spin" />
+								Saving…
+							</span>
+						) : (
+							<span className="text-destructive/80 truncate">
+								Required fields missing
+							</span>
+						)}
+					</div>
+				)}
 			</div>
 
-			<div className="flex flex-col pb-10">
+			<div className="flex flex-col">
 				<NodeConfig
 					nodeData={node.data}
 					register={register}

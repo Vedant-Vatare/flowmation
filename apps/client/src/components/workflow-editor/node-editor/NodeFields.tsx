@@ -51,11 +51,8 @@ const FieldWrapper = ({
 				{field.label}
 			</label>
 			{field.required && (
-				<span
-					className="text-destructive text-[10px] leading-none"
-					title="Required"
-				>
-					*
+				<span className="text-destructive text-[10px] leading-none">
+					*<span className="sr-only">required</span>
 				</span>
 			)}
 		</div>
@@ -298,10 +295,7 @@ export const DropdownField = ({
 				control={control}
 				render={({ field: f }) => (
 					<Select value={(f.value as string) ?? ""} onValueChange={f.onChange}>
-						<SelectTrigger
-							id={field.name}
-							className="bg-muted/50 border-input text-sm"
-						>
+						<SelectTrigger id={field.name} className="w-full bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
 							<SelectValue
 								placeholder={field.placeholder ?? "Select an option"}
 							/>
@@ -415,7 +409,7 @@ export const ArrayField = ({
 								<button
 									type="button"
 									onClick={() => remove(idx)}
-									className="h-7 w-7 shrink-0 flex items-center justify-center rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+									className="min-h-9 min-w-9 shrink-0 flex items-center justify-center rounded text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
 								>
 									<Trash2 className="h-3.5 w-3.5" />
 								</button>
@@ -425,7 +419,7 @@ export const ArrayField = ({
 						<button
 							type="button"
 							onClick={add}
-							className="flex items-center justify-center gap-1.5 w-full h-7 rounded-md border border-dashed border-border/60 text-xs text-muted-foreground/50 hover:text-foreground hover:border-border transition-colors mt-0.5"
+							className="flex items-center justify-center gap-1.5 w-full min-h-9 rounded-md border border-dashed border-border/60 text-xs text-muted-foreground/50 hover:text-foreground hover:border-border transition-colors mt-0.5"
 						>
 							<Plus className="h-3 w-3" />
 							Add item
@@ -523,7 +517,7 @@ const KeyValueEditor = ({
 						type="button"
 						onClick={() => remove(idx)}
 						className={[
-							"h-6 w-6 shrink-0 flex items-center justify-center rounded",
+							"min-h-9 min-w-9 shrink-0 flex items-center justify-center rounded",
 							"text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors",
 							idx < pairs.length - 1
 								? "opacity-0 group-hover/kv:opacity-100 transition-opacity"

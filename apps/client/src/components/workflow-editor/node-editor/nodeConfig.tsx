@@ -40,10 +40,18 @@ const checkNodeConfigs = (
 	return false;
 };
 
+const SectionDivider = () => (
+	<div className="h-px bg-border/20 mx-3" />
+);
+
 export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	const getCredentialProvider = useNodeCredentialProvider();
 	const credentialprovider = getCredentialProvider(nodeData.task);
 	const hasConfigs = checkNodeConfigs(nodeData, credentialprovider);
+	const showInfo = nodesWithInfo.includes(
+		nodeData.task as (typeof nodesWithInfo)[number],
+	);
+	const showCredentials = !!credentialprovider;
 
 	if (!hasConfigs) {
 		return (
@@ -56,7 +64,9 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	return (
 		<>
 			<NodeInfo nodeData={nodeData} />
+			{showInfo && showCredentials && <SectionDivider />}
 			<NodeCredentials nodeData={nodeData} control={control} />
+			{showCredentials && nodeData.parameters.length > 0 && <SectionDivider />}
 			<NodeParameters
 				nodeData={nodeData}
 				register={register}
