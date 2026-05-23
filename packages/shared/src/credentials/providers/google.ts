@@ -17,6 +17,9 @@ export const googleCredential: OAuth2CredentialDef = {
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/spreadsheets",
 		"https://www.googleapis.com/auth/calendar",
+		"https://www.googleapis.com/auth/drive.file",
+		"https://www.googleapis.com/auth/drive.readonly",
+		"https://www.googleapis.com/auth/drive",
 	],
 	getAccountIdentifier: async (accessToken: string) => {
 		try {

@@ -4,6 +4,7 @@ import type {
 	CronNode,
 	DiscordNode,
 	GitHubNode,
+	GoogleDriveNode,
 	GmailNode,
 	GoogleCalendarNode,
 	GoogleSheetsNode,
@@ -20,6 +21,7 @@ import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
+import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
@@ -61,6 +63,8 @@ export const executeNode = ({
 				executionId,
 				nodeData?.inputNodeNames,
 			);
+		case "action.google_drive":
+			return googleDriveNodeExecutor(node as GoogleDriveNode, executionId);
 		case "action.gmail":
 			return gmailNodeExecutor(node as GmailNode, executionId);
 		case "action.google_calendar":

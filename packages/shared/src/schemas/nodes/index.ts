@@ -5,6 +5,7 @@ export * from "./integrations/discord.schema.js";
 export * from "./integrations/google-calendar.schema.js";
 export * from "./integrations/google-sheets.schema.js";
 export * from "./integrations/github.schema.js";
+export * from "./integrations/google-drive.schema.js";
 export * from "./integrations/gmail.schema.js";
 export * from "./integrations/notion.schema.js";
 export * from "./integrations/slack.schema.js";
