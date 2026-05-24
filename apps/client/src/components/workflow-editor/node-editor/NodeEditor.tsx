@@ -9,7 +9,6 @@ import {
 	nodeSchemaRegistry,
 } from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
-import { Loader2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
@@ -20,6 +19,7 @@ import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../../ui/button";
+import { EditorStatusBar } from "./EditorStatusBar";
 import {
 	ArrayField,
 	BooleanField,
@@ -202,7 +202,12 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	}, [node.data.parameters, node.data.credentialId]);
 
 	const formSchema = useMemo(
-		() => extractFormSchema(nodeSchemaRegistry, node.data.task, node.data.parameters),
+		() =>
+			extractFormSchema(
+				nodeSchemaRegistry,
+				node.data.task,
+				node.data.parameters,
+			),
 		[node.data.task, node.data.parameters],
 	);
 
@@ -213,10 +218,17 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	});
 
 	const [editorStatus, setEditorStatus] = useState<
-		"idle" | "saving" | "missing"
+		"idle" | "unsaved" | "saving" | "saved" | "missing"
 	>("idle");
 
 	const userHasEdited = useRef(false);
+	const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+		};
+	}, []);
 
 	const doSave = useCallback(
 		(values: Record<string, unknown>) => {
@@ -251,7 +263,13 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 					workflowId,
 				},
 				{
-					onSettled: () => setEditorStatus("idle"),
+					onSuccess: () => {
+						setEditorStatus("saved");
+						savedTimerRef.current = setTimeout(() => {
+							setEditorStatus("idle");
+						}, 2000);
+					},
+					onError: () => setEditorStatus("idle"),
 				},
 			);
 		},
@@ -273,6 +291,9 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				userHasEdited.current = true;
 				return;
 			}
+			setEditorStatus((prev) =>
+				prev === "idle" || prev === "saved" ? "unsaved" : prev,
+			);
 			debouncedSave(values as Record<string, unknown>);
 		});
 		return () => subscription.unsubscribe();
@@ -282,23 +303,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		<div className="flex flex-col h-full w-full bg-background shadow-sm">
 			<div className="sticky top-0 z-10 bg-background">
 				<NodeNameSection node={node} />
-				{editorStatus !== "idle" && (
-					<div
-						className="flex text-xs pl-1.5 items-center gap-1.5 min-w-0 pb-2"
-						aria-live="polite"
-					>
-						{editorStatus === "saving" ? (
-							<span className="text-muted-foreground/70 flex items-center gap-1">
-								<Loader2 className="h-3 w-3 animate-spin" />
-								Saving…
-							</span>
-						) : (
-							<span className="text-destructive/80 truncate">
-								Required fields missing
-							</span>
-						)}
-					</div>
-				)}
+			<EditorStatusBar status={editorStatus} />
 			</div>
 
 			<div className="flex flex-col">

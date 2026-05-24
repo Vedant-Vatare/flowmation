@@ -60,16 +60,18 @@ const FieldWrapper = ({
 			)}
 		</div>
 		{children}
-		{error && (
-			<p className="text-destructive text-[11px] leading-snug" role="alert">
-				{error}
-			</p>
-		)}
-		{field.description && (
-			<p className="text-[11px] text-muted-foreground/60 leading-snug">
-				{field.description}
-			</p>
-		)}
+		<div className="min-h-5">
+			{error && (
+				<p className="text-destructive text-[11px] leading-snug" role="alert">
+					{error}
+				</p>
+			)}
+			{!error && field.description && (
+				<p className="text-[11px] text-muted-foreground/60 leading-snug">
+					{field.description}
+				</p>
+			)}
+		</div>
 	</div>
 );
 
