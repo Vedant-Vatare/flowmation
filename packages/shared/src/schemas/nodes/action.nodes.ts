@@ -5,6 +5,7 @@ import {
 	nodeOutputPortsSchema,
 	nodeParameterSchema,
 } from "./base.nodes.js";
+import { withExpr } from "./validation.js";
 
 export const httpNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.http"),
@@ -15,7 +16,9 @@ export const httpNodeSchema = baseNodeSchema.extend({
 				label: z.literal("URL"),
 				name: z.literal("url"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: withExpr(
+					z.string().url({ error: "Must be a valid URL" }).max(4000),
+				),
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
@@ -38,7 +41,7 @@ export const httpNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Body"),
 				name: z.literal("body"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: z.string().max(10000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -119,7 +122,7 @@ export const waitingNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Wait time"),
 				name: z.literal("wait_time_period"),
 				type: z.literal("number"),
-				value: z.string(),
+				value: withExpr(z.coerce.number().min(1)),
 				default: z.literal("10").optional(),
 				required: z.boolean(),
 				dependsOn: z

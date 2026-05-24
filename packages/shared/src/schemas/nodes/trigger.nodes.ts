@@ -4,6 +4,7 @@ import {
 	baseNodeSchema,
 	nodeParameterSchema,
 } from "./base.nodes.js";
+import { withExpr } from "./validation.js";
 
 export const baseTriggerNodeSchema = baseNodeSchema.extend({
 	inputPorts: z
@@ -35,7 +36,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("interval_value"),
 				label: z.literal("Every"),
 				type: z.literal("number"),
-				value: z.string(),
+				value: withExpr(z.coerce.number().min(1)),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -65,7 +66,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("cron_expression"),
 				label: z.literal("Cron Expression"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(100),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -80,6 +81,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("limit"),
 				label: z.literal("Limit"),
 				type: z.literal("input"),
+				value: withExpr(z.coerce.number().min(1).optional()).optional(),
 			}),
 		]),
 	),

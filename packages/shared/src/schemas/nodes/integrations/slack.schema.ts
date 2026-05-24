@@ -27,7 +27,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				type: z.literal("input"),
 				value: z.string(),
 				required: z.boolean(),
-				description: z.literal("Channel ID ").optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -63,9 +63,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				type: z.literal("input"),
 				value: z.string(),
 				required: z.boolean(),
-				description: z
-					.literal("Comma-separated Slack user IDs to invite")
-					.optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({

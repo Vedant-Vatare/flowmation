@@ -1,5 +1,6 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
 
 export const googleDriveNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.google_drive"),
@@ -28,7 +29,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Search Query"),
 				name: z.literal("query"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				description: z.string().optional(),
@@ -45,7 +46,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Page Size"),
 				name: z.literal("pageSize"),
 				type: z.literal("number"),
-				value: z.string(),
+				value: withExpr(z.coerce.number().int().min(1).max(1000)),
 				default: z.literal("10").optional(),
 				required: z.boolean(),
 				dependsOn: z
@@ -61,7 +62,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("File ID"),
 				name: z.literal("fileId"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -76,7 +77,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("File Name"),
 				name: z.literal("fileName"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				dependsOn: z
@@ -92,7 +93,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Parent Folder ID"),
 				name: z.literal("parentFolderId"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				description: z.string().optional(),
@@ -109,7 +110,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("MIME Type"),
 				name: z.literal("mimeType"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(200),
 				default: z.literal("text/plain").optional(),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
@@ -127,7 +128,7 @@ export const googleDriveNodeSchema = baseNodeSchema.extend({
 				label: z.literal("File Content"),
 				name: z.literal("fileContent"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: z.string().max(10000),
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z

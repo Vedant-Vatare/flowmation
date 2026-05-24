@@ -13,3 +13,4 @@ export * from "./integrations/slack.schema.js";
 export * from "./nodes.constants.js";
 export * from "./transform.nodes.js";
 export * from "./trigger.nodes.js";
+export * from "./validation.js";

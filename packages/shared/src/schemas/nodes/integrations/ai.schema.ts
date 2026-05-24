@@ -1,5 +1,6 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
 
 export const aiNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.ai"),
@@ -28,19 +29,17 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Model"),
 				name: z.literal("model"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				default: z.literal("gpt-4o").optional(),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
-				description: z
-					.literal("Use hyphens (e.g. gpt-4o, gemini-2.5-flash-lite, claude-sonnet-4-20250514)")
-					.optional(),
+				description: z.string().optional(),
 			}),
 			nodeParameterSchema.extend({
 				label: z.literal("Prompt"),
 				name: z.literal("prompt"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: z.string().max(10000),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 			}),
@@ -48,7 +47,7 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Max Tokens"),
 				name: z.literal("maxTokens"),
 				type: z.literal("number"),
-				value: z.string(),
+				value: withExpr(z.coerce.number().int().min(1).max(1000000)),
 				default: z.literal("1000").optional(),
 				required: z.boolean(),
 				description: z.string().optional(),

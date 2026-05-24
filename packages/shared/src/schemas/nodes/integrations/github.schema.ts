@@ -1,5 +1,6 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
 
 export const gitHubNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.github"),
@@ -63,7 +64,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Owner"),
 				name: z.literal("owner"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -88,7 +89,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Repository"),
 				name: z.literal("repo"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -109,7 +110,6 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 					)
 					.optional(),
 			}),
-
 			nodeParameterSchema.extend({
 				label: z.literal("Type"),
 				name: z.literal("type"),
@@ -139,7 +139,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Issue Number"),
 				name: z.literal("issue_number"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -154,7 +154,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Title"),
 				name: z.literal("title"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -169,7 +169,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Body"),
 				name: z.literal("body"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: z.string().max(10000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -209,11 +209,9 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Labels"),
 				name: z.literal("labels"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
-				description: z
-					.literal("Comma-separated labels (e.g. bug,enhancement)")
-					.optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -229,9 +227,9 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Assignees"),
 				name: z.literal("assignees"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
-				description: z.literal("Comma-separated GitHub usernames").optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -245,9 +243,9 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Assignee"),
 				name: z.literal("assignee"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
-				description: z.literal("Filter by assignee username").optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -261,7 +259,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Pull Request Number"),
 				name: z.literal("pull_number"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -276,9 +274,9 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Base Branch"),
 				name: z.literal("base"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: z.string().max(2000),
 				required: z.boolean(),
-				description: z.literal("Filter PRs by base branch name").optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -292,7 +290,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Per Page"),
 				name: z.literal("per_page"),
 				type: z.literal("number"),
-				value: z.string(),
+				value: withExpr(z.coerce.number().int().min(1).max(100)),
 				default: z.literal("30").optional(),
 				required: z.boolean(),
 				dependsOn: z

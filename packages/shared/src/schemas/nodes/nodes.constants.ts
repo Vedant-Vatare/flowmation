@@ -1,4 +1,4 @@
-import type z from "zod";
+import type { z } from "zod";
 import {
 	httpNodeSchema,
 	mergeDataNodeSchema,
@@ -38,7 +38,6 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.gmail", gmailNodeSchema],
 	["action.google_calendar", googleCalendarNodeSchema],
 	["action.google_sheets", googleSheetsNodeSchema],
-	["action.github", gitHubNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.slack", slackNodeSchema],
