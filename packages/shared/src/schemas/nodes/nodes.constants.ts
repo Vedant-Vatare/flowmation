@@ -14,6 +14,7 @@ import { googleCalendarNodeSchema } from "./integrations/google-calendar.schema.
 import { googleSheetsNodeSchema } from "./integrations/google-sheets.schema.js";
 import { notionNodeSchema } from "./integrations/notion.schema.js";
 import { slackNodeSchema } from "./integrations/slack.schema.js";
+import { telegramNodeSchema } from "./integrations/telegram.schema.js";
 import { setVariableNodeSchema } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -41,4 +42,5 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.discord", discordNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.slack", slackNodeSchema],
+	["action.telegram", telegramNodeSchema],
 ]);

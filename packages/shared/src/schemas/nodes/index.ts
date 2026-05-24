@@ -10,6 +10,7 @@ export * from "./integrations/google-drive.schema.js";
 export * from "./integrations/gmail.schema.js";
 export * from "./integrations/notion.schema.js";
 export * from "./integrations/slack.schema.js";
+export * from "./integrations/telegram.schema.js";
 export * from "./nodes.constants.js";
 export * from "./transform.nodes.js";
 export * from "./trigger.nodes.js";

@@ -18,6 +18,7 @@ import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
+import TelegramIcon from "@/assets/icons/nodes/telegram.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
 import WebhookIcon from "@/assets/icons/nodes/webhook.svg?react";
 
@@ -174,6 +175,13 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Slack",
 		icon: SlackIcon,
 		background: "#E01E5A",
+		color: "#ffffff",
+		branded: true,
+	},
+	"action.telegram": {
+		name: "Telegram",
+		icon: TelegramIcon,
+		background: "#26A5E4",
 		color: "#ffffff",
 		branded: true,
 	},

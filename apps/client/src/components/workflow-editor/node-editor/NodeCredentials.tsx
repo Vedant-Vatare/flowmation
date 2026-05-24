@@ -11,10 +11,9 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
+import { API_KEY_PROVIDERS } from "@nodebase/shared";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { useGetCredentials, useSaveApiKey } from "@/queries/credentials";
-
-const API_KEY_PROVIDERS = ["ai"];
 
 const truncateEmail = (name: string, maxLen = 28) => {
 	if (name.length <= maxLen) return name;

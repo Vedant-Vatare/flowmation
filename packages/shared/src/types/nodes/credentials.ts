@@ -6,6 +6,7 @@ export const CREDENTIALS_PROVIDER = [
 	"github",
 	"notion",
 	"slack",
+	"telegram",
 ] as const;
 
 export type CredentialType = (typeof CREDENTIALS_TYPE)[number];

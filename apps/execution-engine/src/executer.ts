@@ -14,6 +14,7 @@ import type {
 	MergeNode,
 	NotionNode,
 	SlackNode,
+	TelegramNode,
 	WaitNode,
 	WorkflowNode,
 } from "@nodebase/shared";
@@ -29,6 +30,7 @@ import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
+import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
@@ -83,6 +85,8 @@ export const executeNode = ({
 			return notionNodeExecutor(node as NotionNode, executionId);
 		case "action.slack":
 			return slackNodeExecutor(node as SlackNode, executionId);
+		case "action.telegram":
+			return telegramNodeExecutor(node as TelegramNode, executionId);
 
 		default:
 			return {
