@@ -6,6 +6,7 @@ import {
 	type Control,
 	Controller,
 	type UseFormRegister,
+	useFormState,
 } from "react-hook-form";
 import { Checkbox } from "../../ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
@@ -38,9 +39,11 @@ const inputCls =
 const FieldWrapper = ({
 	field,
 	children,
+	error,
 }: {
 	field: NodeParameters;
 	children: React.ReactNode;
+	error?: string;
 }) => (
 	<div className="flex flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0">
 		<div className="flex items-center gap-1">
@@ -57,7 +60,11 @@ const FieldWrapper = ({
 			)}
 		</div>
 		{children}
-
+		{error && (
+			<p className="text-destructive text-[11px] leading-snug" role="alert">
+				{error}
+			</p>
+		)}
 		{field.description && (
 			<p className="text-[11px] text-muted-foreground/60 leading-snug">
 				{field.description}
@@ -77,16 +84,18 @@ const ExpressionController = ({
 	<Controller
 		name={field.name}
 		control={control}
-		render={({ field: f }) => (
-			<ExpressionInput
-				id={field.name}
-				value={String(f.value ?? "")}
-				onChange={f.onChange}
-				currentNodeId={currentNodeId}
-				multiline={multiline}
-				placeholder={String(field.placeholder ?? field.default ?? "")}
-				className="bg-muted/50"
-			/>
+		render={({ field: f, fieldState: { error } }) => (
+			<FieldWrapper field={field} error={error?.message}>
+				<ExpressionInput
+					id={field.name}
+					value={String(f.value ?? "")}
+					onChange={f.onChange}
+					currentNodeId={currentNodeId}
+					multiline={multiline}
+					placeholder={String(field.placeholder ?? field.default ?? "")}
+					className="bg-muted/50"
+				/>
+			</FieldWrapper>
 		)}
 	/>
 );
@@ -96,13 +105,11 @@ export const InputField = ({
 	control,
 	currentNodeId,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId">) => (
-	<FieldWrapper field={field}>
-		<ExpressionController
-			field={field}
-			control={control}
-			currentNodeId={currentNodeId}
-		/>
-	</FieldWrapper>
+	<ExpressionController
+		field={field}
+		control={control}
+		currentNodeId={currentNodeId}
+	/>
 );
 
 export const NumberField = ({
@@ -110,13 +117,11 @@ export const NumberField = ({
 	control,
 	currentNodeId,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId">) => (
-	<FieldWrapper field={field}>
-		<ExpressionController
-			field={field}
-			control={control}
-			currentNodeId={currentNodeId}
-		/>
-	</FieldWrapper>
+	<ExpressionController
+		field={field}
+		control={control}
+		currentNodeId={currentNodeId}
+	/>
 );
 
 export const TextareaField = ({
@@ -124,25 +129,23 @@ export const TextareaField = ({
 	control,
 	currentNodeId,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId">) => (
-	<FieldWrapper field={field}>
-		<ExpressionController
-			field={field}
-			control={control}
-			currentNodeId={currentNodeId}
-			multiline
-		/>
-	</FieldWrapper>
+	<ExpressionController
+		field={field}
+		control={control}
+		currentNodeId={currentNodeId}
+		multiline
+	/>
 );
 
 export const BooleanField = ({
 	field,
 	control,
 }: Pick<NodeFieldProps, "field" | "control">) => (
-	<FieldWrapper field={field}>
-		<Controller
-			name={field.name}
-			control={control}
-			render={({ field: f }) => (
+	<Controller
+		name={field.name}
+		control={control}
+		render={({ field: f, fieldState: { error } }) => (
+			<FieldWrapper field={field} error={error?.message}>
 				<label
 					htmlFor={field.name}
 					className="flex items-center gap-2.5 cursor-pointer w-fit"
@@ -156,9 +159,9 @@ export const BooleanField = ({
 						{field.placeholder ?? "Enable"}
 					</span>
 				</label>
-			)}
-		/>
-	</FieldWrapper>
+			</FieldWrapper>
+		)}
+	/>
 );
 
 export const CheckboxField = ({
@@ -178,20 +181,20 @@ export const CheckboxField = ({
 	}, [field]);
 
 	return (
-		<FieldWrapper field={field}>
-			<Controller
-				name={field.name}
-				control={control}
-				defaultValue={[]}
-				render={({ field: f }) => {
-					const selected: string[] = Array.isArray(f.value) ? f.value : [];
-					const toggle = (opt: string) =>
-						f.onChange(
-							selected.includes(opt)
-								? selected.filter((v) => v !== opt)
-								: [...selected, opt],
-						);
-					return (
+		<Controller
+			name={field.name}
+			control={control}
+			defaultValue={[]}
+			render={({ field: f, fieldState: { error } }) => {
+				const selected: string[] = Array.isArray(f.value) ? f.value : [];
+				const toggle = (opt: string) =>
+					f.onChange(
+						selected.includes(opt)
+							? selected.filter((v) => v !== opt)
+							: [...selected, opt],
+					);
+				return (
+					<FieldWrapper field={field} error={error?.message}>
 						<div className="flex flex-col gap-2">
 							{options.map((opt: string) => (
 								<label
@@ -208,10 +211,10 @@ export const CheckboxField = ({
 								</label>
 							))}
 						</div>
-					);
-				}}
-			/>
-		</FieldWrapper>
+					</FieldWrapper>
+				);
+			}}
+		/>
 	);
 };
 
@@ -232,11 +235,11 @@ export const RadioField = ({
 	}, [field]);
 
 	return (
-		<FieldWrapper field={field}>
-			<Controller
-				name={field.name}
-				control={control}
-				render={({ field: f }) => (
+		<Controller
+			name={field.name}
+			control={control}
+			render={({ field: f, fieldState: { error } }) => (
+				<FieldWrapper field={field} error={error?.message}>
 					<RadioGroup
 						value={f.value as string}
 						onValueChange={f.onChange}
@@ -253,9 +256,9 @@ export const RadioField = ({
 							</label>
 						))}
 					</RadioGroup>
-				)}
-			/>
-		</FieldWrapper>
+				</FieldWrapper>
+			)}
+		/>
 	);
 };
 
@@ -289,13 +292,16 @@ export const DropdownField = ({
 	}, [options]);
 
 	return (
-		<FieldWrapper field={field}>
-			<Controller
-				name={field.name}
-				control={control}
-				render={({ field: f }) => (
+		<Controller
+			name={field.name}
+			control={control}
+			render={({ field: f, fieldState: { error } }) => (
+				<FieldWrapper field={field} error={error?.message}>
 					<Select value={(f.value as string) ?? ""} onValueChange={f.onChange}>
-						<SelectTrigger id={field.name} className="w-full bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+						<SelectTrigger
+							id={field.name}
+							className="w-full bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+						>
 							<SelectValue
 								placeholder={field.placeholder ?? "Select an option"}
 							/>
@@ -336,64 +342,74 @@ export const DropdownField = ({
 							)}
 						</SelectContent>
 					</Select>
-				)}
-			/>
-		</FieldWrapper>
+				</FieldWrapper>
+			)}
+		/>
 	);
 };
 
 export const DateField = ({
 	field,
 	register,
-}: Pick<NodeFieldProps, "field" | "register">) => (
-	<FieldWrapper field={field}>
-		<input
-			id={field.name}
-			type="date"
-			className={
-				"w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-			}
-			{...register(field.name, { required: field.required })}
-		/>
-	</FieldWrapper>
-);
+	control,
+}: Pick<NodeFieldProps, "field" | "register" | "control">) => {
+	const { errors } = useFormState({ control });
+	const error = errors[field.name]?.message as string | undefined;
+	return (
+		<FieldWrapper field={field} error={error}>
+			<input
+				id={field.name}
+				type="date"
+				className={
+					"w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+				}
+				{...register(field.name, { required: field.required })}
+			/>
+		</FieldWrapper>
+	);
+};
 
 export const DateTimeField = ({
 	field,
 	register,
-}: Pick<NodeFieldProps, "field" | "register">) => (
-	<FieldWrapper field={field}>
-		<input
-			id={field.name}
-			type="datetime-local"
-			className={inputCls}
-			{...register(field.name, { required: field.required })}
-		/>
-	</FieldWrapper>
-);
+	control,
+}: Pick<NodeFieldProps, "field" | "register" | "control">) => {
+	const { errors } = useFormState({ control });
+	const error = errors[field.name]?.message as string | undefined;
+	return (
+		<FieldWrapper field={field} error={error}>
+			<input
+				id={field.name}
+				type="datetime-local"
+				className={inputCls}
+				{...register(field.name, { required: field.required })}
+			/>
+		</FieldWrapper>
+	);
+};
 
 export const ArrayField = ({
 	field,
 	control,
 	currentNodeId,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId">) => (
-	<FieldWrapper field={field}>
-		<Controller
-			name={field.name}
-			control={control}
-			defaultValue={[]}
-			render={({ field: f }) => {
-				const items: string[] = Array.isArray(f.value) ? f.value : [""];
-				const update = (idx: number, val: string) => {
-					const next = [...items];
-					next[idx] = val;
-					f.onChange(next);
-				};
-				const remove = (idx: number) =>
-					f.onChange(items.filter((_, i) => i !== idx));
-				const add = () => f.onChange([...items, ""]);
+	<Controller
+		name={field.name}
+		control={control}
+		defaultValue={[]}
+		render={({ field: f, fieldState: { error } }) => {
+			const items: string[] = Array.isArray(f.value) ? f.value : [""];
+			const update = (idx: number, val: string) => {
+				const next = [...items];
+				next[idx] = val;
+				f.onChange(next);
+			};
+			const remove = (idx: number) =>
+				f.onChange(items.filter((_, i) => i !== idx));
+			const add = () => f.onChange([...items, ""]);
 
-				return (
+			return (
+				<FieldWrapper field={field} error={error?.message}>
 					<div className="flex flex-col gap-1.5">
 						{items.map((item, idx) => (
 							<div key={idx} className="flex items-center gap-1.5">
@@ -425,10 +441,10 @@ export const ArrayField = ({
 							Add item
 						</button>
 					</div>
-				);
-			}}
-		/>
-	</FieldWrapper>
+				</FieldWrapper>
+			);
+		}}
+	/>
 );
 
 type KVPair = { key: string; value: string };
@@ -537,18 +553,18 @@ export const KeyValueField = ({
 	control,
 	currentNodeId,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId">) => (
-	<FieldWrapper field={field}>
-		<Controller
-			name={field.name}
-			control={control}
-			defaultValue={{}}
-			render={({ field: f }) => (
+	<Controller
+		name={field.name}
+		control={control}
+		defaultValue={{}}
+		render={({ field: f, fieldState: { error } }) => (
+			<FieldWrapper field={field} error={error?.message}>
 				<KeyValueEditor
 					value={(f.value as Record<string, string>) ?? {}}
 					onChange={f.onChange}
 					currentNodeId={currentNodeId}
 				/>
-			)}
-		/>
-	</FieldWrapper>
+			</FieldWrapper>
+		)}
+	/>
 );

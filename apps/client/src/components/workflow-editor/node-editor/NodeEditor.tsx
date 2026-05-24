@@ -1,8 +1,13 @@
 /* biome-ignore-all lint/suspicious/noArrayIndexKey : ignore index */
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckmarkSquare02Icon, Edit04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { NodeParameters, NodePropertyType } from "@nodebase/shared";
+import {
+	extractFormSchema,
+	type NodePropertyType,
+	nodeSchemaRegistry,
+} from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
 import { Loader2 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -30,33 +35,6 @@ import {
 	TextareaField,
 } from "./NodeFields";
 import { NodeConfig } from "./nodeConfig";
-
-function allRequiredFilled(
-	params: NodeParameters[],
-	formValues: Record<string, unknown>,
-): boolean {
-	return params
-		.filter((p) => p.required)
-		.filter((p) => {
-			if (!p.dependsOn || p.dependsOn.length === 0) return true;
-			return p.dependsOn.every((dep) => {
-				const depValue = formValues[dep.parameter];
-				return dep.values.includes(depValue);
-			});
-		})
-		.every((p) => {
-			const v = formValues[p.name];
-			if (
-				v === null ||
-				v === undefined ||
-				v === "" ||
-				(typeof v === "number" && Number.isNaN(v))
-			)
-				return false;
-			if (Array.isArray(v)) return v.length > 0;
-			return true;
-		});
-}
 
 export const NodeField = memo(
 	({ field, register, control, currentNodeId }: NodeFieldProps) => {
@@ -210,6 +188,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const { workflowId } = Route.useParams();
+
 	const defaultValues = useMemo(() => {
 		const vals: Record<string, unknown> = {};
 		for (const param of node.data.parameters) {
@@ -222,8 +201,15 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		return vals;
 	}, [node.data.parameters, node.data.credentialId]);
 
+	const formSchema = useMemo(
+		() => extractFormSchema(nodeSchemaRegistry, node.data.task, node.data.parameters),
+		[node.data.task, node.data.parameters],
+	);
+
 	const { register, control, watch } = useForm<Record<string, unknown>>({
 		defaultValues,
+		resolver: zodResolver(formSchema),
+		mode: "onChange",
 	});
 
 	const [editorStatus, setEditorStatus] = useState<
@@ -234,7 +220,8 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const doSave = useCallback(
 		(values: Record<string, unknown>) => {
-			if (!allRequiredFilled(node.data.parameters, values)) {
+			const result = formSchema?.safeParse(values);
+			if (!result?.success) {
 				setEditorStatus("missing");
 				return;
 			}
@@ -268,7 +255,14 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				},
 			);
 		},
-		[node.data.parameters, node.id, node.data.task, updateNode, workflowId],
+		[
+			node.data.parameters,
+			node.id,
+			node.data.task,
+			updateNode,
+			workflowId,
+			formSchema,
+		],
 	);
 
 	const debouncedSave = useDebounce(doSave, () => node.id);
