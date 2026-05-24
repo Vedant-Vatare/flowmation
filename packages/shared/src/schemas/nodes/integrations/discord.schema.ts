@@ -14,7 +14,7 @@ export const discordNodeSchema = baseNodeSchema.extend({
 				value: withExpr(
 					z.url({ error: "Must be a valid webhook URL" }).max(4000),
 				),
-				placeholder: z.literal("https://discord.com/api/webhooks/..."),
+				placeholder: z.string().optional(),
 				required: z.boolean().default(true),
 			}),
 			nodeParameterSchema.extend({

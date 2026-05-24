@@ -10,7 +10,7 @@ import {
 import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
 import { authenticateUser } from "@/utils/auth.utils.js";
 import {
-	validateNodeMiddleware,
+	validateNodeSchema,
 	validatePartialNodeMiddleware,
 } from "@/utils/nodes.utils.js";
 
@@ -18,7 +18,25 @@ const router = Router() as RouterType;
 
 router.use(authenticateUser);
 
-router.post("/", validateNodeMiddleware, asyncHandler(addNodeInWorkflow));
+router.post(
+	"/",
+	(req, res, next) => {
+		const result = validateNodeSchema(req.body.node, {
+			skipParamValues: true,
+		});
+		if (result.success) {
+			req.body.node = result.data;
+			next();
+		} else {
+			return res.status(400).json({
+				error: "ValidationError",
+				message: "Invalid data",
+				errors: result.error,
+			});
+		}
+	},
+	asyncHandler(addNodeInWorkflow),
+);
 router.get("/:workflowId", asyncHandler(getNodesInWorkflow));
 router.patch(
 	"/:workflowId",
