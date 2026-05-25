@@ -6,6 +6,7 @@ import {
 } from "./action.nodes.js";
 import { conditionalNodeSchema } from "./control.nodes.js";
 import { aiNodeSchema } from "./integrations/ai.schema.js";
+import { calcomNodeSchema } from "./integrations/calcom.schema.js";
 import { discordNodeSchema } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema } from "./integrations/github.schema.js";
 import { googleDriveNodeSchema } from "./integrations/google-drive.schema.js";
@@ -34,6 +35,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.merge", mergeDataNodeSchema],
 	["trigger.webhook", webhookNodeSchema],
 	["action.ai", aiNodeSchema],
+	["action.calcom", calcomNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.google_drive", googleDriveNodeSchema],
 	["action.gmail", gmailNodeSchema],

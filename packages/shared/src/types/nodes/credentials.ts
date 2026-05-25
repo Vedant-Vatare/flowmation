@@ -2,6 +2,7 @@ export const CREDENTIALS_TYPE = ["apiKey", "oauth"] as const;
 
 export const CREDENTIALS_PROVIDER = [
 	"ai",
+	"calcom",
 	"google",
 	"github",
 	"notion",

@@ -1,6 +1,7 @@
 import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
 import type {
 	AiNode,
+	CalcomNode,
 	ConditionNode,
 	CronNode,
 	DiscordNode,
@@ -22,6 +23,7 @@ import type { Job } from "bullmq";
 import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
 import { aiNodeExecutor } from "./nodes/actions/integrations/ai.node.js";
+import { calcomNodeExecutor } from "./nodes/actions/integrations/calcom.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
@@ -57,6 +59,8 @@ export const executeNode = ({
 	switch (node.task) {
 		case "action.ai":
 			return aiNodeExecutor(node as AiNode, executionId);
+		case "action.calcom":
+			return calcomNodeExecutor(node as CalcomNode, executionId);
 		case "action.http":
 			return httpNodeExecutor(node as HttpNode, executionId);
 		case "action.wait":
