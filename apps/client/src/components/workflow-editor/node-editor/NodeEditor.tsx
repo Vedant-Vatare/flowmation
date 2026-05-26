@@ -13,6 +13,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
+import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
@@ -188,6 +189,8 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const { workflowId } = Route.useParams();
+	const getCredentialProvider = useNodeCredentialProvider();
+	const credentialProvider = getCredentialProvider(node.data.task);
 
 	const defaultValues = useMemo(() => {
 		const vals: Record<string, unknown> = {};
@@ -207,7 +210,25 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				nodeSchemaRegistry,
 				node.data.task,
 				node.data.parameters,
-			),
+			).superRefine((values, ctx) => {
+				for (const param of node.data.parameters) {
+					if (!param.required) continue;
+					if (param.dependsOn?.length) {
+						const isActive = param.dependsOn.every((d) =>
+							d.values.includes(values[d.parameter]),
+						);
+						if (!isActive) continue;
+					}
+					const val = values[param.name];
+					if (val === undefined || val === null || val === "") {
+						ctx.addIssue({
+							code: "custom",
+							path: [param.name],
+							message: `${param.label ?? param.name} is required`,
+						});
+					}
+				}
+			}),
 		[node.data.task, node.data.parameters],
 	);
 
@@ -232,6 +253,10 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const doSave = useCallback(
 		(values: Record<string, unknown>) => {
+			if (credentialProvider && !values.credentialId) {
+				setEditorStatus("missing");
+				return;
+			}
 			const result = formSchema?.safeParse(values);
 			if (!result?.success) {
 				setEditorStatus("missing");
@@ -274,6 +299,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			);
 		},
 		[
+			credentialProvider,
 			node.data.parameters,
 			node.id,
 			node.data.task,
@@ -303,7 +329,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		<div className="flex flex-col h-full w-full bg-background shadow-sm">
 			<div className="sticky top-0 z-10 bg-background">
 				<NodeNameSection node={node} />
-			<EditorStatusBar status={editorStatus} />
+				<EditorStatusBar status={editorStatus} />
 			</div>
 
 			<div className="flex flex-col">

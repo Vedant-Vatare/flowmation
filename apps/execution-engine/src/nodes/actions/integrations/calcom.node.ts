@@ -12,8 +12,6 @@ const apiVersionFor = (path: string): string => {
 	return "2024-08-13";
 };
 
-const coerceNum = (v: unknown): number => (v != null ? Number(v) : 0);
-
 const toUTC = (v: unknown): string => {
 	const d = new Date(v as string);
 	return Number.isNaN(d.getTime()) ? (v as string) : d.toISOString();
@@ -98,7 +96,7 @@ export const calcomNodeExecutor = async (
 		const apiKey = credential.fields.apiKey;
 
 		if (operation === "create_booking") {
-			const eventTypeId = coerceNum(params.eventTypeId?.value);
+			const eventTypeId = params.eventTypeId?.value;
 			const startTime = toUTC(params.startTime?.value);
 			const attendeeName = params.attendeeName?.value;
 			const attendeeEmail = params.attendeeEmail?.value;
@@ -189,7 +187,7 @@ export const calcomNodeExecutor = async (
 
 		if (operation === "list_bookings") {
 			const status = params.status?.value;
-			const limit = coerceNum(params.limit?.value);
+			const limit = params.limit?.value;
 
 			const queryParams = new URLSearchParams();
 			if (status) queryParams.set("status", status);
@@ -219,7 +217,7 @@ export const calcomNodeExecutor = async (
 		}
 
 		if (operation === "get_availability_slots") {
-			const eventTypeId = coerceNum(params.eventTypeId?.value);
+			const eventTypeId = params.eventTypeId?.value;
 			const startDate = params.startDate?.value;
 			const endDate = params.endDate?.value;
 			const timezone = params.timezone?.value || "UTC";

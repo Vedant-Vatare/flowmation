@@ -40,9 +40,7 @@ const checkNodeConfigs = (
 	return false;
 };
 
-const SectionDivider = () => (
-	<div className="h-px bg-border/20 mx-3" />
-);
+const SectionDivider = () => <div className="h-px bg-border/20 mx-3" />;
 
 export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	const getCredentialProvider = useNodeCredentialProvider();

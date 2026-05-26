@@ -45,7 +45,18 @@ export const validateNodeSchema = (
 
 	if (options.skipParamValues && schema.shape.parameters?.element?.options) {
 		const permissiveOptions = schema.shape.parameters.element.options.map(
-			(opt: z.ZodObject) => opt.extend({ value: z.any() }),
+			(opt: z.ZodObject) =>
+				opt.extend({
+					value: z.any(),
+					dependsOn: z
+						.array(
+							z.object({
+								parameter: z.string(),
+								values: z.array(z.unknown()),
+							}),
+						)
+						.optional(),
+				}),
 		);
 		targetSchema = schema.extend({
 			parameters: z.array(z.discriminatedUnion("name", permissiveOptions)),

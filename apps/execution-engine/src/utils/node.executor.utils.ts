@@ -5,7 +5,11 @@ import { recordNodeCompletion } from "./workflow.updates.utils.js";
 
 type KeyValueEntry = Record<string, string>;
 
-export const getResolvedParams = async <T extends NodeParameters>(
+type NodeParameterLike = Omit<NodeParameters, "value"> & {
+	value?: NodeParameters["value"];
+};
+
+export const getResolvedParams = async <T extends NodeParameterLike>(
 	node: { parameters: T[]; settings: WorkflowNode["settings"] },
 	executionId: string,
 ) => {
@@ -14,6 +18,13 @@ export const getResolvedParams = async <T extends NodeParameters>(
 			? await FormatParamsValueExpressions(node.parameters, executionId)
 			: node.parameters
 	) as T[];
+
+	for (const p of parameters) {
+		if (p.type === "number" && typeof p.value === "string" && p.value !== "") {
+			const n = Number(p.value);
+			if (!Number.isNaN(n)) (p as Record<string, unknown>).value = n;
+		}
+	}
 
 	return getTypedParams(parameters);
 };

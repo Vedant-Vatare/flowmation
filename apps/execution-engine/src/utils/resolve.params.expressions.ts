@@ -3,10 +3,14 @@ import { getNodeOutput } from "@/services/executionStore.js";
 
 const EXPRESSION_REGEX = /\{\{\s*([^}.]+?)(?:\.([^}]+?))?\s*\}\}/g;
 
-export async function FormatParamsValueExpressions(
-	params: NodeParameters[],
+type NodeParameterLike = Omit<NodeParameters, "value"> & {
+	value?: NodeParameters["value"];
+};
+
+export async function FormatParamsValueExpressions<T extends NodeParameterLike>(
+	params: T[],
 	executionId: string,
-): Promise<NodeParameters[]> {
+): Promise<T[]> {
 	return Promise.all(
 		params.map(async (param) => ({
 			...param,

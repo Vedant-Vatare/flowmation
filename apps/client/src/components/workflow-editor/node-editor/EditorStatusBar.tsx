@@ -25,18 +25,20 @@ export const EditorStatusBar = ({ status }: { status: EditorStatus }) => (
 					)}
 					{status === "saving" && (
 						<span className="text-muted-foreground/70 flex items-center gap-1.5">
-							<HugeiconsIcon icon={Loading03Icon} size={12} className="animate-spin" />
+							<HugeiconsIcon
+								icon={Loading03Icon}
+								size={12}
+								className="animate-spin"
+							/>
 							Saving…
 						</span>
 					)}
 					{status === "saved" && (
-						<span className="text-foreground/75">
-							Saved
-						</span>
+						<span className="text-foreground/75">Saved</span>
 					)}
 					{status === "missing" && (
 						<span className="text-destructive truncate flex items-center gap-1.5">
-							Required fields missing
+							Required fields are missing
 						</span>
 					)}
 				</motion.div>

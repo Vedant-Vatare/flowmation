@@ -33,110 +33,110 @@ export const calcomNodeSchema = baseNodeSchema.extend({
 				value: withExpr(z.coerce.number().int().positive()),
 				required: z.boolean(),
 				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(z.literal("cancel_booking")),
-						}),
-					)
-					.optional(),
-			}),
-			nodeParameterSchema.extend({
-				label: z.literal("Start Time"),
-				name: z.literal("startTime"),
-				type: z.literal("date-time"),
-				value: z.string(),
-				required: z.boolean(),
-				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(
-								z.union([
-									z.literal("create_booking"),
-									z.literal("reschedule_booking"),
-								]),
-							),
-						}),
-					)
-					.optional(),
-			}),
-			nodeParameterSchema.extend({
-				label: z.literal("Attendee Name"),
-				name: z.literal("attendeeName"),
-				type: z.literal("input"),
-				value: z.string(),
-				required: z.boolean(),
-				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(z.literal("create_booking")),
-						}),
-					)
-					.optional(),
-			}),
-			nodeParameterSchema.extend({
-				label: z.literal("Attendee Email"),
-				name: z.literal("attendeeEmail"),
-				type: z.literal("input"),
-				value: z.string(),
-				required: z.boolean(),
-				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(z.literal("create_booking")),
-						}),
-					)
-					.optional(),
-			}),
-			nodeParameterSchema.extend({
-				label: z.literal("Booking UID"),
-				name: z.literal("bookingUid"),
-				type: z.literal("input"),
-				value: z.string().regex(/^(?!\d+$).+/, "Invalid Booking UID"),
-				required: z.boolean(),
-				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(
-								z.union([
-									z.literal("cancel_booking"),
-									z.literal("reschedule_booking"),
-								]),
-							),
-						}),
-					)
-					.optional(),
-			}),
-			nodeParameterSchema.extend({
-				label: z.literal("Reason"),
-				name: z.literal("reason"),
-				type: z.literal("textarea"),
-				value: z.string(),
-				required: z.boolean(),
-				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(
-								z.union([
-									z.literal("cancel_booking"),
-									z.literal("reschedule_booking"),
-								]),
-							),
-						}),
-					)
-					.optional(),
-			}),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(
+							z.union([
+								z.literal("create_booking"),
+								z.literal("get_availability_slots"),
+							]),
+						),
+					}),
+				)
+				.optional(),
+		}),
+		nodeParameterSchema.extend({
+			label: z.literal("Start Time"),
+			name: z.literal("startTime"),
+			type: z.literal("date-time"),
+			value: z.string(),
+			required: z.boolean(),
+			description: z.string().optional(),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(
+							z.union([
+								z.literal("create_booking"),
+								z.literal("reschedule_booking"),
+							]),
+						),
+					}),
+				)
+				.optional(),
+		}),
+		nodeParameterSchema.extend({
+			label: z.literal("Attendee Name"),
+			name: z.literal("attendeeName"),
+			type: z.literal("input"),
+			value: z.string(),
+			required: z.boolean(),
+			description: z.string().optional(),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(z.literal("create_booking")),
+					}),
+				)
+				.optional(),
+		}),
+		nodeParameterSchema.extend({
+			label: z.literal("Attendee Email"),
+			name: z.literal("attendeeEmail"),
+			type: z.literal("input"),
+			value: z.string(),
+			required: z.boolean(),
+			description: z.string().optional(),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(z.literal("create_booking")),
+					}),
+				)
+				.optional(),
+		}),
+		nodeParameterSchema.extend({
+			label: z.literal("Booking UID"),
+			name: z.literal("bookingUid"),
+			type: z.literal("input"),
+			value: z.string().regex(/^(?!\d+$).+/, "Invalid Booking UID"),
+			required: z.boolean(),
+			description: z.string().optional(),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(
+							z.union([
+								z.literal("cancel_booking"),
+								z.literal("reschedule_booking"),
+							]),
+						),
+					}),
+				)
+				.optional(),
+		}),
+		nodeParameterSchema.extend({
+			label: z.literal("Reason"),
+			name: z.literal("reason"),
+			type: z.literal("textarea"),
+			value: z.string(),
+			required: z.boolean(),
+			description: z.string().optional(),
+			dependsOn: z
+				.array(
+					z.object({
+						parameter: z.literal("operation"),
+						values: z.array(z.literal("cancel_booking")),
+					}),
+				)
+				.optional(),
+		}),
 			nodeParameterSchema.extend({
 				label: z.literal("Status Filter"),
 				name: z.literal("status"),

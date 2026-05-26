@@ -2,16 +2,11 @@ import { z } from "zod";
 
 const EXPRESSION_PATTERN = /\{\{[^}]*\}\}/;
 
-export function withExpr<T extends z.ZodTypeAny>(schema: T) {
-	return z.any().superRefine((val, ctx) => {
-		if (typeof val === "string" && EXPRESSION_PATTERN.test(val)) return;
-		const result = schema.safeParse(val);
-		if (!result.success) {
-			ctx.addIssue(
-				result.error.issues[0]?.message ?? "Invalid value",
-			);
-		}
-	});
+export function withExpr<T extends z.ZodType>(schema: T) {
+	return z.pipe(
+		z.any(),
+		z.union([z.string().regex(EXPRESSION_PATTERN), z.literal(""), schema]),
+	);
 }
 
 export function extractFormSchema(
