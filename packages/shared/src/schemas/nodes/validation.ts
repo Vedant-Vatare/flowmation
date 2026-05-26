@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const EXPRESSION_PATTERN = /\{\{[^}]*\}\}/;
+const EXPRESSION_PATTERN = /\{\{[^}]+\}\}/;
 
 export function withExpr<T extends z.ZodType>(schema: T) {
 	return z.pipe(

@@ -38,16 +38,6 @@ export const googleSheetsNodeSchema = baseNodeSchema.extend({
 				value: googleSheetsNodeValueSchemas.spreadsheetId,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(
-								z.enum(["get_values", "update_values", "append_values"]),
-							),
-						}),
-					)
-					.optional(),
 			}),
 			nodeParameterSchema.extend({
 				label: z.literal("Range"),
@@ -57,16 +47,6 @@ export const googleSheetsNodeSchema = baseNodeSchema.extend({
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				description: z.string().optional(),
-				dependsOn: z
-					.array(
-						z.object({
-							parameter: z.literal("operation"),
-							values: z.array(
-								z.enum(["get_values", "update_values", "append_values"]),
-							),
-						}),
-					)
-					.optional(),
 			}),
 			nodeParameterSchema.extend({
 				label: z.literal("Values"),

@@ -25,12 +25,9 @@ export const cronJobNodeValueSchemas = {
 	limit: withExpr(z.coerce.number().min(1).optional()).optional(),
 } as const;
 
-export const cronJobNodeSchema = baseNodeSchema.extend({
+export const cronJobNodeSchema = baseTriggerNodeSchema.extend({
 	task: z.literal("trigger.cron"),
 	type: z.union([z.literal("trigger"), z.literal("action")]),
-	inputPorts: z
-		.array(z.object({ name: z.string(), label: z.string() }))
-		.length(0),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

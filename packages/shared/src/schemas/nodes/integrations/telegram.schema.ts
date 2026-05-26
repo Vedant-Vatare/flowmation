@@ -15,7 +15,7 @@ export const telegramNodeValueSchemas = {
 export const telegramNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.telegram"),
 	type: z.literal("action"),
-	credentialId: z.string().nullable().optional(),
+	credentialId: z.uuid().nullable(),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

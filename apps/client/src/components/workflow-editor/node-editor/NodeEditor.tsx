@@ -6,7 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
 	extractFormSchema,
 	type NodePropertyType,
-	nodeSchemaRegistry,
+	nodeParamValueRegistry,
 } from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -207,7 +207,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const formSchema = useMemo(
 		() =>
 			extractFormSchema(
-				nodeSchemaRegistry,
+				nodeParamValueRegistry,
 				node.data.task,
 				node.data.parameters,
 			).superRefine((values, ctx) => {

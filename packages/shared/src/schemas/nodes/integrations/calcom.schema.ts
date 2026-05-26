@@ -20,7 +20,7 @@ export const calcomNodeValueSchemas = {
 export const calcomNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.calcom"),
 	type: z.literal("action"),
-	credentialId: z.string().nullable().optional(),
+	credentialId: z.uuid().nullable(),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

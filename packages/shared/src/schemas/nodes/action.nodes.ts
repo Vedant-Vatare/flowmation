@@ -115,7 +115,7 @@ export const waitingNodeValueSchemas = {
 
 export const waitingNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.wait"),
-	type: z.union([z.literal("trigger"), z.literal("action")]),
+	type: z.literal("action"),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({

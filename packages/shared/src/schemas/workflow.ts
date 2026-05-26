@@ -71,9 +71,9 @@ export const partialWorkflowConnectionSchema = workflowConnectionSchema
 	.extend({ id: z.string() });
 
 export const NodeIdsWithPositionSchema = z.array(
-	workflowNodeSchema.pick({
-		id: true,
-		positionX: true,
-		positionY: true,
+	z.object({
+		id: z.uuid(),
+		positionX: z.number(),
+		positionY: z.number(),
 	}),
 );

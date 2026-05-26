@@ -12,7 +12,7 @@ export const slackNodeValueSchemas = {
 export const slackNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.slack"),
 	type: z.literal("action"),
-	credentialId: z.string().nullable().optional(),
+	credentialId: z.uuid().nullable(),
 	parameters: z.array(
 		z.discriminatedUnion("name", [
 			nodeParameterSchema.extend({
