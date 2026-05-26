@@ -318,7 +318,9 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				return;
 			}
 			setEditorStatus((prev) =>
-				prev === "idle" || prev === "saved" ? "unsaved" : prev,
+				prev === "idle" || prev === "saved" || prev === "missing"
+					? "unsaved"
+					: prev,
 			);
 			debouncedSave(values as Record<string, unknown>);
 		});

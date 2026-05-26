@@ -82,25 +82,32 @@ const ExpressionController = ({
 	multiline = false,
 }: Pick<NodeFieldProps, "field" | "control" | "currentNodeId"> & {
 	multiline?: boolean;
-}) => (
-	<Controller
-		name={field.name}
-		control={control}
-		render={({ field: f, fieldState: { error } }) => (
-			<FieldWrapper field={field} error={error?.message}>
-				<ExpressionInput
-					id={field.name}
-					value={String(f.value ?? "")}
-					onChange={f.onChange}
-					currentNodeId={currentNodeId}
-					multiline={multiline}
-					placeholder={String(field.placeholder ?? field.default ?? "")}
-					className="bg-muted/50"
-				/>
-			</FieldWrapper>
-		)}
-	/>
-);
+}) => {
+	const [isEditingExpr, setIsEditingExpr] = useState(false);
+	return (
+		<Controller
+			name={field.name}
+			control={control}
+			render={({ field: f, fieldState: { error } }) => (
+				<FieldWrapper
+					field={field}
+					error={isEditingExpr ? undefined : error?.message}
+				>
+					<ExpressionInput
+						id={field.name}
+						value={String(f.value ?? "")}
+						onChange={f.onChange}
+						currentNodeId={currentNodeId}
+						multiline={multiline}
+						placeholder={String(field.placeholder ?? field.default ?? "")}
+						className="bg-muted/50"
+						setIsEditingExpr={setIsEditingExpr}
+					/>
+				</FieldWrapper>
+			)}
+		/>
+	);
+};
 
 export const InputField = ({
 	field,

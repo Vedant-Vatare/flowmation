@@ -29,6 +29,7 @@ interface ExpressionInputProps {
 	placeholder?: string;
 	className?: string;
 	id?: string;
+	setIsEditingExpr?: (active: boolean) => void;
 }
 
 function tokenize(text: string): { text: string; isExpr: boolean }[] {
@@ -70,6 +71,7 @@ export const ExpressionInput = ({
 	placeholder,
 	className = "",
 	id,
+	setIsEditingExpr,
 }: ExpressionInputProps) => {
 	const allNodes = useNodes();
 	const otherNodes = allNodes.filter((n) => n.id !== currentNodeId);
@@ -105,6 +107,7 @@ export const ExpressionInput = ({
 		} else {
 			setDropdownOpen(false);
 		}
+		setIsEditingExpr?.(active !== null);
 	};
 
 	const handlePaste = (
@@ -123,6 +126,9 @@ export const ExpressionInput = ({
 				setDropdownOpen(true);
 			} else {
 				setDropdownOpen(false);
+			}
+			if (setIsEditingExpr) {
+				setIsEditingExpr(active !== null);
 			}
 		});
 	};

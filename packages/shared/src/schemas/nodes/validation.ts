@@ -5,7 +5,13 @@ const EXPRESSION_PATTERN = /\{\{[^}]+\}\}/;
 export function withExpr<T extends z.ZodType>(schema: T) {
 	return z.pipe(
 		z.any(),
-		z.union([z.string().regex(EXPRESSION_PATTERN), z.literal(""), schema]),
+		z.union([
+			z.string().regex(EXPRESSION_PATTERN, {
+				error: "Invalid expression format. use {{variable name}}",
+			}),
+			z.literal(""),
+			schema,
+		]),
 	);
 }
 
