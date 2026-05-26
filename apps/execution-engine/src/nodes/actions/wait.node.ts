@@ -31,7 +31,7 @@ export const waitNodeExecutor = async (
 				message: "time period value could not be parsed to number",
 			};
 		}
-		delay = val * timeUnitsToMs[params.time_unit.value];
+		delay = val * timeUnitsToMs[params.time_unit.value as keyof typeof timeUnitsToMs];
 	} else {
 		if (!params.date_time.value) {
 			return {

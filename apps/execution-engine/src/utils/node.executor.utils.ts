@@ -47,7 +47,6 @@ export const checkKeyValueParam = (
 	if (Array.isArray(value)) {
 		return (
 			value.length > 0 &&
-			value.some((e) => Object.keys(e)[0] !== "") &&
 			value.every(isValidKeyValueEntry)
 		);
 	}

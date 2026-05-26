@@ -14,16 +14,18 @@ export const httpNodeExecutor = async (
 		url.searchParams.set(key, value);
 	}
 
-	const headers = params.headers.value;
-
 	const bodyMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 	const body =
 		bodyMethods.has(method) && params.body.value
 			? params.body.value
 			: undefined;
 
-	if (body && !headers["Content-Type"]) {
-		headers["Content-Type"] = "application/json";
+	const headersRecord: Record<string, string | string[]> =
+		typeof params.headers.value === "object" ? params.headers.value : {};
+	const headers = new Headers(headersRecord);
+
+	if (body && !headers.has("Content-Type")) {
+		headers.set("Content-Type", "application/json");
 	}
 
 	try {
