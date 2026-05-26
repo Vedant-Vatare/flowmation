@@ -2,6 +2,19 @@ import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 import { withExpr } from "../validation.js";
 
+export const gmailNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	to: withExpr(z.string().max(2000)),
+	subject: withExpr(z.string().max(2000)),
+	body: withExpr(z.string().max(10000)),
+	draftId: withExpr(z.string().max(2000)),
+	query: withExpr(z.string().max(2000)),
+	maxResults: withExpr(z.coerce.number().int().min(1).max(500)),
+	messageId: withExpr(z.string().max(2000)),
+	labelIds: withExpr(z.string().max(2000)),
+	readStatus: withExpr(z.string()),
+} as const;
+
 export const gmailNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.gmail"),
 	type: z.literal("action"),
@@ -12,7 +25,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				name: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: gmailNodeValueSchemas.operation,
 				default: z.literal("send_email").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -32,7 +45,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("To"),
 				name: z.literal("to"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.to,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -49,7 +62,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Subject"),
 				name: z.literal("subject"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.subject,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -66,7 +79,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Body"),
 				name: z.literal("body"),
 				type: z.literal("textarea"),
-				value: z.string().max(10000),
+				value: gmailNodeValueSchemas.body,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -83,7 +96,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Draft ID"),
 				name: z.literal("draftId"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.draftId,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -98,7 +111,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Search Query"),
 				name: z.literal("query"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.query,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -114,7 +127,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Max Results"),
 				name: z.literal("maxResults"),
 				type: z.literal("number"),
-				value: withExpr(z.coerce.number().int().min(1).max(500)),
+				value: gmailNodeValueSchemas.maxResults,
 				default: z.literal("10").optional(),
 				required: z.boolean(),
 				dependsOn: z
@@ -130,7 +143,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Message ID"),
 				name: z.literal("messageId"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.messageId,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -152,7 +165,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Label IDs"),
 				name: z.literal("labelIds"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gmailNodeValueSchemas.labelIds,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -168,7 +181,7 @@ export const gmailNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Read Status"),
 				name: z.literal("readStatus"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: gmailNodeValueSchemas.readStatus,
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
 					.default([

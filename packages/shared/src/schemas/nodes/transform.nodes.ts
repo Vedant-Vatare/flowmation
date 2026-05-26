@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "./base.nodes.js";
+import { withExpr } from "./validation.js";
+
+export const setVariableNodeValueSchemas = {
+	variable_name: withExpr(z.string()),
+	value: withExpr(z.union([z.string(), z.number(), z.boolean()])),
+} as const;
 
 export const setVariableNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.set_variable"),
@@ -10,14 +16,14 @@ export const setVariableNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Variable Name"),
 				name: z.literal("variable_name"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: setVariableNodeValueSchemas.variable_name,
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
 				label: z.literal("Value"),
 				name: z.literal("value"),
 				type: z.literal("input"),
-				value: z.union([z.string(), z.number(), z.boolean()]),
+				value: setVariableNodeValueSchemas.value,
 				required: z.boolean(),
 			}),
 		]),

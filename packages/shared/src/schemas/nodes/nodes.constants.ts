@@ -1,26 +1,31 @@
 import type { z } from "zod";
 import {
 	httpNodeSchema,
+	httpNodeValueSchemas,
 	mergeDataNodeSchema,
+	mergeDataNodeValueSchemas,
 	waitingNodeSchema,
+	waitingNodeValueSchemas,
 } from "./action.nodes.js";
-import { conditionalNodeSchema } from "./control.nodes.js";
-import { aiNodeSchema } from "./integrations/ai.schema.js";
-import { calcomNodeSchema } from "./integrations/calcom.schema.js";
-import { discordNodeSchema } from "./integrations/discord.schema.js";
-import { gitHubNodeSchema } from "./integrations/github.schema.js";
-import { googleDriveNodeSchema } from "./integrations/google-drive.schema.js";
-import { gmailNodeSchema } from "./integrations/gmail.schema.js";
-import { googleCalendarNodeSchema } from "./integrations/google-calendar.schema.js";
-import { googleSheetsNodeSchema } from "./integrations/google-sheets.schema.js";
-import { notionNodeSchema } from "./integrations/notion.schema.js";
-import { slackNodeSchema } from "./integrations/slack.schema.js";
-import { telegramNodeSchema } from "./integrations/telegram.schema.js";
-import { setVariableNodeSchema } from "./transform.nodes.js";
+import { conditionalNodeSchema, conditionalNodeValueSchemas } from "./control.nodes.js";
+import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
+import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
+import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
+import { gitHubNodeSchema, gitHubNodeValueSchemas } from "./integrations/github.schema.js";
+import { googleDriveNodeSchema, googleDriveNodeValueSchemas } from "./integrations/google-drive.schema.js";
+import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.schema.js";
+import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
+import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
+import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
+import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
+import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
+import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
 	cronJobNodeSchema,
+	cronJobNodeValueSchemas,
 	inputNodeSchema,
+	inputNodeValueSchemas,
 	webhookNodeSchema,
 } from "./trigger.nodes.js";
 
@@ -45,4 +50,25 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.notion", notionNodeSchema],
 	["action.slack", slackNodeSchema],
 	["action.telegram", telegramNodeSchema],
+]);
+
+export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>([
+	["trigger.cron", cronJobNodeValueSchemas],
+	["trigger.input", inputNodeValueSchemas],
+	["action.http", httpNodeValueSchemas],
+	["action.wait", waitingNodeValueSchemas],
+	["action.set_variable", setVariableNodeValueSchemas],
+	["action.condition", conditionalNodeValueSchemas],
+	["action.merge", mergeDataNodeValueSchemas],
+	["action.ai", aiNodeValueSchemas],
+	["action.calcom", calcomNodeValueSchemas],
+	["action.github", gitHubNodeValueSchemas],
+	["action.google_drive", googleDriveNodeValueSchemas],
+	["action.gmail", gmailNodeValueSchemas],
+	["action.google_calendar", googleCalendarNodeValueSchemas],
+	["action.google_sheets", googleSheetsNodeValueSchemas],
+	["action.discord", discordNodeValueSchemas],
+	["action.notion", notionNodeValueSchemas],
+	["action.slack", slackNodeValueSchemas],
+	["action.telegram", telegramNodeValueSchemas],
 ]);

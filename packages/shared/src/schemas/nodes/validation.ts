@@ -10,39 +10,18 @@ export function withExpr<T extends z.ZodType>(schema: T) {
 }
 
 export function extractFormSchema(
-	registry: Map<string, z.ZodObject>,
+	registry: Map<string, Record<string, z.ZodType>>,
 	task: string,
 	params: Array<{ name: string; required?: boolean }>,
 ): z.ZodObject<z.ZodRawShape> {
-	const nodeSchema = registry.get(task);
-	if (!nodeSchema) return z.object({});
-
-	const parametersField = nodeSchema.shape.parameters;
-	if (!parametersField) return z.object({});
-
-	const union = parametersField.element;
-	if (!union || !union.options) return z.object({});
-
-	const valueSchemaMap = new Map<string, z.ZodTypeAny>();
-
-	for (const option of union.options) {
-		const nameSchema = option.shape?.name;
-		if (!nameSchema) continue;
-		const paramName = nameSchema.value;
-		const valueSchema = option.shape?.value;
-		if (!valueSchema || paramName === undefined) continue;
-		valueSchemaMap.set(paramName, valueSchema);
-	}
-
-	if (valueSchemaMap.size === 0) return z.object({});
+	const valueSchemas = registry.get(task);
+	if (!valueSchemas) return z.object({});
 
 	const shape: Record<string, z.ZodTypeAny> = {};
 	for (const param of params) {
-		const valueSchema = valueSchemaMap.get(param.name);
+		const valueSchema = valueSchemas[param.name];
 		if (!valueSchema) continue;
-
-		const wrapped = withExpr(valueSchema);
-		shape[param.name] = param.required ? wrapped : wrapped.optional();
+		shape[param.name] = param.required ? valueSchema : valueSchema.optional();
 	}
 
 	return z.object(shape);

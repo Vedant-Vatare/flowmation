@@ -4,6 +4,7 @@ import {
 	nodeOutputPortsSchema,
 	nodeParameterSchema,
 } from "./base.nodes.js";
+import { withExpr } from "./validation.js";
 
 export const comparisonOperatorsEnum = z.enum([
 	"eq",
@@ -16,6 +17,12 @@ export const comparisonOperatorsEnum = z.enum([
 	"emt",
 ]);
 
+export const conditionalNodeValueSchemas = {
+	left_operand: withExpr(z.union([z.string(), z.number(), z.boolean()])),
+	right_operand: withExpr(z.union([z.string(), z.number(), z.boolean()])),
+	operator: withExpr(comparisonOperatorsEnum),
+} as const;
+
 export const conditionalNodeSchema = baseNodeSchema.extend({
 	type: z.literal("action"),
 	task: z.literal("action.condition"),
@@ -24,13 +31,13 @@ export const conditionalNodeSchema = baseNodeSchema.extend({
 			nodeParameterSchema.extend({
 				name: z.literal("left_operand"),
 				type: z.literal("input"),
-				value: z.union([z.string(), z.number(), z.boolean()]),
+				value: conditionalNodeValueSchemas.left_operand,
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
 				name: z.literal("right_operand"),
 				type: z.literal("input"),
-				value: z.union([z.string(), z.number(), z.boolean()]),
+				value: conditionalNodeValueSchemas.right_operand,
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
@@ -39,7 +46,7 @@ export const conditionalNodeSchema = baseNodeSchema.extend({
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
 					.optional(),
-				value: comparisonOperatorsEnum,
+				value: conditionalNodeValueSchemas.operator,
 				required: z.boolean(),
 			}),
 		]),

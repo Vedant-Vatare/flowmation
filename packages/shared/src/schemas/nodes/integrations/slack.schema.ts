@@ -1,5 +1,13 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
+
+export const slackNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	channel: withExpr(z.string()),
+	text: withExpr(z.string()),
+	users: withExpr(z.string()),
+} as const;
 
 export const slackNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.slack"),
@@ -11,7 +19,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				name: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: slackNodeValueSchemas.operation,
 				default: z.literal("send_message").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -25,7 +33,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Channel"),
 				name: z.literal("channel"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: slackNodeValueSchemas.channel,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -46,7 +54,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Message"),
 				name: z.literal("text"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: slackNodeValueSchemas.text,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -61,7 +69,7 @@ export const slackNodeSchema = baseNodeSchema.extend({
 				label: z.literal("User IDs"),
 				name: z.literal("users"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: slackNodeValueSchemas.users,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z

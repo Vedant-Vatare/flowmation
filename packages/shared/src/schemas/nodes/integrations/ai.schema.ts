@@ -2,6 +2,13 @@ import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 import { withExpr } from "../validation.js";
 
+export const aiNodeValueSchemas = {
+	provider: withExpr(z.string()),
+	model: withExpr(z.string().max(2000)),
+	prompt: withExpr(z.string().max(10000)),
+	maxTokens: withExpr(z.coerce.number().int().min(1).max(1000000)),
+} as const;
+
 export const aiNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.ai"),
 	type: z.literal("action"),
@@ -12,7 +19,7 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Provider"),
 				name: z.literal("provider"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: aiNodeValueSchemas.provider,
 				default: z.literal("openai").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -29,7 +36,7 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Model"),
 				name: z.literal("model"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: aiNodeValueSchemas.model,
 				default: z.literal("gpt-4o").optional(),
 				required: z.boolean(),
 				placeholder: z.string().optional(),
@@ -39,7 +46,7 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Prompt"),
 				name: z.literal("prompt"),
 				type: z.literal("textarea"),
-				value: z.string().max(10000),
+				value: aiNodeValueSchemas.prompt,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 			}),
@@ -47,7 +54,7 @@ export const aiNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Max Tokens"),
 				name: z.literal("maxTokens"),
 				type: z.literal("number"),
-				value: withExpr(z.coerce.number().int().min(1).max(1000000)),
+				value: aiNodeValueSchemas.maxTokens,
 				default: z.literal("1000").optional(),
 				required: z.boolean(),
 				description: z.string().optional(),

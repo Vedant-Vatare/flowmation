@@ -1,5 +1,16 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
+
+export const notionNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	pageId: withExpr(z.string()),
+	parentPageId: withExpr(z.string()),
+	title: withExpr(z.string()),
+	content: withExpr(z.string()),
+	databaseId: withExpr(z.string()),
+	properties: withExpr(z.string()),
+} as const;
 
 const dependsOnSchema = z.array(
 	z.object({ parameter: z.string(), values: z.array(z.unknown()) }),
@@ -15,7 +26,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("operation"),
 				label: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: notionNodeValueSchemas.operation,
 				default: z.literal("get_page_content"),
 				required: z.boolean().default(true),
 				options: z
@@ -32,7 +43,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("pageId"),
 				label: z.literal("page ID"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: notionNodeValueSchemas.pageId,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
 					{
@@ -46,7 +57,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("parentPageId"),
 				label: z.literal("parent page ID"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: notionNodeValueSchemas.parentPageId,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
 					{ parameter: "operation", values: ["create_page"] },
@@ -57,7 +68,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("title"),
 				label: z.literal("title"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: notionNodeValueSchemas.title,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
 					{
@@ -71,7 +82,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("content"),
 				label: z.literal("content"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: notionNodeValueSchemas.content,
 				required: z.boolean().default(false),
 				dependsOn: dependsOnSchema.default([
 					{
@@ -85,7 +96,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("databaseId"),
 				label: z.literal("database ID"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: notionNodeValueSchemas.databaseId,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
 					{ parameter: "operation", values: ["create_database_row"] },
@@ -96,7 +107,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				name: z.literal("properties"),
 				label: z.literal("properties"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: notionNodeValueSchemas.properties,
 				required: z.boolean().default(false),
 				dependsOn: dependsOnSchema.default([
 					{ parameter: "operation", values: ["create_database_row"] },

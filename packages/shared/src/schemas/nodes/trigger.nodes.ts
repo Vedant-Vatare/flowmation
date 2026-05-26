@@ -17,6 +17,14 @@ export const clickNodeSchema = baseTriggerNodeSchema.extend({
 	type: z.literal("trigger"),
 });
 
+export const cronJobNodeValueSchemas = {
+	trigger_type: withExpr(z.enum(["interval", "cron"])),
+	interval_value: withExpr(z.coerce.number().min(1)),
+	interval_unit: withExpr(z.enum(["seconds", "minutes", "hours", "days"])),
+	cron_expression: withExpr(z.string().max(100)),
+	limit: withExpr(z.coerce.number().min(1).optional()).optional(),
+} as const;
+
 export const cronJobNodeSchema = baseNodeSchema.extend({
 	task: z.literal("trigger.cron"),
 	type: z.union([z.literal("trigger"), z.literal("action")]),
@@ -29,14 +37,14 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("trigger_type"),
 				label: z.literal("Trigger Type"),
 				type: z.literal("dropdown"),
-				value: z.enum(["interval", "cron"]),
+				value: cronJobNodeValueSchemas.trigger_type,
 				required: z.boolean(),
 			}),
 			nodeParameterSchema.extend({
 				name: z.literal("interval_value"),
 				label: z.literal("Every"),
 				type: z.literal("number"),
-				value: withExpr(z.coerce.number().min(1)),
+				value: cronJobNodeValueSchemas.interval_value,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -51,7 +59,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("interval_unit"),
 				label: z.literal("Unit"),
 				type: z.literal("dropdown"),
-				value: z.enum(["seconds", "minutes", "hours", "days"]),
+				value: cronJobNodeValueSchemas.interval_unit,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -66,7 +74,7 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("cron_expression"),
 				label: z.literal("Cron Expression"),
 				type: z.literal("input"),
-				value: z.string().max(100),
+				value: cronJobNodeValueSchemas.cron_expression,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -81,11 +89,15 @@ export const cronJobNodeSchema = baseNodeSchema.extend({
 				name: z.literal("limit"),
 				label: z.literal("Limit"),
 				type: z.literal("input"),
-				value: withExpr(z.coerce.number().min(1).optional()).optional(),
+				value: cronJobNodeValueSchemas.limit,
 			}),
 		]),
 	),
 });
+
+export const inputNodeValueSchemas = {
+	inputs: withExpr(z.record(z.string(), anyNodeValueSchema)),
+} as const;
 
 export const inputNodeSchema = baseTriggerNodeSchema.extend({
 	task: z.literal("trigger.input"),
@@ -96,7 +108,7 @@ export const inputNodeSchema = baseTriggerNodeSchema.extend({
 				label: z.literal("Input Data"),
 				name: z.literal("inputs"),
 				type: z.literal("key-value"),
-				value: z.record(z.string(), anyNodeValueSchema),
+				value: inputNodeValueSchemas.inputs,
 				required: z.boolean(),
 			}),
 		]),

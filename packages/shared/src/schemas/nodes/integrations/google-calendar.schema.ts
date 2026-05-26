@@ -2,6 +2,22 @@ import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 import { withExpr } from "../validation.js";
 
+export const googleCalendarNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	calendarId: withExpr(z.string().max(2000)),
+	timeMin: withExpr(z.string()),
+	timeMax: withExpr(z.string().max(2000)),
+	maxResults: withExpr(z.coerce.number().int().min(1).max(2500)),
+	query: withExpr(z.string().max(2000)),
+	eventId: withExpr(z.string().max(2000)),
+	summary: withExpr(z.string().max(2000)),
+	description: withExpr(z.string().max(10000)),
+	location: withExpr(z.string().max(2000)),
+	startTime: withExpr(z.string().max(2000)),
+	endTime: withExpr(z.string()),
+	timeZone: withExpr(z.string().max(2000)),
+} as const;
+
 export const googleCalendarNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.google_calendar"),
 	type: z.literal("action"),
@@ -12,7 +28,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				name: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: googleCalendarNodeValueSchemas.operation,
 				default: z.literal("list_events").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -28,10 +44,10 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Calendar ID"),
 				name: z.literal("calendarId"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.calendarId,
 				default: z.literal("primary").optional(),
 				required: z.boolean(),
-			description: z.string().optional(),
+				description: z.string().optional(),
 				dependsOn: z
 					.array(
 						z.object({
@@ -52,7 +68,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Time Min"),
 				name: z.literal("timeMin"),
 				type: z.literal("date-time"),
-				value: z.string(),
+				value: googleCalendarNodeValueSchemas.timeMin,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -68,7 +84,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Time Max"),
 				name: z.literal("timeMax"),
 				type: z.literal("date-time"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.timeMax,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -84,7 +100,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Max Results"),
 				name: z.literal("maxResults"),
 				type: z.literal("number"),
-				value: withExpr(z.coerce.number().int().min(1).max(2500)),
+				value: googleCalendarNodeValueSchemas.maxResults,
 				default: z.literal("50").optional(),
 				required: z.boolean(),
 				dependsOn: z
@@ -100,7 +116,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Query"),
 				name: z.literal("query"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.query,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				description: z.string().optional(),
@@ -117,7 +133,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Event ID"),
 				name: z.literal("eventId"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.eventId,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -132,7 +148,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Summary"),
 				name: z.literal("summary"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.summary,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				dependsOn: z
@@ -148,7 +164,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Description"),
 				name: z.literal("description"),
 				type: z.literal("textarea"),
-				value: z.string().max(10000),
+				value: googleCalendarNodeValueSchemas.description,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -163,7 +179,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Location"),
 				name: z.literal("location"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.location,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
 				dependsOn: z
@@ -179,7 +195,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Start Time"),
 				name: z.literal("startTime"),
 				type: z.literal("date-time"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.startTime,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -195,7 +211,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("End Time"),
 				name: z.literal("endTime"),
 				type: z.literal("date-time"),
-				value: z.string(),
+				value: googleCalendarNodeValueSchemas.endTime,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -211,7 +227,7 @@ export const googleCalendarNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Time Zone"),
 				name: z.literal("timeZone"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: googleCalendarNodeValueSchemas.timeZone,
 				default: z.literal("UTC").optional(),
 				required: z.boolean(),
 				placeholder: z.string().optional(),

@@ -1,5 +1,16 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { withExpr } from "../validation.js";
+
+export const telegramNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	chatId: withExpr(z.string()),
+	text: withExpr(z.string()),
+	parseMode: withExpr(z.string()),
+	photo: withExpr(z.string()),
+	caption: withExpr(z.string()),
+	document: withExpr(z.string()),
+} as const;
 
 export const telegramNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.telegram"),
@@ -11,7 +22,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				name: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.operation,
 				default: z.literal("send_message").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -26,7 +37,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Chat ID"),
 				name: z.literal("chatId"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.chatId,
 				required: z.boolean(),
 				description: z.string().optional(),
 			}),
@@ -34,7 +45,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Message Text"),
 				name: z.literal("text"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.text,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -49,7 +60,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Parse Mode"),
 				name: z.literal("parseMode"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.parseMode,
 				default: z.literal("none").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -72,7 +83,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Photo URL"),
 				name: z.literal("photo"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.photo,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -87,7 +98,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Caption"),
 				name: z.literal("caption"),
 				type: z.literal("textarea"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.caption,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -104,7 +115,7 @@ export const telegramNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Document URL"),
 				name: z.literal("document"),
 				type: z.literal("input"),
-				value: z.string(),
+				value: telegramNodeValueSchemas.document,
 				required: z.boolean(),
 				dependsOn: z
 					.array(

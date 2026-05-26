@@ -2,6 +2,23 @@ import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 import { withExpr } from "../validation.js";
 
+export const gitHubNodeValueSchemas = {
+	operation: withExpr(z.string()),
+	owner: withExpr(z.string().max(2000)),
+	repo: withExpr(z.string().max(2000)),
+	type: withExpr(z.string()),
+	issue_number: withExpr(z.string().max(2000)),
+	title: withExpr(z.string().max(2000)),
+	body: withExpr(z.string().max(10000)),
+	state: withExpr(z.string()),
+	labels: withExpr(z.string().max(2000)),
+	assignees: withExpr(z.string().max(2000)),
+	assignee: withExpr(z.string().max(2000)),
+	pull_number: withExpr(z.string().max(2000)),
+	base: withExpr(z.string().max(2000)),
+	per_page: withExpr(z.coerce.number().int().min(1).max(100)),
+} as const;
+
 export const gitHubNodeSchema = baseNodeSchema.extend({
 	task: z.literal("action.github"),
 	type: z.literal("action"),
@@ -12,7 +29,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				name: z.literal("operation"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: gitHubNodeValueSchemas.operation,
 				default: z.literal("get_repository").optional(),
 				options: z
 					.array(
@@ -33,7 +50,6 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 							value: "list_repos",
 							groupLabel: "repository",
 						},
-						// Issues
 						{ label: "List Issues", value: "list_issues", groupLabel: "issue" },
 						{ label: "Get Issue", value: "get_issue", groupLabel: "issue" },
 						{
@@ -64,7 +80,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Owner"),
 				name: z.literal("owner"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.owner,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -89,7 +105,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Repository"),
 				name: z.literal("repo"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.repo,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -114,7 +130,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Type"),
 				name: z.literal("type"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: gitHubNodeValueSchemas.type,
 				default: z.literal("all").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -139,7 +155,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Issue Number"),
 				name: z.literal("issue_number"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.issue_number,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -154,7 +170,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Title"),
 				name: z.literal("title"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.title,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -169,7 +185,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Body"),
 				name: z.literal("body"),
 				type: z.literal("textarea"),
-				value: z.string().max(10000),
+				value: gitHubNodeValueSchemas.body,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -184,7 +200,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("State"),
 				name: z.literal("state"),
 				type: z.literal("dropdown"),
-				value: z.string(),
+				value: gitHubNodeValueSchemas.state,
 				default: z.literal("open").optional(),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -209,7 +225,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Labels"),
 				name: z.literal("labels"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.labels,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -227,7 +243,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Assignees"),
 				name: z.literal("assignees"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.assignees,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -243,7 +259,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Assignee"),
 				name: z.literal("assignee"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.assignee,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -259,7 +275,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Pull Request Number"),
 				name: z.literal("pull_number"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.pull_number,
 				required: z.boolean(),
 				dependsOn: z
 					.array(
@@ -274,7 +290,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Base Branch"),
 				name: z.literal("base"),
 				type: z.literal("input"),
-				value: z.string().max(2000),
+				value: gitHubNodeValueSchemas.base,
 				required: z.boolean(),
 				description: z.string().optional(),
 				dependsOn: z
@@ -290,7 +306,7 @@ export const gitHubNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Per Page"),
 				name: z.literal("per_page"),
 				type: z.literal("number"),
-				value: withExpr(z.coerce.number().int().min(1).max(100)),
+				value: gitHubNodeValueSchemas.per_page,
 				default: z.literal("30").optional(),
 				required: z.boolean(),
 				dependsOn: z
