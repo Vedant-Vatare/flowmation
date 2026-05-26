@@ -4,7 +4,7 @@ import {
 	workflowNodeSchema,
 } from "@nodebase/shared";
 import type { NextFunction, Request, Response } from "express";
-import { flattenError, z } from "zod";
+import { flattenError } from "zod";
 
 type NodeValidationResult =
 	| { success: true; data: Record<string, unknown> }
@@ -18,7 +18,6 @@ type NodeValidationResult =
 
 type NodeValidationOptions = {
 	partial?: boolean;
-	skipParamValues?: boolean;
 };
 
 export const validateNodeSchema = (
@@ -41,29 +40,7 @@ export const validateNodeSchema = (
 		throw new Error(`No schema found for task: ${nodeData.task}`);
 	}
 
-	let targetSchema = schema;
-
-	if (options.skipParamValues && schema.shape.parameters?.element?.options) {
-		const permissiveOptions = schema.shape.parameters.element.options.map(
-			(opt: z.ZodObject) =>
-				opt.extend({
-					value: z.any(),
-					dependsOn: z
-						.array(
-							z.object({
-								parameter: z.string(),
-								values: z.array(z.unknown()),
-							}),
-						)
-						.optional(),
-				}),
-		);
-		targetSchema = schema.extend({
-			parameters: z.array(z.discriminatedUnion("name", permissiveOptions)),
-		});
-	}
-
-	const fullNodeSchema = workflowNodeSchema.extend(targetSchema.shape);
+	const fullNodeSchema = workflowNodeSchema.extend(schema.shape);
 
 	const validationSchema = options.partial
 		? fullNodeSchema.partial()

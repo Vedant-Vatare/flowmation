@@ -138,7 +138,7 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 };
 
 export const updateNodesPositions = async (req: Request, res: Response) => {
-	const nodes = req.body as NodeIdsWithPosition;
+	const nodes = req.body.nodes as NodeIdsWithPosition;
 	const workflowId = req.params.workflowId as string;
 	const userId = res.locals.userId;
 

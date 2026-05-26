@@ -68,7 +68,12 @@ export const validateRequest = (
 				errors: flattenError(zodResponse.error),
 			});
 		}
-		req.body = zodResponse.data;
+
+		if (options.key) {
+			(req[field] as Record<string, unknown>)[options.key] = zodResponse.data;
+		} else {
+			req[field] = zodResponse.data;
+		}
 		next();
 	};
 };
