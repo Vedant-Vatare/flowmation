@@ -14,10 +14,18 @@ export const getDecryptedCredential = async (credentialId: string) => {
 
 	if (credential.type === "apiKey") {
 		const fields = credential.fields || {};
+
+		const def = credentialRegistry[credential.provider] as
+			| { type: "apiKey"; fields: { key: string; secret: boolean }[] }
+			| undefined;
+
 		const decryptedFields: Record<string, string> = {};
+
 		for (const [key, value] of Object.entries(fields)) {
-			decryptedFields[key] = decrypt(value);
+			const fieldDef = def?.fields.find((f) => f.key === key);
+			decryptedFields[key] = fieldDef?.secret ? decrypt(value) : value;
 		}
+
 		return { type: "apiKey", fields: decryptedFields };
 	}
 

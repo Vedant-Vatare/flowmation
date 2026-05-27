@@ -15,13 +15,13 @@ export const useSaveApiKey = () => {
 	return useMutation({
 		mutationFn: ({
 			provider,
-			apiKey,
+			fields,
 			name,
 		}: {
 			provider: string;
-			apiKey: string;
+			fields: Record<string, string>;
 			name: string;
-		}) => saveApiKey(provider, { apiKey, name }),
+		}) => saveApiKey(provider, { ...fields, name }),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["credentials"] });
 		},

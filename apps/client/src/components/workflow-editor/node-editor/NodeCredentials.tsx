@@ -11,7 +11,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
-import { API_KEY_PROVIDERS } from "@nodebase/shared";
+import { API_KEY_PROVIDERS, credentialRegistry } from "@nodebase/shared";
+import type { ApiKeyCredentialDef } from "@nodebase/shared";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { useGetCredentials, useSaveApiKey } from "@/queries/credentials";
 
@@ -44,7 +45,7 @@ export const NodeCredentials = memo(
 		} = useGetCredentials();
 		const queryClient = useQueryClient();
 		const saveApiKeyMutation = useSaveApiKey();
-		const [apiKey, setApiKey] = useState("");
+		const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
 		const [credName, setCredName] = useState("");
 		const [showForm, setShowForm] = useState(false);
 
@@ -63,23 +64,33 @@ export const NodeCredentials = memo(
 			? API_KEY_PROVIDERS.includes(provider)
 			: false;
 
+		const credentialDef = provider
+			? (credentialRegistry[provider] as ApiKeyCredentialDef | undefined)
+			: undefined;
+
 		const handleSaveApiKey = useCallback(async () => {
-			if (!provider || !apiKey.trim()) return;
+			if (!provider) return;
+			const allFilled = credentialDef?.fields.every((f) => fieldValues[f.key]?.trim());
+			if (!allFilled) return;
 			saveApiKeyMutation.mutate(
 				{
 					provider,
-					apiKey,
+					fields: { ...fieldValues },
 					name: credName.trim() || `${provider} API Key`,
 				},
 				{
 					onSuccess: () => {
-						setApiKey("");
+						setFieldValues({});
 						setCredName("");
 						setShowForm(false);
 					},
 				},
 			);
-		}, [provider, apiKey, credName, saveApiKeyMutation]);
+		}, [provider, fieldValues, credName, saveApiKeyMutation, credentialDef]);
+
+		const setField = (key: string, value: string) => {
+			setFieldValues((prev) => ({ ...prev, [key]: value }));
+		};
 
 		if (!provider) return null;
 
@@ -151,19 +162,25 @@ export const NodeCredentials = memo(
 								onChange={(e) => setCredName(e.target.value)}
 								className="rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
 							/>
-							<Input
-								placeholder="sk-..."
-								value={apiKey}
-								onChange={(e) => setApiKey(e.target.value)}
-								type="password"
-								className="rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
-							/>
+							{credentialDef?.fields.map((field) => (
+								<Input
+									key={field.key}
+									placeholder={field.placeholder || field.label}
+									value={fieldValues[field.key] || ""}
+									onChange={(e) => setField(field.key, e.target.value)}
+									type={field.secret ? "password" : "text"}
+									className="rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
+								/>
+							))}
 							<div className="flex items-center gap-2 pt-1">
 								<Button
 									variant="secondary"
 									size="sm"
 									onClick={handleSaveApiKey}
-									disabled={saveApiKeyMutation.isPending || !apiKey.trim()}
+									disabled={
+										saveApiKeyMutation.isPending ||
+										!credentialDef?.fields.every((f) => fieldValues[f.key]?.trim())
+									}
 									type="button"
 								>
 									{saveApiKeyMutation.isPending ? "Saving..." : "Save"}
@@ -173,7 +190,7 @@ export const NodeCredentials = memo(
 									size="sm"
 									onClick={() => {
 										setShowForm(false);
-										setApiKey("");
+										setFieldValues({});
 										setCredName("");
 									}}
 									type="button"

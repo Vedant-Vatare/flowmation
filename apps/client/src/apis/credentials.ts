@@ -15,7 +15,7 @@ export const fetchCredentials = async (): Promise<CredentialResponse[]> => {
 
 export const saveApiKey = async (
 	provider: string,
-	data: { apiKey: string; name: string },
+	data: Record<string, string>,
 ): Promise<void> => {
 	await api.post(`/credentials/${provider}`, data);
 };
