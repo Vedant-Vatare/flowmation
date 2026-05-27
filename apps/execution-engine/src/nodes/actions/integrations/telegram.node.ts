@@ -158,7 +158,6 @@ export const telegramNodeExecutor = async (
 
 		return { success: false, message: `Unsupported operation: ${operation}` };
 	} catch (err) {
-		if (err instanceof UnrecoverableError) throw err;
 		return {
 			success: false,
 			message:

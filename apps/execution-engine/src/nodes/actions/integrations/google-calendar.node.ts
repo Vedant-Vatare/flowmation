@@ -1,5 +1,4 @@
 import type { GoogleCalendarNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
@@ -36,7 +35,7 @@ export const googleCalendarNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation)
-			throw new UnrecoverableError("google calendar node operation is invalid");
+			throw new Error("google calendar node operation is invalid");
 
 		const calendarId = (params.calendarId?.value as string) || "primary";
 		const authHeaders = {

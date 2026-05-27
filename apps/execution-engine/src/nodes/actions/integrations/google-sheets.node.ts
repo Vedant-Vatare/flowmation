@@ -1,5 +1,4 @@
 import type { GoogleSheetsNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
@@ -37,7 +36,7 @@ export const googleSheetsNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation)
-			throw new UnrecoverableError("google sheets node operation is invalid");
+			throw new Error("google sheets node operation is invalid");
 
 		const spreadsheetId = params.spreadsheetId?.value as string;
 		const range = params.range?.value as string;

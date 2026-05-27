@@ -1,5 +1,4 @@
 import type { AiNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -187,7 +186,6 @@ export const aiNodeExecutor = async (
 			},
 		};
 	} catch (err) {
-		if (err instanceof UnrecoverableError) throw err;
 		return {
 			success: false,
 			message:

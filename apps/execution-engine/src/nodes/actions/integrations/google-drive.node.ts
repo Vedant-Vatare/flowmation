@@ -1,5 +1,4 @@
 import type { GoogleDriveNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
@@ -29,7 +28,7 @@ export const googleDriveNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation)
-			throw new UnrecoverableError("google drive node operation is invalid");
+			throw new Error("google drive node operation is invalid");
 
 		const authHeaders = {
 			Authorization: `Bearer ${credential.accessToken}`,

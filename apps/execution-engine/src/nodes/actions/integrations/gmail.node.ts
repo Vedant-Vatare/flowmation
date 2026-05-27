@@ -1,5 +1,4 @@
 import type { GmailNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
@@ -44,7 +43,7 @@ export const gmailNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation)
-			throw new UnrecoverableError("gmail node operation is invalid");
+			throw new Error("gmail node operation is invalid");
 
 		if (operation === "send_email" || operation === "create_draft") {
 			const to = params.to?.value as string;
@@ -167,7 +166,7 @@ export const gmailNodeExecutor = async (
 			const subject = params.subject?.value as string;
 			const bodyText = params.body?.value as string;
 
-			if (!messageId) throw new UnrecoverableError("invalid message id");
+			if (!messageId) throw new Error("invalid message id");
 
 			const originalRes = await fetch(
 				`https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=metadata&metadataHeaders=Message-ID&metadataHeaders=References`,

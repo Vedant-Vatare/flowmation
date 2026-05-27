@@ -1,5 +1,4 @@
 import type { NotionNode } from "@nodebase/shared";
-import { UnrecoverableError } from "bullmq";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
 import { getDecryptedCredential } from "@/utils/credentials.utils.js";
@@ -190,7 +189,7 @@ export const notionNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation)
-			throw new UnrecoverableError("Notion node operation is invalid");
+			throw new Error("Notion node operation is invalid");
 
 		const headers: Record<string, string> = {
 			Authorization: `Bearer ${credential.accessToken}`,
@@ -205,8 +204,8 @@ export const notionNodeExecutor = async (
 			const title = params.title?.value as string;
 			const properties = params.properties?.value as string | undefined;
 
-			if (!databaseId) throw new UnrecoverableError("databaseId is required");
-			if (!title) throw new UnrecoverableError("title is required");
+			if (!databaseId) throw new Error("databaseId is required");
+			if (!title) throw new Error("title is required");
 
 			const body = {
 				parent: { type: "database_id" as const, database_id: databaseId },
@@ -230,8 +229,8 @@ export const notionNodeExecutor = async (
 			const content = params.content?.value as string | undefined;
 
 			if (!parentPageId)
-				throw new UnrecoverableError("parentPageId is required");
-			if (!title) throw new UnrecoverableError("title is required");
+				throw new Error("parentPageId is required");
+			if (!title) throw new Error("title is required");
 
 			const body: Record<string, unknown> = {
 				parent: { type: "page_id" as const, page_id: parentPageId },
@@ -255,7 +254,7 @@ export const notionNodeExecutor = async (
 			const blockId = toNotionUUID((params.pageId?.value as string) ?? "");
 			const content = params.content?.value as string | undefined;
 
-			if (!blockId) throw new UnrecoverableError("blockId/pageId is required");
+			if (!blockId) throw new Error("blockId/pageId is required");
 
 			if (!content) {
 				return { success: true, output: { message: "No content to append" } };
@@ -277,7 +276,7 @@ export const notionNodeExecutor = async (
 		if (operation === "get_page_content") {
 			const pageId = toNotionUUID((params.pageId?.value as string) ?? "");
 
-			if (!pageId) throw new UnrecoverableError("pageId is required");
+			if (!pageId) throw new Error("pageId is required");
 
 			const response = await fetch(
 				`${NOTION_API}/blocks/${pageId}/children?page_size=100`,

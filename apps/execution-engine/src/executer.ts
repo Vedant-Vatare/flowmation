@@ -6,9 +6,9 @@ import type {
 	CronNode,
 	DiscordNode,
 	GitHubNode,
-	GoogleDriveNode,
 	GmailNode,
 	GoogleCalendarNode,
+	GoogleDriveNode,
 	GoogleSheetsNode,
 	HttpNode,
 	InputNode,
@@ -27,9 +27,9 @@ import { aiNodeExecutor } from "./nodes/actions/integrations/ai.node.js";
 import { calcomNodeExecutor } from "./nodes/actions/integrations/calcom.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
-import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
+import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
@@ -80,7 +80,10 @@ export const executeNode = ({
 		case "action.gmail":
 			return gmailNodeExecutor(node as GmailNode, executionId);
 		case "action.google_calendar":
-			return googleCalendarNodeExecutor(node as GoogleCalendarNode, executionId);
+			return googleCalendarNodeExecutor(
+				node as GoogleCalendarNode,
+				executionId,
+			);
 		case "action.google_sheets":
 			return googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId);
 		case "action.github":
