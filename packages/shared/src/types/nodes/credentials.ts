@@ -6,6 +6,7 @@ export const CREDENTIALS_PROVIDER = [
 	"google",
 	"github",
 	"notion",
+	"razorpay",
 	"slack",
 	"telegram",
 ] as const;

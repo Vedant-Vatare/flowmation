@@ -17,6 +17,10 @@ import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.sch
 import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
 import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
 import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
+import {
+	razorpayNodeSchema,
+	razorpayNodeValueSchemas,
+} from "./integrations/razorpay.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
 import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
@@ -48,6 +52,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.google_sheets", googleSheetsNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.notion", notionNodeSchema],
+	["action.razorpay", razorpayNodeSchema],
 	["action.slack", slackNodeSchema],
 	["action.telegram", telegramNodeSchema],
 ]);
@@ -69,6 +74,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.google_sheets", googleSheetsNodeValueSchemas],
 	["action.discord", discordNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
+	["action.razorpay", razorpayNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],
 	["action.telegram", telegramNodeValueSchemas],
 ]);

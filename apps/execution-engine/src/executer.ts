@@ -14,6 +14,7 @@ import type {
 	InputNode,
 	MergeNode,
 	NotionNode,
+	RazorpayNode,
 	SlackNode,
 	TelegramNode,
 	WaitNode,
@@ -31,6 +32,7 @@ import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
+import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
@@ -87,6 +89,8 @@ export const executeNode = ({
 			return discordNodeExecutor(node as DiscordNode, executionId);
 		case "action.notion":
 			return notionNodeExecutor(node as NotionNode, executionId);
+		case "action.razorpay":
+			return razorpayNodeExecutor(node as RazorpayNode, executionId);
 		case "action.slack":
 			return slackNodeExecutor(node as SlackNode, executionId);
 		case "action.telegram":

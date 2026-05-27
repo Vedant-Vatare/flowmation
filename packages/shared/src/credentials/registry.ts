@@ -3,6 +3,7 @@ import { calcomCredential } from "./providers/calcom.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
 import { notionCredential } from "./providers/notion.js";
+import { razorpayCredential } from "./providers/razorpay.js";
 import { slackCredential } from "./providers/slack.js";
 import { telegramCredential } from "./providers/telegram.js";
 import type { CredentialDef } from "./types.js";
@@ -13,6 +14,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	google: googleCredential,
 	github: githubCredential,
 	notion: notionCredential,
+	razorpay: razorpayCredential,
 	slack: slackCredential,
 	telegram: telegramCredential,
 };

@@ -16,6 +16,7 @@ import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
+import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
@@ -177,6 +178,13 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Notion",
 		icon: NotionIcon,
 		background: "#FFFEFC",
+		branded: true,
+	},
+	"action.razorpay": {
+		name: "Razorpay",
+		icon: RazorpayIcon,
+		background: "#3399FF",
+		color: "#ffffff",
 		branded: true,
 	},
 	"action.slack": {
