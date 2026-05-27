@@ -66,26 +66,38 @@ export const workflowWorker = new Worker(
 			throw new UnrecoverableError("does not have any action node");
 		}
 
-		await handleSequentialNodeExecution(job, startNode, globalPendingBranches);
+		const nodeExecutionResult = await handleSequentialNodeExecution(
+			job,
+			startNode,
+			globalPendingBranches,
+		);
+		return nodeExecutionResult;
 	},
 	{ connection, concurrency: 50 },
 );
 
 workflowWorker.on(
 	"completed",
-	async (job: Job<WorkflowJobPayload>, result: { removeRecord?: boolean }) => {
+	async (
+		job: Job<WorkflowJobPayload>,
+		result: { removeRecord?: boolean; success?: boolean; nodeFailed?: boolean },
+	) => {
 		if (!job) return;
 		if (result?.removeRecord) {
 			await deleteWorkflowExecutionQuery(job.data.executionId);
 			console.log("workflow was recorded!", job.data.executionId);
 			return;
 		}
+
+		const status = result?.nodeFailed ? "failed" : "success";
 		console.log(
 			"workflow execution complete for workflow:",
 			job.data.workflowId,
 			job.data.executionId,
+			"status:",
+			status,
 		);
-		await updateWorkflowStatusQuery(job.data.executionId, "success");
+		await updateWorkflowStatusQuery(job.data.executionId, status);
 		broadcastExecutionUpdate(job.data, {
 			type: "workflow:completed",
 			completedAt: new Date(),
@@ -193,7 +205,7 @@ const handleSequentialNodeExecution = async (
 	job: Job<WorkflowJobPayload>,
 	startNode: WorkflowNode,
 	globalPendingBranches: WorkflowNode[],
-) => {
+): Promise<{ success: boolean; nodeFailed?: boolean }> => {
 	const { nodes, connections, executionId, workflowId } = job.data;
 
 	let currentNode: WorkflowNode | undefined = startNode;
@@ -201,6 +213,7 @@ const handleSequentialNodeExecution = async (
 
 	/* nodeconfigs is populated when current node is executed and its configs can be passed for the next node execution which is used by worker job configs. */
 	let nodeConfigs: NodeExecutionConfig = {};
+	let nodeFailed = false;
 
 	while (currentNode) {
 		const node = currentNode;
@@ -228,11 +241,29 @@ const handleSequentialNodeExecution = async (
 			nodeConfigs,
 		);
 
-		const nodeExecution = (await nodeJob.waitUntilFinished(
-			nodeQueueEvents,
-		)) as WorkflowNodesWorker;
+		let nodeExecution: WorkflowNodesWorker;
+		try {
+			nodeExecution = (await nodeJob.waitUntilFinished(
+				nodeQueueEvents,
+			)) as WorkflowNodesWorker;
+		} catch {
+			if (node.settings?.continueOnFail) {
+				nodeFailed = true;
+				currentNode = getNextNode(
+					connections,
+					node,
+					nodes,
+					["default"],
+					globalPendingBranches,
+				);
+				nodeConfigs = {};
+				previousExecution = null;
+				continue;
+			}
+			return { success: false, nodeFailed: true };
+		}
 
-		nodeConfigs = nodeExecutionConfig(node, nodeExecution?.output);
+		nodeConfigs = nodeExecutionConfig(node, nodeExecution.output);
 		previousExecution = {
 			id: nodeExecution.id,
 			node: node,
@@ -244,7 +275,7 @@ const handleSequentialNodeExecution = async (
 			connections,
 			node,
 			nodes,
-			nodeExecution?.allowedNodePorts ?? [],
+			nodeExecution.allowedNodePorts ?? [],
 			globalPendingBranches,
 		);
 
@@ -266,6 +297,8 @@ const handleSequentialNodeExecution = async (
 			}
 		}
 	}
+
+	return { success: !nodeFailed, nodeFailed };
 };
 
 const getNextNode = (

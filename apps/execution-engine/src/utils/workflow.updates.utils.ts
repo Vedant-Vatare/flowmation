@@ -3,6 +3,7 @@ import {
 	completeNodeExecutionQuery,
 	createNodeExecutionQuery,
 	createNodeExecutionRecordQuery,
+	NodeExecutionFailedQuery,
 } from "@/queries/workflow.executions.js";
 import { storeNodeOutput } from "@/services/executionStore.js";
 import { broadcastExecutionUpdate } from "./sse.utils.js";
@@ -48,6 +49,38 @@ export const recordNodeCompletion = async (
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
 		output: nodeOutput,
+		completedAt: new Date(),
+	});
+
+	await Promise.all([nodeDbUpdate, saveToStore]);
+};
+
+export const recordNodeExecutionFailed = async (
+	jobData: NodeJobPayload,
+	error: unknown,
+) => {
+	const nodeOutput = jobData.node.settings?.alwaysOutputData
+		? jobData.node.settings?.fallbackOutputData
+		: error;
+	if (!jobData.nodeExecutionId)
+		throw new Error("node execution cannot be undefined");
+
+	const nodeDbUpdate = NodeExecutionFailedQuery(
+		jobData.nodeExecutionId,
+		nodeOutput,
+	);
+
+	const saveToStore = storeNodeOutput(
+		jobData.executionId,
+		jobData.node.name,
+		nodeOutput,
+	);
+
+	broadcastExecutionUpdate(jobData, {
+		type: "node:failed",
+		workflowNodeId: jobData.node.id,
+		task: jobData.node.task,
+		error: nodeOutput,
 		completedAt: new Date(),
 	});
 

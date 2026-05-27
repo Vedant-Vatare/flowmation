@@ -32,6 +32,8 @@ export const NodeSettingsSchema = z
 		retryCount: z.number().int().min(0).max(3).optional(),
 		timeout: z.number().int().min(0).optional(),
 		continueOnFail: z.boolean().optional(),
+		alwaysOutputData: z.boolean().optional(),
+		fallbackOutputData: z.unknown().optional(),
 		disabled: z.boolean().optional(),
 	})
 	.default({});

@@ -11,6 +11,7 @@ import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handlePreviousNodeExecution } from "@/utils/node.executor.utils.js";
 import {
 	recordNodeCompletion,
+	recordNodeExecutionFailed,
 	recordNodeStart,
 } from "@/utils/workflow.updates.utils.js";
 
@@ -65,7 +66,7 @@ workflowNodesWorker.on(
 	async (job: Job<NodeJobPayload> | undefined, err: Error) => {
 		if (!job?.data.nodeExecutionId) return;
 		console.error(err);
-		await recordNodeCompletion(job.data, err.message);
+		await recordNodeExecutionFailed(job.data, err.message);
 	},
 );
 

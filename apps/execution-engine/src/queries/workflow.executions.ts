@@ -69,6 +69,12 @@ export const completeNodeExecutionQuery = async (
 		.set({ completedAt: new Date(), output, status: "success" })
 		.where(eq(nodeExecutionTable.id, id));
 };
+export const NodeExecutionFailedQuery = async (id: string, output: unknown) => {
+	return await db
+		.update(nodeExecutionTable)
+		.set({ completedAt: new Date(), output, status: "failed" })
+		.where(eq(nodeExecutionTable.id, id));
+};
 
 export const deleteWorkflowExecutionQuery = async (executionId: string) => {
 	if (!executionId) return { success: false };

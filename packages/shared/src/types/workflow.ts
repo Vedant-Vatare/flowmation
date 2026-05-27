@@ -63,7 +63,8 @@ export type NodeExecutionUpdate =
 			type: "node:failed";
 			workflowNodeId: string;
 			task: string;
-			error: string;
+			error: unknown;
+			completedAt: Date;
 	  };
 
 export type WorkflowExecutionUpdate =
