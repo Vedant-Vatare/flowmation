@@ -96,7 +96,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const { workflowId } = Route.useParams();
 	const { icon: Icon, color, background, branded } = node.data.ui;
 	const [isEditingName, setIsEditingName] = useState(false);
-	const [isDuplicateName, setIsDuplicateName] = useState(false);
+	const [errorInNodeName, setErrorInNodeName] = useState<null | string>(null);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
 	const nodeNameRef = useRef<HTMLElement | null>(null);
 	const { mutate: updateNode } = useUpdateWorkflowNode();
@@ -104,7 +104,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const editNodeName = () => {
 		if (!nodeNameRef.current) return;
 		setIsEditingName(true);
-		setIsDuplicateName(false);
+		setErrorInNodeName(null);
 
 		nodeNameRef.current.contentEditable = "true";
 		nodeNameRef.current.focus();
@@ -118,8 +118,8 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 
 	const saveNodeName = () => {
 		if (!nodeNameRef.current) return;
-		const name = nodeNameRef.current?.innerText.trim();
-		if (!name || isDuplicateName) {
+		const name = nodeNameRef.current.innerText.replace(/[^\w\s-]/g, "").trim();
+		if (!name || errorInNodeName) {
 			nodeNameRef.current.focus();
 			return;
 		}
@@ -133,12 +133,25 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 		setIsEditingName(false);
 	};
 
-	const checkForDuplicate = () => {
-		const name = nodeNameRef.current?.innerText.trim();
+	const checkNodeName = () => {
+		if (!nodeNameRef.current) return;
+
+		const name = nodeNameRef.current.innerText.trim();
 		if (!name) return;
-		setIsDuplicateName(!isUniqueNodeName(name, getNodes()));
+
+		if (/[^\w\s-]/.test(name)) {
+			setErrorInNodeName("name contains invalid character(s)");
+			return;
+		}
+
+		if (!isUniqueNodeName(name, getNodes(), node.id)) {
+			setErrorInNodeName("Name should be unique");
+			return;
+		}
+
+		setErrorInNodeName(null);
 	};
-	const deboucedCheckDuplicate = useDebounce(checkForDuplicate, undefined, 200);
+	const deboucedCheckNodeName = useDebounce(checkNodeName, undefined, 50);
 
 	return (
 		<div className="relative flex gap-3 py-2 my-2 pl-2.5 items-center bg-muted p-1">
@@ -156,14 +169,14 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 			<div className="flex flex-col min-w-0">
 				<span
 					ref={nodeNameRef}
-					className={cn("outline-none", isDuplicateName && "shake")}
-					onInput={deboucedCheckDuplicate}
+					className={cn("outline-none", errorInNodeName && "shake")}
+					onInput={deboucedCheckNodeName}
 					suppressContentEditableWarning={true}
 				>
 					{node.data.name}
 				</span>
 			</div>
-			<div className="ml-auto mr-1 cursor-pointer opacity-75">
+			<div className="ml-auto mr-1 cursor-pointer opacity-75 shrink-0">
 				{isEditingName ? (
 					<Button onClick={saveNodeName} variant={"default"} size={"icon-sm"}>
 						<HugeiconsIcon icon={CheckmarkSquare02Icon} size={14} />
@@ -176,11 +189,11 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 			</div>
 			<span
 				className={cn(
-					"absolute -bottom-4 text-destructive text-xs transition-transform duration-250 ease-out pointer-events-none",
-					isDuplicateName ? "block translate-y-0" : "hidden -translate-y-2.5",
+					"absolute left-0 right-0 top-[110%] text-destructive text-xs px-2.5 py-1 bg-background",
+					errorInNodeName ? "block" : "hidden",
 				)}
 			>
-				Name should be unique
+				{errorInNodeName}
 			</span>
 		</div>
 	);

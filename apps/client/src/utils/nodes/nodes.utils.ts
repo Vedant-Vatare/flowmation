@@ -53,9 +53,12 @@ export type CanvasNodeProps = {
 export const isUniqueNodeName = (
 	nodeName: string,
 	nodes: WorkflowCanvasNode[],
+	excludeId?: string,
 ): boolean => {
 	const nameExists = nodes.some(
-		(n) => n.data.name.toLowerCase() === nodeName.toLocaleLowerCase(),
+		(n) =>
+			n.id !== excludeId &&
+			n.data.name.toLowerCase() === nodeName.toLocaleLowerCase(),
 	);
 	return !nameExists;
 };
