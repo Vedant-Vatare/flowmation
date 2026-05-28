@@ -214,8 +214,15 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 					: (param.default ?? "");
 		}
 		vals.credentialId = node.data.credentialId ?? "";
+		if (node.data.settings) {
+			for (const [key, value] of Object.entries(node.data.settings)) {
+				if (key !== "hasExpressions" && value !== undefined && value !== null) {
+					vals[key] = value;
+				}
+			}
+		}
 		return vals;
-	}, [node.data.parameters, node.data.credentialId]);
+	}, [node.data.parameters, node.data.credentialId, node.data.settings]);
 
 	const formSchema = useMemo(
 		() =>
@@ -223,25 +230,27 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				nodeParamValueRegistry,
 				node.data.task,
 				node.data.parameters,
-			).superRefine((values, ctx) => {
-				for (const param of node.data.parameters) {
-					if (!param.required) continue;
-					if (param.dependsOn?.length) {
-						const isActive = param.dependsOn.every((d) =>
-							d.values.includes(values[d.parameter]),
-						);
-						if (!isActive) continue;
+			)
+				.passthrough()
+				.superRefine((values, ctx) => {
+					for (const param of node.data.parameters) {
+						if (!param.required) continue;
+						if (param.dependsOn?.length) {
+							const isActive = param.dependsOn.every((d) =>
+								d.values.includes(values[d.parameter]),
+							);
+							if (!isActive) continue;
+						}
+						const val = values[param.name];
+						if (val === undefined || val === null || val === "") {
+							ctx.addIssue({
+								code: "custom",
+								path: [param.name],
+								message: `${param.label ?? param.name} is required`,
+							});
+						}
 					}
-					const val = values[param.name];
-					if (val === undefined || val === null || val === "") {
-						ctx.addIssue({
-							code: "custom",
-							path: [param.name],
-							message: `${param.label ?? param.name} is required`,
-						});
-					}
-				}
-			}),
+				}),
 		[node.data.task, node.data.parameters],
 	);
 
@@ -287,6 +296,18 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 			setEditorStatus("saving");
 
+			const updatedSettings: Record<string, unknown> = {
+				hasExpressions: containsExpressions,
+			};
+			if (node.data.settings) {
+				for (const key of Object.keys(node.data.settings)) {
+					if (key === "hasExpressions") continue;
+					if (key in values) {
+						updatedSettings[key] = values[key];
+					}
+				}
+			}
+
 			updateNode(
 				{
 					node: {
@@ -294,9 +315,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 						task: node.data.task,
 						parameters: updatedParams,
 						credentialId: (values.credentialId as string) || null,
-						settings: {
-							hasExpressions: containsExpressions,
-						},
+						settings: updatedSettings,
 					},
 					workflowId,
 				},
@@ -319,6 +338,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			updateNode,
 			workflowId,
 			formSchema,
+			node.data.settings,
 		],
 	);
 

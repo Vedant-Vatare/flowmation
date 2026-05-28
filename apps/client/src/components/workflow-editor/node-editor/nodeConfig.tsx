@@ -4,6 +4,7 @@ import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { NodeCredentials } from "./NodeCredentials";
 import { NodeField } from "./NodeEditor";
 import { NodeInfo, nodesWithInfo } from "./NodeInfoSection";
+import { NodeSettings } from "./NodeSettings";
 
 type NodeConfig = {
 	nodeData: WorkflowNodeData;
@@ -59,6 +60,12 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 		);
 	}
 
+	const showSettings =
+		nodeData.settings &&
+		Object.entries(nodeData.settings).some(
+			([k, v]) => k !== "hasExpressions" && v !== undefined && v !== null,
+		);
+
 	return (
 		<>
 			<NodeInfo nodeData={nodeData} />
@@ -66,6 +73,13 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 			<NodeCredentials nodeData={nodeData} control={control} />
 			{showCredentials && nodeData.parameters.length > 0 && <SectionDivider />}
 			<NodeParameters
+				nodeData={nodeData}
+				register={register}
+				control={control}
+			/>
+			{(showInfo || showCredentials || nodeData.parameters.length > 0) &&
+				showSettings && <SectionDivider />}
+			<NodeSettings
 				nodeData={nodeData}
 				register={register}
 				control={control}
