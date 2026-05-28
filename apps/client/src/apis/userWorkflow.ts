@@ -3,6 +3,7 @@ import type {
 	ExecutionLog,
 	NodeIdsWithPosition,
 	PartialWorkflowNode,
+	UpdateUserWorkflow,
 	UserWorkflow,
 	WorkflowConnection,
 	WorkflowExecution,
@@ -109,6 +110,17 @@ export const updateWorkflowNodeConnApi = async (
 type UpdateNodesPositionApi = {
 	workflowId: string;
 	nodes: NodeIdsWithPosition;
+};
+
+export const updateUserWorkflowApi = async (
+	workflowId: string,
+	data: UpdateUserWorkflow,
+) => {
+	const response = await api.patch<{ workflow: UserWorkflow }>(
+		`/workflows/${workflowId}`,
+		data,
+	);
+	return response.data.workflow;
 };
 
 export const updateNodesPositionApi = async ({

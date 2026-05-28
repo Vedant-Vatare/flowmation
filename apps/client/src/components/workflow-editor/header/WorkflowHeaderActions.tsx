@@ -1,9 +1,11 @@
-import { useRouterState } from "@tanstack/react-router";
+import { useMatch } from "@tanstack/react-router";
 import { WorkflowExecuteButton } from "@/components/workflow-editor/header/WorkflowExecuteButton";
 
 export const WorkflowHeaderActions = () => {
-	const { location } = useRouterState();
-	const isWorkflowEditor = location.pathname.startsWith("/workflow/");
+	const isWorkflowEditor = useMatch({
+		from: "/_mainLayout/workflow/$workflowId",
+		shouldThrow: false,
+	});
 
 	if (!isWorkflowEditor) {
 		return null;

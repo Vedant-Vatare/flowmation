@@ -1,6 +1,8 @@
 import type {
 	ExecuteWorkflowRequest,
 	PartialWorkflowNode,
+	UpdateUserWorkflow,
+	UserWorkflow,
 	WorkflowNode,
 } from "@nodebase/shared";
 import {
@@ -24,6 +26,7 @@ import {
 	getWorkflowConnections,
 	getWorkflowNodes,
 	updateNodesPositionApi,
+	updateUserWorkflowApi,
 	updateWorkflowNodeApi,
 	updateWorkflowNodeConnApi,
 	workflowExecutionLogsApi,
@@ -32,6 +35,13 @@ import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { initiateSSEConnection } from "@/services/sse";
 import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
+
+export const userWorkflowsOptions = () =>
+	queryOptions({
+		queryKey: ["user-workflows"],
+		queryFn: getUserWorkflowsApi,
+		staleTime: Number.POSITIVE_INFINITY,
+	});
 
 export const workflowNodesOptions = (workflowId: string) =>
 	queryOptions({
@@ -43,13 +53,10 @@ export const workflowNodesOptions = (workflowId: string) =>
 export const useCreateUserWorkflowQuery = () =>
 	useMutation({
 		mutationFn: createUserWorkflowApi,
+		onSuccess: () => {},
 	});
 
-export const useUserWorkflowQuery = () =>
-	useQuery({
-		queryKey: ["user-workflows"],
-		queryFn: getUserWorkflowsApi,
-	});
+export const useUserWorkflowQuery = () => useQuery(userWorkflowsOptions());
 
 export const useWorkflowNodesQuery = (workflowId: string) =>
 	useQuery(workflowNodesOptions(workflowId));
@@ -132,6 +139,26 @@ export const useUpdateNodesPositions = () =>
 	useMutation({
 		mutationFn: updateNodesPositionApi,
 	});
+
+export const useUpdateUserWorkflow = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: ({
+			workflowId,
+			data,
+		}: {
+			workflowId: string;
+			data: UpdateUserWorkflow;
+		}) => updateUserWorkflowApi(workflowId, data),
+		onSuccess: (data, { workflowId }) => {
+			queryClient.setQueryData(
+				userWorkflowsOptions().queryKey,
+				(old: UserWorkflow[] | undefined) =>
+					old?.map((w) => (w.id === workflowId ? data : w)),
+			);
+		},
+	});
+};
 
 export const useExecuteWorkflow = () => {
 	const setShowExecutionUpdates = useWorkflowExecutionStore(

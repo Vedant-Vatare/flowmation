@@ -35,7 +35,7 @@ export type CreateWorkflow = {
 	name: string;
 	description: string;
 	status: "active";
-	executionCount: 0;
+	executionCount: number;
 };
 export type UpdateUserWorkflow = Partial<CreateWorkflow>;
 
