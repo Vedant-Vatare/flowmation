@@ -1,4 +1,4 @@
-import { Plus, Zap } from "@hugeicons/core-free-icons";
+import { Zap } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { NodeExecutionUpdate } from "@nodebase/shared";
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
@@ -10,16 +10,22 @@ import {
 	useWorkflowExecutionStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
-import { withAlpha } from "@/utils/colors";
 
 type ExecutionStateType = NodeExecutionUpdate["type"] | null;
+
+const NODE_VARS = {
+	"--node-w": "100px",
+	"--node-h": "76px",
+	"--icon-size": "48px",
+	"--icon-radius": "14px",
+	"--handle-size": "8px",
+} as const;
 
 export const WorkflowNode = memo(
 	({ data }: NodeProps<Node<WorkflowNodeData>>) => {
 		const { ui, name, inputPorts, outputPorts } = data;
 		const Icon = ui.icon;
-		const bg = withAlpha(ui.background ?? "#6366f1", 0.2);
-		const border = ui.background ?? "#6366f1";
+		const nodeColor = ui.background ?? "#6366f1";
 
 		const [executionState, setExecutionState] =
 			useState<ExecutionStateType>(null);
@@ -65,9 +71,10 @@ export const WorkflowNode = memo(
 
 		return (
 			<div
-				style={{ background: bg, borderColor: border }}
+				style={NODE_VARS as React.CSSProperties}
 				className={cn(
-					`workflow-node group relative min-w-32 h-28 max-w-max rounded-xl flex flex-col items-center justify-center gap-2 transition-all duration-200 border hover:scale-105 cursor-grab ${getStateClass()}`,
+					"workflow-node group relative cursor-grab transition-all duration-150",
+					getStateClass(),
 				)}
 			>
 				{isTrigger && isSelectingTrigger ? (
@@ -87,86 +94,72 @@ export const WorkflowNode = memo(
 					</button>
 				) : null}
 
-				{inputPorts?.map((port, i) => (
+				{inputPorts?.map((port) => (
 					<Handle
 						key={port.name}
 						id={port.name}
 						type="target"
 						position={Position.Left}
 						style={{
-							top: `${((i + 1) / (inputPorts.length + 1)) * 100}%`,
-							height: 7,
-							width: 7,
-							background: "var(--background)",
-							border: `2px solid ${withAlpha(border, 0.8)}`,
-							borderRadius: "50%",
-							transition: "transform 0.15s",
+							top: "calc(var(--icon-size) / 2)",
+							transform: "translateY(-50%)",
+							backgroundColor: "var(--muted-foreground)",
 						}}
-						className="hover:scale-105"
 					/>
 				))}
 
 				<div
 					style={{
-						background: withAlpha(border, 0.15),
-						border: `1px solid ${withAlpha(border, 0.3)}`,
+						width: "var(--icon-size)",
+						height: "var(--icon-size)",
+						borderRadius: "var(--icon-radius)",
+						background: nodeColor,
 					}}
-					className="w-10 h-10 rounded-lg flex items-center justify-center"
+					className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center justify-center transition-all duration-200 group-hover:scale-105!"
 				>
 					<Icon
 						style={ui.branded ? {} : { color: ui.color ?? "#ffffff" }}
-						className="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
+						className="w-5.5 h-5.5 transition-transform duration-200 group-hover:scale-110"
 					/>
 				</div>
 
 				<span
-					style={{ color: "var(--foreground)" }}
-					className="text-xs font-bold text-center leading-tight px-1"
+					style={{
+						color: "var(--foreground)",
+						bottom: "4px",
+						left: "50%",
+						transform: "translateX(-50%)",
+					}}
+					className="absolute text-[11px] font-medium text-center leading-tight max-w-24 truncate px-0.5"
+					title={name}
 				>
 					{name}
 				</span>
 
-				{outputPorts?.map((port, i) => (
+				{outputPorts?.map((port) => (
 					<Handle
 						key={port.name}
 						id={port.name}
 						type="source"
 						position={Position.Right}
 						style={{
-							top: `${((i + 1) / (outputPorts.length + 1)) * 100}%`,
-							height: 7,
-							width: 7,
-							borderColor: border,
-							borderRadius: "50%",
-							cursor: "crosshair",
-							display: "flex",
-							alignItems: "center",
-							justifyContent: "center",
-							zIndex: 10,
-							transition: "transform 0.15s, box-shadow 0.15s",
-							boxShadow: `0 0 6px ${withAlpha(border, 0.5)}`,
+							top: "calc(var(--icon-size) / 2)",
+							transform: "translateY(-50%)",
+							backgroundColor: "var(--muted-foreground)",
 						}}
-						className="hidden group-hover:block"
-					>
-						<span className="text-accent text-xs pointer-events-none h-16 w-16 p-1 object-cover select-none font-bold">
-							<HugeiconsIcon icon={Plus} className="h-full w-full" />
-						</span>
-					</Handle>
+					/>
 				))}
 
 				{outputPorts?.length > 1 &&
-					outputPorts.map((port, i) => (
+					outputPorts.map((port) => (
 						<div
 							key={port.name}
 							style={{
-								top: `${((i + 1) / (outputPorts.length + 1)) * 100}%`,
+								top: "calc(var(--icon-size) / 2)",
 								right: "-50%",
 								transform: "translateY(-50%)",
-								background: withAlpha(border, 0.15),
-								border: `1px solid ${withAlpha(border, 0.3)}`,
-								color: border,
 							}}
-							className="absolute text-[9px] font-semibold px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap"
+							className="absolute text-[9px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap"
 						>
 							{port.label}
 						</div>

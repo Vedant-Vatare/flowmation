@@ -81,7 +81,9 @@ const WorkflowCanvas = () => {
 	}, [workflowConnections, setEdges]);
 
 	const canvasNodes = workflowNodes ? toCanvasNodes(workflowNodes) : [];
-	const canvasEdges = workflowConnections ? toCanvasEdges(workflowConnections) : [];
+	const canvasEdges = workflowConnections
+		? toCanvasEdges(workflowConnections)
+		: [];
 
 	useEffect(() => {
 		if (!triggerFocusRequestKey) return;
@@ -237,7 +239,7 @@ const WorkflowCanvas = () => {
 		return <Loader fullPage={false} />;
 	}
 
-		return (
+	return (
 		<ReactFlow
 			defaultNodes={canvasNodes}
 			defaultEdges={canvasEdges}
@@ -294,7 +296,7 @@ const WorkflowCanvasLayout = () => {
 			<LayoutProvider
 				initialDirection="RIGHT"
 				initialAutoLayout={false}
-				initialNodeDimensions={{ width: 128, height: 112 }}
+				initialNodeDimensions={{ width: 100, height: 76 }}
 			>
 				<TestWebhook />
 				<WorkflowCanvas />
