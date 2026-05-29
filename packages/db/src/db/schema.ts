@@ -74,7 +74,7 @@ export const nodesTable = pgTable("nodes", {
 	inputPorts: jsonb("input_ports")
 		.$type<{ name: string; label: string }>()
 		.array(),
-	settings: jsonb("settings").$type<NodeSettings>().default({}).notNull(),
+	settings: jsonb("settings").$type<NodeSettings>().notNull(),
 });
 
 export const userWorkflowsTable = pgTable(
@@ -114,7 +114,7 @@ export const workflowNodesTable = pgTable(
 		credentialId: uuid("credential_id").references(() => credentialsTable.id, {
 			onDelete: "set null",
 		}),
-		settings: jsonb("config").$type<NodeSettings>().default({}).notNull(),
+		settings: jsonb("config").$type<NodeSettings>().notNull(),
 		parameters: jsonb().$type<NodeParameters[]>().notNull().default([]),
 		outputPorts: jsonb("output_ports")
 			.$type<{ name: string; label: string }[]>()

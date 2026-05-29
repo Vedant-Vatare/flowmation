@@ -141,6 +141,13 @@
       "when": 1779382413739,
       "tag": "0019_exotic_thunderball",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1780038196992,
+      "tag": "0020_stiff_risque",
+      "breakpoints": true
     }
   ]
 }

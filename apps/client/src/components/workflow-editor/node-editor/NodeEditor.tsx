@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
 	extractFormSchema,
 	type NodePropertyType,
+	type NodeSettings,
 	nodeParamValueRegistry,
 } from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
@@ -296,15 +297,16 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 			setEditorStatus("saving");
 
-			const updatedSettings: Record<string, unknown> = {
+			let updatedSettings: NodeSettings = {
+				...node.data.settings,
 				hasExpressions: containsExpressions,
 			};
-			if (node.data.settings) {
-				for (const key of Object.keys(node.data.settings)) {
-					if (key === "hasExpressions") continue;
-					if (key in values) {
-						updatedSettings[key] = values[key];
-					}
+
+			for (const [key, _v] of Object.entries(updatedSettings)) {
+				if (key === "hasExpressions") continue;
+				const formValue = values[key];
+				if (formValue !== undefined) {
+					updatedSettings = { ...updatedSettings, [key]: formValue };
 				}
 			}
 

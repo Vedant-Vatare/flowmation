@@ -18,11 +18,7 @@ const router = Router() as RouterType;
 
 router.use(authenticateUser);
 
-router.post(
-	"/",
-	validateNodeMiddleware,
-	asyncHandler(addNodeInWorkflow),
-);
+router.post("/", validateNodeMiddleware, asyncHandler(addNodeInWorkflow));
 router.get("/:workflowId", asyncHandler(getNodesInWorkflow));
 router.patch(
 	"/:workflowId",

@@ -20,6 +20,7 @@ export const createNode: RequestHandler = async (
 			credentialProvider: nodeData.credentialProvider,
 			inputPorts: nodeData.inputPorts,
 			outputPorts: nodeData.outputPorts,
+			settings: nodeData.settings,
 		})
 		.returning();
 	return res.status(201).json({ message: "node created successfully", node });
