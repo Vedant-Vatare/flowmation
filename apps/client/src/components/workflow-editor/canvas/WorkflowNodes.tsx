@@ -17,8 +17,14 @@ const NODE_VARS = {
 	"--node-w": "100px",
 	"--node-h": "76px",
 	"--icon-size": "48px",
-	"--icon-radius": "14px",
+	"--icon-radius": "0.8rem",
 	"--handle-size": "8px",
+	"--handle-gap": "20px",
+} as const;
+
+const TRIGGER_VARS = {
+	...NODE_VARS,
+	"--icon-radius": "45% 20% 20% 45%",
 } as const;
 
 export const WorkflowNode = memo(
@@ -47,6 +53,26 @@ export const WorkflowNode = memo(
 		const { executeTriggerNode, isPending } = useTestWorkflowExecution();
 		const isTrigger = data.type === "trigger";
 
+		const baseHandleStyles = {
+			width: "var(--handle-size)",
+			height: "var(--handle-size)",
+			minWidth: "var(--handle-size)",
+			minHeight: "var(--handle-size)",
+			background: "oklch(0.95 0 0)",
+			border: "2px solid var(--border)",
+			borderRadius: "50%",
+			opacity: 1,
+			zIndex: 20,
+			transition: "all 0.15s ease",
+			transform: "translateY(-50%)",
+		};
+
+		const getHandleTop = (i: number, total: number) => {
+			if (total === 1) return "calc(var(--icon-size) / 2)";
+			const offset = i - (total - 1) / 2;
+			return `calc(var(--icon-size) / 2 + ${offset} * var(--handle-gap))`;
+		};
+
 		useEffect(() => {
 			if (!showExecutionUpdates) {
 				setExecutionState(null);
@@ -71,7 +97,7 @@ export const WorkflowNode = memo(
 
 		return (
 			<div
-				style={NODE_VARS as React.CSSProperties}
+				style={(isTrigger ? TRIGGER_VARS : NODE_VARS) as React.CSSProperties}
 				className={cn(
 					"workflow-node group relative cursor-grab transition-all duration-150",
 					getStateClass(),
@@ -94,16 +120,16 @@ export const WorkflowNode = memo(
 					</button>
 				) : null}
 
-				{inputPorts?.map((port) => (
+				{inputPorts?.map((port, i) => (
 					<Handle
 						key={port.name}
 						id={port.name}
 						type="target"
 						position={Position.Left}
 						style={{
-							top: "calc(var(--icon-size) / 2)",
-							transform: "translateY(-50%)",
-							backgroundColor: "var(--muted-foreground)",
+							...baseHandleStyles,
+							left: "calc((var(--node-w) - var(--icon-size)) / 2 - var(--handle-size) / 2)",
+							top: getHandleTop(i, inputPorts.length),
 						}}
 					/>
 				))}
@@ -126,37 +152,40 @@ export const WorkflowNode = memo(
 				<span
 					style={{
 						color: "var(--foreground)",
-						bottom: "4px",
+						top: "calc(var(--icon-size) + 4px)",
 						left: "50%",
 						transform: "translateX(-50%)",
+						textWrap: "balance",
 					}}
-					className="absolute text-[11px] font-medium text-center leading-tight max-w-24 truncate px-0.5"
+					className="absolute w-full text-[11px] font-medium text-center leading-tight line-clamp-2 px-1"
 					title={name}
 				>
 					{name}
 				</span>
 
-				{outputPorts?.map((port) => (
+				{outputPorts?.map((port, i) => (
 					<Handle
 						key={port.name}
 						id={port.name}
 						type="source"
 						position={Position.Right}
 						style={{
-							top: "calc(var(--icon-size) / 2)",
-							transform: "translateY(-50%)",
-							backgroundColor: "var(--muted-foreground)",
+							...baseHandleStyles,
+							right:
+								"calc((var(--node-w) - var(--icon-size)) / 2 - var(--handle-size) / 2)",
+							top: getHandleTop(i, outputPorts.length),
+							cursor: "crosshair",
 						}}
 					/>
 				))}
 
 				{outputPorts?.length > 1 &&
-					outputPorts.map((port) => (
+					outputPorts.map((port, i) => (
 						<div
 							key={port.name}
 							style={{
-								top: "calc(var(--icon-size) / 2)",
-								right: "-50%",
+								top: getHandleTop(i, outputPorts.length),
+								left: "calc(100% + 6px)",
 								transform: "translateY(-50%)",
 							}}
 							className="absolute text-[9px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap"

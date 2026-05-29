@@ -142,6 +142,7 @@ export const toCanvasEdge = (conn: WorkflowConnection): Edge => ({
 	target: conn.targetId,
 	sourceHandle: conn.sourcePort,
 	targetHandle: conn.targetPort,
+	type: "workflow",
 });
 
 export const toCanvasEdges = (connections: WorkflowConnection[]): Edge[] =>

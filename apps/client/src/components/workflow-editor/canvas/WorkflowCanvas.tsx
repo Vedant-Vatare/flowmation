@@ -4,6 +4,7 @@ import {
 	type Connection,
 	ConnectionMode,
 	type Edge,
+	type EdgeTypes,
 	MarkerType,
 	MiniMap,
 	type NodeTypes,
@@ -43,10 +44,15 @@ import {
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { TestWebhook } from "../TestWebhook";
 import { WorkflowControls } from "./WorkflowControls";
+import { WorkflowEdge } from "./WorkflowEdge";
 import { WorkflowNode } from "./WorkflowNodes";
 
 const nodeTypes: NodeTypes = {
 	workflowNode: WorkflowNode,
+};
+
+const edgeTypes: EdgeTypes = {
+	workflow: WorkflowEdge,
 };
 
 const WorkflowCanvas = () => {
@@ -244,6 +250,7 @@ const WorkflowCanvas = () => {
 			defaultNodes={canvasNodes}
 			defaultEdges={canvasEdges}
 			nodeTypes={nodeTypes}
+			edgeTypes={edgeTypes}
 			proOptions={{ hideAttribution: true }}
 			fitView={false}
 			fitViewOptions={{
