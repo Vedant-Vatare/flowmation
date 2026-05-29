@@ -26,16 +26,6 @@ export const nodeCredentialSchema = z.object({
 	type: nodeCredentialsEnum,
 });
 
-export const NodeSettingsSchema = z.object({
-	hasExpressions: z.boolean().default(false),
-	retryCount: z.number().int().min(0).max(3).default(0),
-	timeout: z.number().int().min(0).default(30000),
-	continueOnFail: z.boolean().default(false),
-	alwaysOutputData: z.boolean().default(false),
-	fallbackOutputData: z.unknown().optional(),
-	disabled: z.boolean().default(false),
-});
-
 export const nodePropertyTypeSchema = z.enum([
 	"input",
 	"number",
@@ -74,6 +64,26 @@ export const nodeParameterSchema = z.object({
 	dependsOn: z.array(parameterDependSchema).optional(),
 });
 
+export const NodeSettingsSchema = z.object({
+	hasExpressions: z.boolean().optional(),
+	retryCount: z.number().int().min(0).max(3).optional(),
+	timeout: z.number().int().min(0).max(30000).optional(),
+	continueOnFail: z.boolean().optional(),
+	alwaysOutputData: z.boolean().optional(),
+	fallbackOutputData: z.unknown().optional(),
+	disabled: z.boolean().optional(),
+});
+
+export const NodeSettingsDefaultValues = {
+	hasExpressions: false,
+	retryCount: 0,
+	timeout: 30000,
+	continueOnFail: false,
+	alwaysOutputData: false,
+	fallbackOutputData: null,
+	disabled: false,
+} satisfies z.infer<typeof NodeSettingsSchema>;
+
 export const nodeOutputPortsSchema = z.object({
 	name: z.string(),
 	label: z.string(),
@@ -82,11 +92,6 @@ export const nodeOutputPortsSchema = z.object({
 export const nodeInputPortsSchema = z.object({
 	name: z.string(),
 	label: z.string(),
-});
-
-export const baseNodeSettingsSchema = z.object({
-	retryAfterFail: z.boolean(),
-	executeOnlyOnce: z.boolean(),
 });
 
 export const baseNodeSchema = z.object({
@@ -112,4 +117,7 @@ export const baseNodeSchema = z.object({
 	credentialProvider: z.string().optional(),
 });
 
-export const updateBaseNodeSchema = baseNodeSchema.partial();
+export const updateBaseNodeSchema = baseNodeSchema.partial().extend({
+	inputPorts: z.array(nodeInputPortsSchema).optional(),
+	outputPorts: z.array(nodeOutputPortsSchema).optional(),
+});
