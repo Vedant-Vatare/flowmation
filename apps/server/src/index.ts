@@ -1,12 +1,19 @@
 import "dotenv/config";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
-import cookieParser from "cookie-parser";
 import APIRouterV1 from "@/routes/index.routes.js";
 import { errorHandler } from "./utils/api.utils.js";
 
 const app = express();
-app.use(cors({}));
+
+app.use(
+	cors({
+		origin: process.env.CLIENT_URL,
+		credentials: true,
+	}),
+);
+
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
