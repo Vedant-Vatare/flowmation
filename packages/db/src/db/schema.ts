@@ -55,9 +55,23 @@ export const usersTable = pgTable("users", {
 	id: uuid().defaultRandom().primaryKey(),
 	email: varchar({ length: 255 }).notNull().unique(),
 	name: varchar({ length: 255 }).notNull(),
-	password: text(),
 	googleOauthId: varchar("google_oauth_id", { length: 255 }).unique(),
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const passkeysTable = pgTable("passkeys", {
+	id: uuid().defaultRandom().primaryKey(),
+	userId: uuid("user_id")
+		.references(() => usersTable.id, { onDelete: "cascade" })
+		.notNull(),
+	name: varchar({ length: 255 }).notNull(),
+	publicKey: text("public_key").notNull(),
+	credentialId: text("credential_id").notNull().unique(),
+	webauthnUserId: text("webauthn_user_id").notNull(),
+	counter: integer("counter").notNull().default(0),
+	transports: varchar("transports", { length: 255 }).array(),
+	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+	lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
 });
 
 export const nodesTable = pgTable("nodes", {
@@ -207,6 +221,19 @@ export const nodeExecutionTable = pgTable(
 		index("node_workflow_execution_idx").on(t.workflowExecutionId),
 	],
 );
+
+export const usersRelations = relations(usersTable, ({ many }) => ({
+	passkeys: many(passkeysTable),
+	credentials: many(credentialsTable),
+	workflows: many(userWorkflowsTable),
+}));
+
+export const passkeysRelations = relations(passkeysTable, ({ one }) => ({
+	user: one(usersTable, {
+		fields: [passkeysTable.userId],
+		references: [usersTable.id],
+	}),
+}));
 
 export const credentialsRelations = relations(
 	credentialsTable,
