@@ -28,9 +28,7 @@ export const initiateSSEConnection = (
 	fetchEventSource(URL, {
 		signal: controller.signal,
 		openWhenHidden: true,
-		headers: {
-			Authorization: `bearer ${localStorage.getItem("token")}`,
-		},
+		credentials: "include",
 
 		async onopen(response: Response) {
 			if (response.ok) {

@@ -100,7 +100,6 @@ export const NodeCredentials = memo(
 
 		const handleConnect = () => {
 			const apiUrl = import.meta.env.VITE_API_URL;
-			const token = localStorage.getItem("token");
 			const label = encodeURIComponent(nodeData.name);
 
 			const width = 600;
@@ -111,7 +110,7 @@ export const NodeCredentials = memo(
 			);
 
 			window.open(
-				`${apiUrl}/credentials/oauth/${provider}/connect?source=popup&token=${token}&label=${label}`,
+				`${apiUrl}/credentials/oauth/${provider}/connect?source=popup&label=${label}`,
 				"oauth_popup",
 				`width=${width},height=${height},left=${left},top=${top},status=yes,scrollbars=yes`,
 			);

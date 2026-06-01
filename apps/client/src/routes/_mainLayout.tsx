@@ -6,6 +6,7 @@ import {
 	Workflow,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
+import { startRegistration } from "@simplewebauthn/browser";
 import {
 	createFileRoute,
 	Link,
@@ -13,7 +14,9 @@ import {
 	redirect,
 	useRouterState,
 } from "@tanstack/react-router";
-import { ChevronRight, ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, KeyRound, LogOut } from "lucide-react";
+import { toast } from "sonner";
+import { logOutUserApi } from "@/apis/auth";
 import BrandIcon from "@/assets/icons/flowmation_temp.svg";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -25,6 +28,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -48,11 +52,12 @@ import {
 import { WorkflowHeaderActions } from "@/components/workflow-editor/header/WorkflowHeaderActions";
 import { WorkflowNameSection } from "@/components/workflow-editor/header/WorkflowNameSection";
 import { useUserWorkflowQuery } from "@/queries/userWorkflows";
+import { isUserAuthenticated } from "@/utils/auth";
 
 export const Route = createFileRoute("/_mainLayout")({
-	beforeLoad: () => {
-		const token = localStorage.getItem("token");
-		if (!token) {
+	beforeLoad: async () => {
+		const isAuthenticated = await isUserAuthenticated();
+		if (!isAuthenticated) {
 			throw redirect({ to: "/auth/login" });
 		}
 	},
@@ -89,6 +94,52 @@ function NavItem({
 
 function AppSidebar() {
 	const { data: userWorkflows } = useUserWorkflowQuery();
+
+	const handleRegisterPasskey = async () => {
+		try {
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/auth/passkey/generate-registration`,
+				{
+					method: "GET",
+					credentials: "include",
+				},
+			);
+
+			if (!res.ok) {
+				const err = await res.json();
+				throw new Error(
+					err.message || "Failed to initiate passkey registration",
+				);
+			}
+
+			const options = await res.json();
+
+			// 2. Pass options to the authenticator
+			const attResp = await startRegistration({ optionsJSON: options });
+
+			// 3. Verify the response with the server
+			const verificationRes = await fetch(
+				`${import.meta.env.VITE_API_URL}/auth/passkey/verify-registration`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(attResp),
+					credentials: "include",
+				},
+			);
+
+			if (!verificationRes.ok) {
+				throw new Error("Passkey verification failed");
+			}
+
+			toast.success("Passkey registered successfully!");
+		} catch (error) {
+			console.error(error);
+			toast.error(
+				error instanceof Error ? error.message : "Passkey registration failed",
+			);
+		}
+	};
 
 	return (
 		<Sidebar collapsible="icon">
@@ -185,7 +236,15 @@ function AppSidebar() {
 								</SidebarMenuButton>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent side="top" className="w-56" align="start">
-								<DropdownMenuItem className="text-destructive focus:text-destructive">
+								<DropdownMenuItem onClick={handleRegisterPasskey}>
+									<KeyRound className="mr-2 size-4" />
+									Register Passkey
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									className="text-destructive focus:text-destructive"
+									onClick={() => logOutUserApi()}
+								>
 									<LogOut className="mr-2 size-4" />
 									Sign out
 								</DropdownMenuItem>

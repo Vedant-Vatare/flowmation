@@ -1,8 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type userLogin, userLoginSchema } from "@nodebase/shared";
-import { EyeClosedIcon, EyeIcon } from "lucide-react";
-import { useState } from "react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import {
+	startAuthentication,
+	startRegistration,
+} from "@simplewebauthn/browser";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 import GoogleIcon from "@/assets/icons/nodes/google.svg?react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +17,13 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useLoginQuery } from "@/queries/auth";
+import { router } from "@/main";
+
+const emailSchema = z.object({
+	email: z.email(),
+});
+
+type EmailForm = z.infer<typeof emailSchema>;
 
 export const Login = () => {
 	return (
@@ -25,18 +34,64 @@ export const Login = () => {
 };
 
 const LoginForm = () => {
-	const { mutate } = useLoginQuery();
-	const form = useForm<userLogin>({
+	const form = useForm<EmailForm>({
 		defaultValues: {
 			email: "",
-			password: "",
 		},
-		resolver: zodResolver(userLoginSchema),
+		resolver: zodResolver(emailSchema),
 	});
 
-	const onSubmit: SubmitHandler<userLogin> = (data) => mutate(data);
+	const onGoogleLogin = () => {
+		window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+	};
 
-	const [showPassword, setShowPassword] = useState<boolean>(false);
+	const onSubmit = async (data: EmailForm) => {
+		try {
+			const res = await fetch(
+				`${import.meta.env.VITE_API_URL}/auth/passkey/initiate`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email: data.email }),
+					credentials: "include",
+				},
+			);
+
+			if (!res.ok) {
+				const err = await res.json();
+				throw new Error(err.message || "Failed to initiate passkey login");
+			}
+
+			const { mode, ...options } = await res.json();
+
+			const asseResp =
+				mode === "signup"
+					? await startRegistration({ optionsJSON: options })
+					: await startAuthentication({ optionsJSON: options });
+
+			const verificationRes = await fetch(
+				`${import.meta.env.VITE_API_URL}/auth/passkey/verify`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify(asseResp),
+					credentials: "include",
+				},
+			);
+
+			if (!verificationRes.ok) {
+				throw new Error("Passkey verification failed");
+			}
+
+			toast.success("Logged in successfully!");
+			router.navigate({ to: "/dashboard" });
+		} catch (error) {
+			console.error(error);
+			toast.error(
+				error instanceof Error ? error.message : "Passkey login failed",
+			);
+		}
+	};
 
 	return (
 		<div className="w-full max-w-md">
@@ -55,9 +110,10 @@ const LoginForm = () => {
 					<Button
 						type="button"
 						variant="outline"
-						className="w-full flex items-center gap-2 h-10 hover:text-foreground/80"
+						className="w-full flex items-center gap-2 h-10 hover:bg-muted"
+						onClick={onGoogleLogin}
 					>
-						<GoogleIcon width={32} height={32} fill="currentColor" />
+						<GoogleIcon width={24} height={24} fill="currentColor" />
 						<span>Continue with Google</span>
 					</Button>
 
@@ -89,48 +145,10 @@ const LoginForm = () => {
 								</FormItem>
 							)}
 						/>
-						<FormField
-							control={form.control}
-							name="password"
-							render={({ field }) => (
-								<FormItem>
-									<div className="flex items-center justify-between">
-										<FormLabel>Password</FormLabel>
-										<a
-											className="text-primary text-xs font-medium hover:underline"
-											href="/auth/forgot-password"
-										>
-											Forgot password?
-										</a>
-									</div>
-									<FormControl>
-										<div className="relative">
-											<Input
-												className="bg-muted pr-10"
-												placeholder="Enter your password"
-												type={showPassword ? "text" : "password"}
-												{...field}
-											/>
-											<div className="absolute right-1 top-1/2 -translate-y-1/2">
-												<Button
-													type="button"
-													variant="ghost"
-													size="icon-sm"
-													onClick={() => setShowPassword(!showPassword)}
-												>
-													{showPassword ? <EyeIcon /> : <EyeClosedIcon />}
-												</Button>
-											</div>
-										</div>
-									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
 					</div>
 
 					<Button className="w-full h-10" type="submit">
-						Sign In
+						Sign in with Passkey
 					</Button>
 
 					<p className="text-center text-muted-foreground text-sm pt-1">
