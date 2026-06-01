@@ -6,6 +6,7 @@ import {
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import BrandIcon from "@/assets/icons/flowmation_logo_light.svg";
 import GoogleIcon from "@/assets/icons/nodes/google.svg?react";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { router } from "@/main";
+import { usePasskeyAuth } from "@/queries/auth";
 
 const emailSchema = z.object({
 	email: z.email(),
@@ -41,55 +43,29 @@ const LoginForm = () => {
 		resolver: zodResolver(emailSchema),
 	});
 
+	const { initiate, verify } = usePasskeyAuth();
+
 	const onGoogleLogin = () => {
 		window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
 	};
 
 	const onSubmit = async (data: EmailForm) => {
 		try {
-			const res = await fetch(
-				`${import.meta.env.VITE_API_URL}/auth/passkey/initiate`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ email: data.email }),
-					credentials: "include",
-				},
-			);
+			const { mode, options } = await initiate.mutateAsync(data.email);
 
-			if (!res.ok) {
-				const err = await res.json();
-				throw new Error(err.message || "Failed to initiate passkey login");
-			}
-
-			const { mode, ...options } = await res.json();
-
-			const asseResp =
+			const attResp =
 				mode === "signup"
 					? await startRegistration({ optionsJSON: options })
 					: await startAuthentication({ optionsJSON: options });
 
-			const verificationRes = await fetch(
-				`${import.meta.env.VITE_API_URL}/auth/passkey/verify`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(asseResp),
-					credentials: "include",
-				},
-			);
+			const verified = await verify.mutateAsync(attResp);
 
-			if (!verificationRes.ok) {
-				throw new Error("Passkey verification failed");
+			if (verified) {
+				router.navigate({ to: "/dashboard" });
 			}
-
-			toast.success("Logged in successfully!");
-			router.navigate({ to: "/dashboard" });
 		} catch (error) {
 			console.error(error);
-			toast.error(
-				error instanceof Error ? error.message : "Passkey login failed",
-			);
+			toast.error(error instanceof Error ? error.message : "Login failed");
 		}
 	};
 
@@ -97,20 +73,28 @@ const LoginForm = () => {
 		<div className="w-full max-w-md">
 			<Form {...form}>
 				<form
-					className="bg-card border border-border space-y-5 p-6 rounded-2xl shadow-sm"
+					className="bg-card border border-border space-y-5 p-6 rounded-[10px] shadow-sm"
 					onSubmit={form.handleSubmit(onSubmit)}
 				>
-					<div className="space-y-1 mb-2">
-						<h1 className="font-bold text-2xl text-foreground">Welcome back</h1>
-						<p className="text-muted-foreground text-sm">
-							Sign in to your account to continue
-						</p>
+					<div className="space-y-5 mb-2">
+						<div className="flex items-center gap-2">
+							<img src={BrandIcon} alt="Flowmation" className="size-8" />
+							<span className="text-foreground font-medium">Flowmation</span>
+						</div>
+						<div className="space-y-1">
+							<h1 className="font-bold text-2xl text-foreground">
+								Welcome back
+							</h1>
+							<p className="text-muted-foreground text-sm">
+								Sign in to your account to continue
+							</p>
+						</div>
 					</div>
 
 					<Button
 						type="button"
 						variant="outline"
-						className="w-full flex items-center gap-2 h-10 hover:bg-muted"
+						className="w-full flex items-center gap-2 h-10"
 						onClick={onGoogleLogin}
 					>
 						<GoogleIcon width={24} height={24} fill="currentColor" />
@@ -122,7 +106,7 @@ const LoginForm = () => {
 							<span className="w-full border-t border-border" />
 						</div>
 						<div className="relative flex justify-center text-xs">
-							<span className="bg-card px-3 text-muted-foreground">Or</span>
+							<span className="bg-card px-3 text-muted-foreground">or</span>
 						</div>
 					</div>
 
@@ -139,6 +123,7 @@ const LoginForm = () => {
 											placeholder="you@example.com"
 											type="email"
 											{...field}
+											autoComplete="username webauthn"
 										/>
 									</FormControl>
 									<FormMessage />
@@ -147,8 +132,17 @@ const LoginForm = () => {
 						/>
 					</div>
 
-					<Button className="w-full h-10" type="submit">
-						Sign in with Passkey
+					<Button
+						variant="outline"
+						className="w-full h-10"
+						type="submit"
+						disabled={initiate.isPending || verify.isPending}
+					>
+						{initiate.isPending
+							? "Checking..."
+							: verify.isPending
+								? "Verifying..."
+								: "Continue with Passkey"}
 					</Button>
 
 					<p className="text-center text-muted-foreground text-sm pt-1">
