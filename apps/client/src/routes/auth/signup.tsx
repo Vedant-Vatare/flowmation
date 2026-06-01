@@ -4,8 +4,8 @@ import { isUserAuthenticated } from "@/utils/auth";
 
 export const Route = createFileRoute("/auth/signup")({
 	component: Signup,
-	beforeLoad: async () => {
-		const isAuthenticated = await isUserAuthenticated();
+	beforeLoad: () => {
+		const isAuthenticated = isUserAuthenticated();
 		if (isAuthenticated) return redirect({ to: "/dashboard" });
 	},
 });

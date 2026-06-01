@@ -51,12 +51,13 @@ import {
 } from "@/components/ui/sidebar";
 import { WorkflowHeaderActions } from "@/components/workflow-editor/header/WorkflowHeaderActions";
 import { WorkflowNameSection } from "@/components/workflow-editor/header/WorkflowNameSection";
+import { usePasskeyRegistration } from "@/queries/auth";
 import { useUserWorkflowQuery } from "@/queries/userWorkflows";
-import { isUserAuthenticated } from "@/utils/auth";
+import { clearAuthCookie, isUserAuthenticated } from "@/utils/auth";
 
 export const Route = createFileRoute("/_mainLayout")({
-	beforeLoad: async () => {
-		const isAuthenticated = await isUserAuthenticated();
+	beforeLoad: () => {
+		const isAuthenticated = isUserAuthenticated();
 		if (!isAuthenticated) {
 			throw redirect({ to: "/auth/login" });
 		}
@@ -94,45 +95,16 @@ function NavItem({
 
 function AppSidebar() {
 	const { data: userWorkflows } = useUserWorkflowQuery();
+	const { generate, verify } = usePasskeyRegistration();
 
 	const handleRegisterPasskey = async () => {
 		try {
-			const res = await fetch(
-				`${import.meta.env.VITE_API_URL}/auth/passkey/generate-registration`,
-				{
-					method: "GET",
-					credentials: "include",
-				},
-			);
-
-			if (!res.ok) {
-				const err = await res.json();
-				throw new Error(
-					err.message || "Failed to initiate passkey registration",
-				);
-			}
-
-			const options = await res.json();
-
-			// 2. Pass options to the authenticator
+			const options = await generate.mutateAsync();
 			const attResp = await startRegistration({ optionsJSON: options });
-
-			// 3. Verify the response with the server
-			const verificationRes = await fetch(
-				`${import.meta.env.VITE_API_URL}/auth/passkey/verify-registration`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(attResp),
-					credentials: "include",
-				},
-			);
-
-			if (!verificationRes.ok) {
-				throw new Error("Passkey verification failed");
+			const verified = await verify.mutateAsync(attResp);
+			if (verified) {
+				toast.success("Passkey registered successfully!");
 			}
-
-			toast.success("Passkey registered successfully!");
 		} catch (error) {
 			console.error(error);
 			toast.error(
@@ -243,7 +215,16 @@ function AppSidebar() {
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
 									className="text-destructive focus:text-destructive"
-									onClick={() => logOutUserApi()}
+									onClick={async () => {
+										try {
+											await logOutUserApi();
+										} catch (e: unknown) {
+											console.log("failed to log out", e);
+											toast.error("fail to logout user");
+										}
+										await clearAuthCookie();
+										window.location.href = "/auth/login";
+									}}
 								>
 									<LogOut className="mr-2 size-4" />
 									Sign out

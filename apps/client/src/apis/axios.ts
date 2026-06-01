@@ -1,5 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
+import { router } from "@/main";
+import { clearAuthCookie } from "@/utils/auth";
 import { logOutUserApi } from "./auth";
 
 const api = axios.create({
@@ -10,18 +12,34 @@ const api = axios.create({
 	withCredentials: true,
 });
 
+let isLoggingOut = false;
+
 api.interceptors.response.use(
 	(response) => response,
 	async (error) => {
 		if (!(error instanceof AxiosError)) return Promise.reject(error);
 
-		if (error.response?.status === 401) {
+		if (error.response?.status === 401 && !isLoggingOut) {
+			isLoggingOut = true;
+
 			const message = error.response?.data?.message;
 			if (message) {
 				toast.info(`${message}\nLogin again to continue.`);
 			}
-			await logOutUserApi();
-			return Promise.reject(error);
+
+			try {
+				await logOutUserApi();
+			} catch (e: unknown) {
+				console.log("failed to log out", e);
+				toast.error("fail to logout user");
+			}
+
+			await clearAuthCookie();
+			router.navigate({ to: "/auth/login" });
+
+			setTimeout(() => {
+				isLoggingOut = false;
+			}, 1000);
 		}
 
 		return Promise.reject(error);

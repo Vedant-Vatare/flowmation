@@ -1,7 +1,11 @@
-export const isUserAuthenticated = async () => {
-	return await cookieStore.get("is_authenticated=true");
+export const isUserAuthenticated = (): boolean => {
+	const value = document.cookie
+		.split("; ")
+		.find((c) => c.startsWith("is_authenticated="))
+		?.split("=")[1];
+	return value === "true";
 };
 
-export const clearAuthCookie = (): void => {
-	cookieStore.delete("is_authenticated");
+export const clearAuthCookie = async () => {
+	await cookieStore.delete("is_authenticated");
 };
