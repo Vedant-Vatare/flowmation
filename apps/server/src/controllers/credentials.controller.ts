@@ -58,7 +58,7 @@ export const connectOAuth = async (req: Request, res: Response) => {
 
 	const cookieOptions = {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
+		secure: true,
 		maxAge: 10 * 60 * 1000,
 	};
 
