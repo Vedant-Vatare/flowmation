@@ -59,20 +59,23 @@ export const usersTable = pgTable("users", {
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
-export const passkeysTable = pgTable("passkeys", {
-	id: uuid().defaultRandom().primaryKey(),
-	userId: uuid("user_id")
-		.references(() => usersTable.id, { onDelete: "cascade" })
-		.notNull(),
-	name: varchar({ length: 255 }).notNull(),
-	publicKey: text("public_key").notNull(),
-	credentialId: text("credential_id").notNull().unique(),
-	webauthnUserId: text("webauthn_user_id").notNull(),
-	counter: integer("counter").notNull().default(0),
-	transports: varchar("transports", { length: 255 }).array(),
-	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-	lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
-});
+export const passkeysTable = pgTable(
+	"passkeys",
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		userId: uuid("user_id")
+			.references(() => usersTable.id, { onDelete: "cascade" })
+			.notNull(),
+		name: varchar({ length: 255 }).notNull(),
+		publicKey: text("public_key").notNull(),
+		credentialId: text("credential_id").notNull().unique(),
+		counter: integer("counter").notNull().default(0),
+		transports: varchar("transports", { length: 255 }).array(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+		lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+	},
+	(t) => [index("passkeys_userId_idx").on(t.userId)],
+);
 
 export const nodesTable = pgTable("nodes", {
 	id: uuid().defaultRandom().primaryKey(),

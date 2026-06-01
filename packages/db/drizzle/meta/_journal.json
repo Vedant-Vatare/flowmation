@@ -155,6 +155,13 @@
       "when": 1780138555167,
       "tag": "0021_wet_randall",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1780332649128,
+      "tag": "0022_goofy_gargoyle",
+      "breakpoints": true
     }
   ]
 }
