@@ -443,7 +443,12 @@ const DragHandle = memo(
 
 export const LiveExecutionLogs = () => {
 	const { open: sidebarOpen, width, isMobile } = useSidebar();
-	const [openPanel, setOpenPanel] = useState(true);
+	const showLiveExecutionPanel = useWorkflowExecutionStore(
+		(s) => s.showLiveExecutionPanel,
+	);
+	const setLiveExecutionPanel = useWorkflowExecutionStore(
+		(s) => s.setLiveExecutionPanel,
+	);
 	const [height, setHeight] = useState(DEFAULT_HEIGHT);
 	const [isDragging, setIsDragging] = useState(false);
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>({
@@ -503,9 +508,12 @@ export const LiveExecutionLogs = () => {
 		return true;
 	});
 
-	const onClose = useCallback(() => setOpenPanel(false), []);
+	const onClose = useCallback(
+		() => setLiveExecutionPanel(false),
+		[setLiveExecutionPanel],
+	);
 
-	if (!openPanel) return null;
+	if (!showLiveExecutionPanel) return null;
 
 	return (
 		<div

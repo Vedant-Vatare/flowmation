@@ -2,6 +2,7 @@ import { useLayoutContext } from "@jalez/react-flow-automated-layout";
 import type { NodeIdsWithPosition } from "@nodebase/shared";
 import { useReactFlow, useViewport } from "@xyflow/react";
 import { Maximize2, Minus, Play, Plus, Waypoints } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -50,7 +51,7 @@ function ControlButton({
 	);
 }
 
-function ZoomControls() {
+const ZoomControls = () => {
 	const { workflowId } = Route.useParams();
 	const { zoomIn, zoomOut, fitView, setViewport, getNodes } = useReactFlow();
 	const viewport = useViewport();
@@ -212,9 +213,9 @@ function ZoomControls() {
 			</ControlButton>
 		</div>
 	);
-}
+};
 
-function TestWorkflowButton() {
+const TestWorkflowButton = () => {
 	const { workflowId } = Route.useParams();
 	const { data: workflowNodes } = useWorkflowNodesQuery(workflowId);
 	const { executeTriggerNode, isPending } = useTestWorkflowExecution();
@@ -275,7 +276,40 @@ function TestWorkflowButton() {
 			</Button>
 		</ShineBorder>
 	);
-}
+};
+
+const LiveLogsButton = () => {
+	const showLiveExecutionPanel = useWorkflowExecutionStore(
+		(s) => s.showLiveExecutionPanel,
+	);
+	const setLiveExecutionPanel = useWorkflowExecutionStore(
+		(s) => s.setLiveExecutionPanel,
+	);
+	const hasUpdates = useWorkflowExecutionStore(
+		(s) => Object.keys(s.nodeExecutionUpdates).length > 0,
+	);
+	if (showLiveExecutionPanel || !hasUpdates) return null;
+	return (
+		<AnimatePresence>
+			<motion.div
+				initial={{ y: 50, opacity: 0 }}
+				animate={{ y: 0, opacity: 1 }}
+				exit={{ y: 50, opacity: 0 }}
+				transition={{ type: "spring", stiffness: 300, damping: 25 }}
+			>
+				<Button
+					variant="secondary"
+					size="sm"
+					className="gap-2 rounded-[calc(0.5rem-1.5px)] border border-primary/20 bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-secondary-foreground"
+					title="open live execution panel"
+					onClick={() => setLiveExecutionPanel(true)}
+				>
+					Show Logs
+				</Button>
+			</motion.div>
+		</AnimatePresence>
+	);
+};
 
 export function WorkflowControls() {
 	return (
@@ -283,6 +317,7 @@ export function WorkflowControls() {
 			<div className="flex items-center gap-3">
 				<ZoomControls />
 				<TestWorkflowButton />
+				<LiveLogsButton />
 			</div>
 		</div>
 	);

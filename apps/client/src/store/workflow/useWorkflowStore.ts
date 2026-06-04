@@ -46,6 +46,8 @@ export type NodeExectionWithTime =
 	  };
 
 type WorkflowExecutionStore = {
+	showLiveExecutionPanel: boolean;
+	setLiveExecutionPanel: (state: boolean) => void;
 	showExecutionUpdates: boolean;
 	setShowExecutionUpdates: (state: boolean) => void;
 	nodeExecutionUpdates: Record<string, NodeExectionWithTime>;
@@ -78,6 +80,8 @@ export const useWorkflowTriggerStore = create<WorkflowTriggerStore>((set) => ({
 
 export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 	(set) => ({
+		showLiveExecutionPanel: false,
+		setLiveExecutionPanel: (state) => set({ showLiveExecutionPanel: state }),
 		showExecutionUpdates: false,
 		setShowExecutionUpdates: (state: boolean) =>
 			set({ showExecutionUpdates: state }),
