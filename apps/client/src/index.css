@@ -322,6 +322,9 @@ body {
 	-webkit-mask:
 		linear-gradient(#fff 0 0) content-box,
 		linear-gradient(#fff 0 0);
+	mask:
+		linear-gradient(#fff 0 0) content-box,
+		linear-gradient(#fff 0 0);
 	-webkit-mask-composite: xor;
 	mask-composite: exclude;
 	pointer-events: none;
@@ -364,4 +367,27 @@ body {
 	white-space: nowrap;
 	line-height: 1.4;
 	pointer-events: none;
+}
+
+.wf-control-btn:hover {
+	background: hsl(var(--accent));
+}
+.wf-control-btn:active {
+	background: hsl(var(--accent) / 0.8);
+}
+.wf-control-btn:focus-visible {
+	box-shadow:
+		0 0 0 2px hsl(var(--background)),
+		0 0 0 4px hsl(var(--primary));
+}
+
+/* Numeric input: hide browser spinners */
+input[type="text"]::-webkit-outer-spin-button,
+input[type="text"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+input[type="text"][inputmode="numeric"] {
+	-moz-appearance: textfield;
+	appearance: textfield;
 }
