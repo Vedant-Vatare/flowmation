@@ -10,8 +10,7 @@ const authenticateUser = async ({
 	req,
 }: HandleUserAuth): Promise<string | Response> => {
 	try {
-		const authHeader = req.headers.get("authorization");
-		const token = authHeader?.split(" ")[1];
+		const token = req.cookies.get("auth_token");
 
 		if (!token) return new Response("Invalid token", { status: 401 });
 
@@ -70,6 +69,7 @@ Bun.serve({
 						"Access-Control-Allow-Origin": process.env.CLIENT_URL,
 						"Access-Control-Allow-Methods": "GET, OPTIONS",
 						"Access-Control-Allow-Headers": "Content-Type, Authorization",
+						"Access-Control-Allow-Credentials": "true",
 					},
 				});
 			},
@@ -123,6 +123,7 @@ Bun.serve({
 					headers: {
 						"Access-Control-Allow-Origin": process.env.CLIENT_URL,
 						"Access-Control-Allow-Headers": "Content-Type, Authorization",
+						"Access-Control-Allow-Credentials": "true",
 						"Content-Type": "text/event-stream; charset=utf-8",
 						"Cache-Control": "no-cache, no-transform",
 						Connection: "keep-alive",
