@@ -36,7 +36,11 @@ export const webhook = async (req: Request, res: Response) => {
 
 	if (!webhookId) throw createHttpError.BadRequest("webhookId was invalid");
 
-	await webhookExecution({ webhookId, webhookData: req.body });
+	await webhookExecution({
+		webhookId,
+		webhookData: req.body,
+		executionId: crypto.randomUUID(),
+	});
 	return res.status(201).json({
 		message: "workflow execution started successfully",
 	});

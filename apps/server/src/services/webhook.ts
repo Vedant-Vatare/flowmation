@@ -3,7 +3,7 @@ import createHttpError from "http-errors";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
 type WebhookExecution = {
-	executionId?: string;
+	executionId: string;
 	webhookId: string;
 	webhookData: unknown;
 	liveUpdates?: boolean;
