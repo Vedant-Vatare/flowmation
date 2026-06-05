@@ -98,6 +98,7 @@ export const WorkflowNode = memo(
 		return (
 			<div
 				style={(isTrigger ? TRIGGER_VARS : NODE_VARS) as React.CSSProperties}
+				data-type={data.type}
 				className={cn(
 					"workflow-node group relative cursor-grab transition-all duration-150",
 					getStateClass(),

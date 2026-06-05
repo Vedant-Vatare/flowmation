@@ -305,6 +305,10 @@ body {
 	animation-delay: 50ms;
 }
 
+.workflow-node {
+	--trail-radius: 16px;
+}
+
 .workflow-node.executing::after {
 	content: "";
 	position: absolute;
@@ -312,7 +316,7 @@ body {
 	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
 	width: calc(var(--icon-size, 48px) + 6px);
 	height: calc(var(--icon-size, 48px) + 6px);
-	border-radius: calc(var(--icon-radius, 14px) + 3px);
+	border-radius: var(--trail-radius);
 	padding: 3px;
 	background: conic-gradient(
 		from var(--trail-angle),
@@ -331,6 +335,10 @@ body {
 	animation: spin-trail 1.8s linear infinite;
 }
 
+.workflow-node[data-type="trigger"].executing::after {
+	border-radius: 47% 26% 26% 47%;
+}
+
 .workflow-node.completed::before {
 	content: "";
 	position: absolute;
@@ -338,9 +346,13 @@ body {
 	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
 	width: calc(var(--icon-size, 48px) + 6px);
 	height: calc(var(--icon-size, 48px) + 6px);
-	border-radius: calc(var(--icon-radius, 14px) + 3px);
+	border-radius: var(--trail-radius);
 	border: 2.5px solid #52b788;
 	pointer-events: none;
+}
+
+.workflow-node[data-type="trigger"].completed::before {
+	border-radius: 47% 26% 26% 47%;
 }
 
 .workflow-node.failed::before {
@@ -350,11 +362,15 @@ body {
 	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
 	width: calc(var(--icon-size, 48px) + 6px);
 	height: calc(var(--icon-size, 48px) + 6px);
-	border-radius: calc(var(--icon-radius, 14px) + 3px);
+	border-radius: var(--trail-radius);
 	border: 2.5px solid #dd2d4a;
 	pointer-events: none;
 	animation: shake 500ms ease;
 	animation-delay: 50ms;
+}
+
+.workflow-node[data-type="trigger"].failed::before {
+	border-radius: 47% 26% 26% 47%;
 }
 
 .edge-label {
