@@ -46,3 +46,7 @@ export async function addNodeInQueue(
 ) {
 	return nodeQueue.add("execute-node", data, nodeConfigs);
 }
+
+export const removeScheduledWorkflow = async (workflowId: string) => {
+	await workflowQueue.removeJobScheduler(`scheduler:${workflowId}`);
+};

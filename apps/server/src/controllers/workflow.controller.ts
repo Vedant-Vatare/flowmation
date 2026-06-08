@@ -7,6 +7,7 @@ import {
 	workflowNodesTable,
 	workflowSnapshotsTable,
 } from "@nodebase/db";
+import { removeScheduledWorkflow } from "@nodebase/queue";
 import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
@@ -183,6 +184,8 @@ export const unpublishWorkflow = async (req: Request, res: Response) => {
 		.update(userWorkflowsTable)
 		.set({ status: "inactive" })
 		.where(eq(userWorkflowsTable.id, workflowId));
+
+	await removeScheduledWorkflow(workflowId);
 
 	return res.status(200).json({ message: "workflow unpublished successfully" });
 };
