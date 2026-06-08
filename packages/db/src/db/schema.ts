@@ -5,6 +5,8 @@ import {
 	type NodeParameters,
 	type NodeSettings,
 	WORKFLOW_STATUSES,
+	type WorkflowConnection,
+	type WorkflowNode,
 } from "@nodebase/shared";
 
 import { relations } from "drizzle-orm";
@@ -225,6 +227,20 @@ export const nodeExecutionTable = pgTable(
 	],
 );
 
+export const workflowSnapshotsTable = pgTable(
+	"workflow_snapshots",
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		workflowId: uuid("workflow_id")
+			.references(() => userWorkflowsTable.id, { onDelete: "cascade" })
+			.notNull(),
+		nodes: jsonb().$type<WorkflowNode[]>().notNull(),
+		connections: jsonb().$type<WorkflowConnection[]>().notNull(),
+		publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+	},
+	(t) => [index("snapshot_workflowId_idx").on(t.workflowId)],
+);
+
 export const usersRelations = relations(usersTable, ({ many }) => ({
 	passkeys: many(passkeysTable),
 	credentials: many(credentialsTable),
@@ -255,6 +271,7 @@ export const userWorkflowsRelations = relations(
 		nodes: many(workflowNodesTable),
 		connections: many(workflowConnectionsTable),
 		executions: many(workflowExecutionTable),
+		snapshots: many(workflowSnapshotsTable),
 	}),
 );
 
@@ -287,6 +304,16 @@ export const workflowExecutionRelations = relations(
 	({ one }) => ({
 		workflow: one(userWorkflowsTable, {
 			fields: [workflowExecutionTable.workflowId],
+			references: [userWorkflowsTable.id],
+		}),
+	}),
+);
+
+export const workflowSnapshotsRelations = relations(
+	workflowSnapshotsTable,
+	({ one }) => ({
+		workflow: one(userWorkflowsTable, {
+			fields: [workflowSnapshotsTable.workflowId],
 			references: [userWorkflowsTable.id],
 		}),
 	}),

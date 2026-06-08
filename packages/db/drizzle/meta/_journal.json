@@ -162,6 +162,13 @@
       "when": 1780332649128,
       "tag": "0022_goofy_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780926947768,
+      "tag": "0023_square_metal_master",
+      "breakpoints": true
     }
   ]
 }
