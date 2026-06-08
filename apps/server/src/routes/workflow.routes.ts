@@ -8,7 +8,10 @@ import { executeWorkflow } from "@/controllers/worflow.executions.js";
 import {
 	createWorkflow,
 	getAllUserWorkflow,
+	getPublishStatus,
 	getUserWorkflow,
+	publishWorkflow,
+	unpublishWorkflow,
 	updateUserWorkflow,
 } from "@/controllers/workflow.controller.js";
 import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
@@ -35,5 +38,8 @@ router.patch(
 );
 router.get("/all", getAllUserWorkflow);
 router.get("/:id", getUserWorkflow);
+router.post("/:id/publish", asyncHandler(publishWorkflow));
+router.post("/:id/unpublish", asyncHandler(unpublishWorkflow));
+router.get("/:id/publish-status", asyncHandler(getPublishStatus));
 
 export default router;

@@ -1,4 +1,12 @@
-import { and, db, eq, userWorkflowsTable } from "@nodebase/db";
+import {
+	and,
+	db,
+	eq,
+	userWorkflowsTable,
+	workflowConnectionsTable,
+	workflowNodesTable,
+	workflowSnapshotsTable,
+} from "@nodebase/db";
 import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
@@ -88,4 +96,148 @@ export const getAllUserWorkflow = async (_req: Request, res: Response) => {
 	return res
 		.status(200)
 		.json({ message: "all workflows fetched", userWorkflows });
+};
+
+export const publishWorkflow = async (req: Request, res: Response) => {
+	const workflowId = req.params.id as string;
+	const userId = res.locals.userId as string;
+
+	if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+
+	const [workflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.id, workflowId),
+				eq(userWorkflowsTable.userId, userId),
+			),
+		);
+
+	if (!workflow) throw createHttpError.NotFound("workflow not found");
+
+	const nodes = await db
+		.select()
+		.from(workflowNodesTable)
+		.where(eq(workflowNodesTable.workflowId, workflowId));
+
+	const connections = await db
+		.select()
+		.from(workflowConnectionsTable)
+		.where(eq(workflowConnectionsTable.workflowId, workflowId));
+
+	const [existingSnapshot] = await db
+		.select()
+		.from(workflowSnapshotsTable)
+		.where(eq(workflowSnapshotsTable.workflowId, workflowId));
+
+	if (existingSnapshot) {
+		await db
+			.update(workflowSnapshotsTable)
+			.set({
+				nodes,
+				connections,
+				publishedAt: new Date(),
+			})
+			.where(eq(workflowSnapshotsTable.workflowId, workflowId));
+	} else {
+		await db.insert(workflowSnapshotsTable).values({
+			workflowId,
+			nodes,
+			connections,
+			publishedAt: new Date(),
+		});
+	}
+
+	await db
+		.update(userWorkflowsTable)
+		.set({ status: "active" })
+		.where(eq(userWorkflowsTable.id, workflowId));
+
+	return res.status(200).json({ message: "workflow published successfully" });
+};
+
+export const unpublishWorkflow = async (req: Request, res: Response) => {
+	const workflowId = req.params.id as string;
+	const userId = res.locals.userId as string;
+
+	if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+
+	const [workflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.id, workflowId),
+				eq(userWorkflowsTable.userId, userId),
+			),
+		);
+
+	if (!workflow) throw createHttpError.NotFound("workflow not found");
+
+	await db
+		.delete(workflowSnapshotsTable)
+		.where(eq(workflowSnapshotsTable.workflowId, workflowId));
+
+	await db
+		.update(userWorkflowsTable)
+		.set({ status: "inactive" })
+		.where(eq(userWorkflowsTable.id, workflowId));
+
+	return res.status(200).json({ message: "workflow unpublished successfully" });
+};
+
+export const getPublishStatus = async (req: Request, res: Response) => {
+	const workflowId = req.params.id as string;
+	const userId = res.locals.userId as string;
+
+	if (!workflowId) throw createHttpError.BadRequest("invalid workflow id");
+
+	const [workflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.id, workflowId),
+				eq(userWorkflowsTable.userId, userId),
+			),
+		);
+
+	if (!workflow) throw createHttpError.NotFound("workflow not found");
+
+	const [snapshot] = await db
+		.select()
+		.from(workflowSnapshotsTable)
+		.where(eq(workflowSnapshotsTable.workflowId, workflowId));
+
+	const isPublished = !!snapshot;
+	const publishedAt = snapshot?.publishedAt ?? null;
+
+	let hasDraftChanges = false;
+	if (snapshot) {
+		const currentNodes = await db
+			.select()
+			.from(workflowNodesTable)
+			.where(eq(workflowNodesTable.workflowId, workflowId));
+
+		const currentConnections = await db
+			.select()
+			.from(workflowConnectionsTable)
+			.where(eq(workflowConnectionsTable.workflowId, workflowId));
+
+		const snapshotNodesStr = JSON.stringify(snapshot.nodes);
+		const currentNodesStr = JSON.stringify(currentNodes);
+		const snapshotConnsStr = JSON.stringify(snapshot.connections);
+		const currentConnsStr = JSON.stringify(currentConnections);
+
+		hasDraftChanges =
+			snapshotNodesStr !== currentNodesStr ||
+			snapshotConnsStr !== currentConnsStr;
+	}
+
+	return res.status(200).json({
+		isPublished,
+		publishedAt,
+		hasDraftChanges,
+	});
 };
