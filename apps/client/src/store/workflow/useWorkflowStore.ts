@@ -1,4 +1,8 @@
-import type { NodeExecutionUpdate } from "@nodebase/shared";
+import type {
+	NodeExecutionUpdate,
+	WorkflowConnection,
+	WorkflowNode,
+} from "@nodebase/shared";
 import { create } from "zustand";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 
@@ -116,3 +120,95 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 		},
 	}),
 );
+
+type PublishStatusStore = {
+	snapshotNodes: WorkflowNode[] | null;
+	snapshotConnections: WorkflowConnection[] | null;
+	hasDraftChanges: boolean;
+	setSnapshot: (
+		nodes: WorkflowNode[] | null,
+		connections: WorkflowConnection[] | null,
+	) => void;
+	checkForStatusChanges: (
+		currentNodes: WorkflowNode[],
+		currentConnections: WorkflowConnection[],
+	) => void;
+	reset: () => void;
+};
+
+const normalizeNodes = (nodes: WorkflowNode[]) =>
+	nodes
+		.map((n) => ({
+			id: n.id,
+			nodeId: n.nodeId,
+			positionX: n.positionX,
+			positionY: n.positionY,
+			name: n.name,
+			type: n.type,
+			task: n.task,
+			description: n.description,
+			credentialId: n.credentialId,
+			settings: n.settings,
+			parameters: n.parameters,
+			outputPorts: n.outputPorts,
+			inputPorts: n.inputPorts,
+		}))
+		.sort((a, b) => a.id.localeCompare(b.id));
+
+const normalizeConnections = (conns: WorkflowConnection[]) =>
+	conns
+		.map((c) => ({
+			sourceId: c.sourceId,
+			targetId: c.targetId,
+			sourcePort: c.sourcePort,
+			targetPort: c.targetPort,
+		}))
+		.sort((a, b) => {
+			const cmp = a.sourceId.localeCompare(b.sourceId);
+			if (cmp !== 0) return cmp;
+			return a.targetId.localeCompare(b.targetId);
+		});
+
+export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
+	snapshotNodes: null,
+	snapshotConnections: null,
+	hasDraftChanges: false,
+
+	setSnapshot: (nodes, connections) =>
+		set({
+			snapshotNodes: nodes,
+			snapshotConnections: connections,
+			hasDraftChanges: false,
+		}),
+
+	checkForStatusChanges: (currentNodes, currentConnections) =>
+		set((state) => {
+			if (!state.snapshotNodes || !state.snapshotConnections) {
+				return { hasDraftChanges: false };
+			}
+
+			const currentNodesStr = JSON.stringify(normalizeNodes(currentNodes));
+			const snapshotNodesStr = JSON.stringify(
+				normalizeNodes(state.snapshotNodes),
+			);
+			const currentConnsStr = JSON.stringify(
+				normalizeConnections(currentConnections),
+			);
+			const snapshotConnsStr = JSON.stringify(
+				normalizeConnections(state.snapshotConnections),
+			);
+
+			return {
+				hasDraftChanges:
+					currentNodesStr !== snapshotNodesStr ||
+					currentConnsStr !== snapshotConnsStr,
+			};
+		}),
+
+	reset: () =>
+		set({
+			snapshotNodes: null,
+			snapshotConnections: null,
+			hasDraftChanges: false,
+		}),
+}));

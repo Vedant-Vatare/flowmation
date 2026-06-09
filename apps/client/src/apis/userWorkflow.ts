@@ -168,7 +168,8 @@ export const executionLogs = async (page: number) => {
 export type PublishStatus = {
 	isPublished: boolean;
 	publishedAt: string | null;
-	hasDraftChanges: boolean;
+	snapshotNodes: WorkflowNode[] | null;
+	snapshotConnections: WorkflowConnection[] | null;
 };
 
 export const publishWorkflowApi = async (workflowId: string) => {

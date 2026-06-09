@@ -3,6 +3,7 @@ import type {
 	PartialWorkflowNode,
 	UpdateUserWorkflow,
 	UserWorkflow,
+	WorkflowConnection,
 	WorkflowNode,
 } from "@nodebase/shared";
 import {
@@ -13,6 +14,7 @@ import {
 	useQueryClient,
 } from "@tanstack/react-query";
 import { useReactFlow } from "@xyflow/react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import {
 	addWorkflowNodeApi,
@@ -35,8 +37,12 @@ import {
 	workflowExecutionLogsApi,
 } from "@/apis/userWorkflow";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
+import { useDebounce } from "@/hooks/debounce";
 import { initiateSSEConnection } from "@/services/sse";
-import { useWorkflowExecutionStore } from "@/store/workflow/useWorkflowStore";
+import {
+	usePublishStatusStore,
+	useWorkflowExecutionStore,
+} from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
 export const userWorkflowsOptions = () =>
@@ -73,18 +79,45 @@ export const useWorkflowConnectionsQuery = (workflowId: string) =>
 
 export const useAddWorkflowNode = () => {
 	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
 	return useMutation({
 		mutationFn: (node: WorkflowNode) => addWorkflowNodeApi(node),
-		onSuccess: (data, { workflowId }) =>
+		onSuccess: (data, { workflowId }) => {
 			queryClient.setQueryData(
 				workflowNodesOptions(workflowId).queryKey,
 				(old) => [...(old ?? []), data],
-			),
+			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
+		},
 	});
 };
 
 export const useDeleteWorkflowNode = () => {
 	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
 	return useMutation({
 		mutationFn: ({ id, workflowId }: { id: string; workflowId: string }) =>
 			deleteWorkflowNodeApi(id, workflowId),
@@ -93,12 +126,30 @@ export const useDeleteWorkflowNode = () => {
 				workflowNodesOptions(workflowId).queryKey,
 				(old) => old?.filter((n) => n.id !== id),
 			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
 		},
 	});
 };
 
 export const useUpdateWorkflowNode = () => {
 	const { setNodes } = useReactFlow<WorkflowCanvasNode>();
+	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
 
 	return useMutation({
 		mutationFn: ({
@@ -119,29 +170,159 @@ export const useUpdateWorkflowNode = () => {
 					return { ...n, data: { ...n.data, ...nodeUpdates } };
 				}),
 			);
+
+			queryClient.setQueryData(
+				workflowNodesOptions(variables.workflowId).queryKey,
+				(old: WorkflowNode[] | undefined) =>
+					old?.map((n) => (n.id === nodeId ? { ...n, ...nodeUpdates } : n)),
+			);
+
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(variables.workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId: variables.workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
 		},
 	});
 };
 
-export const useAddWorkflowConn = () =>
-	useMutation({
+export const useAddWorkflowConn = () => {
+	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
+	return useMutation({
 		mutationFn: addWorkflowNodeConnApi,
+		onSuccess: (data, variables) => {
+			const workflowId = variables.workflowId;
+			queryClient.setQueryData(
+				["workflow-connections", { workflowId }],
+				(old: WorkflowConnection[] | undefined) => [...(old ?? []), data],
+			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
+		},
 	});
+};
 
-export const useDeleteWorkflowConn = () =>
-	useMutation({
+export const useDeleteWorkflowConn = () => {
+	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
+	return useMutation({
 		mutationFn: deleteWorkflowConnApi,
+		onSuccess: (_, variables) => {
+			const workflowId = variables.workflowId;
+			queryClient.setQueryData(
+				["workflow-connections", { workflowId }],
+				(old: WorkflowConnection[] | undefined) =>
+					old?.filter((c) => c.id !== variables.id),
+			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
+		},
 	});
+};
 
-export const useUpdateWorkflowConn = () =>
-	useMutation({
+export const useUpdateWorkflowConn = () => {
+	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
+	return useMutation({
 		mutationFn: updateWorkflowNodeConnApi,
+		onSuccess: (data, variables) => {
+			const workflowId = variables.workflowId;
+			queryClient.setQueryData(
+				["workflow-connections", { workflowId }],
+				(old: WorkflowConnection[] | undefined) =>
+					old?.map((c) => (c.id === data.id ? data : c)),
+			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
+		},
 	});
+};
 
-export const useUpdateNodesPositions = () =>
-	useMutation({
+export const useUpdateNodesPositions = () => {
+	const queryClient = useQueryClient();
+	const checkForStatusChanges = usePublishStatusStore(
+		(s) => s.checkForStatusChanges,
+	);
+	const compareDraftChanges = useDebounce(
+		(nodes: WorkflowNode[], connections: WorkflowConnection[]) =>
+			checkForStatusChanges(nodes, connections),
+		undefined,
+		300,
+	);
+	return useMutation({
 		mutationFn: updateNodesPositionApi,
+		onSuccess: (_data, variables) => {
+			const posMap = new Map(
+				variables.nodes.map((n) => [
+					n.id,
+					{ positionX: n.positionX, positionY: n.positionY },
+				]),
+			);
+			queryClient.setQueryData(
+				workflowNodesOptions(variables.workflowId).queryKey,
+				(old: WorkflowNode[] | undefined) =>
+					old?.map((n) => {
+						const pos = posMap.get(n.id);
+						return pos ? { ...n, ...pos } : n;
+					}),
+			);
+			const nodes = queryClient.getQueryData<WorkflowNode[]>(
+				workflowNodesOptions(variables.workflowId).queryKey,
+			);
+			const connections = queryClient.getQueryData<WorkflowConnection[]>([
+				"workflow-connections",
+				{ workflowId: variables.workflowId },
+			]);
+			if (nodes && connections) compareDraftChanges(nodes, connections);
+		},
 	});
+};
 
 export const useUpdateUserWorkflow = () => {
 	const queryClient = useQueryClient();
@@ -213,14 +394,26 @@ export const useExecutionLogs = () => {
 	});
 };
 
-export const usePublishStatus = (workflowId: string) =>
-	useQuery({
+export const usePublishStatus = (workflowId: string) => {
+	const setSnapshot = usePublishStatusStore((s) => s.setSnapshot);
+	const result = useQuery({
 		queryKey: ["publishStatus", { workflowId }],
 		queryFn: () => getPublishStatusApi(workflowId),
+		staleTime: Number.POSITIVE_INFINITY,
 	});
+
+	useEffect(() => {
+		if (result.data) {
+			setSnapshot(result.data.snapshotNodes, result.data.snapshotConnections);
+		}
+	}, [result.data, setSnapshot]);
+
+	return result;
+};
 
 export const usePublishWorkflow = () => {
 	const queryClient = useQueryClient();
+	const reset = usePublishStatusStore((s) => s.reset);
 	return useMutation({
 		mutationFn: publishWorkflowApi,
 		onSuccess: (_data, workflowId) => {
@@ -228,6 +421,7 @@ export const usePublishWorkflow = () => {
 				queryKey: ["publishStatus", { workflowId }],
 			});
 			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			reset();
 			toast.success("Workflow published");
 		},
 		onError: () => {
@@ -238,6 +432,7 @@ export const usePublishWorkflow = () => {
 
 export const useUnpublishWorkflow = () => {
 	const queryClient = useQueryClient();
+	const reset = usePublishStatusStore((s) => s.reset);
 	return useMutation({
 		mutationFn: unpublishWorkflowApi,
 		onSuccess: (_data, workflowId) => {
@@ -245,6 +440,7 @@ export const useUnpublishWorkflow = () => {
 				queryKey: ["publishStatus", { workflowId }],
 			});
 			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			reset();
 			toast.success("Workflow unpublished");
 		},
 		onError: () => {

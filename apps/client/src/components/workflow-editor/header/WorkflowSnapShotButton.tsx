@@ -12,6 +12,7 @@ import {
 	useUnpublishWorkflow,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import { usePublishStatusStore } from "@/store/workflow/useWorkflowStore";
 
 export const WorkflowSnapShotButton = () => {
 	const { workflowId } = Route.useParams();
@@ -20,6 +21,7 @@ export const WorkflowSnapShotButton = () => {
 		usePublishWorkflow();
 	const { mutate: unpublishWorkflow, isPending: isUnpublishing } =
 		useUnpublishWorkflow();
+	const hasDraftChanges = usePublishStatusStore((s) => s.hasDraftChanges);
 
 	const isBusy = isPublishing || isUnpublishing;
 
@@ -32,7 +34,6 @@ export const WorkflowSnapShotButton = () => {
 	}
 
 	const isPublished = publishStatus?.isPublished ?? false;
-	const hasDraftChanges = publishStatus?.hasDraftChanges ?? false;
 
 	if (!isPublished) {
 		return (

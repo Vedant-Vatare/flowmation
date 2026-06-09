@@ -213,34 +213,10 @@ export const getPublishStatus = async (req: Request, res: Response) => {
 		.from(workflowSnapshotsTable)
 		.where(eq(workflowSnapshotsTable.workflowId, workflowId));
 
-	const isPublished = !!snapshot;
-	const publishedAt = snapshot?.publishedAt ?? null;
-
-	let hasDraftChanges = false;
-	if (snapshot) {
-		const currentNodes = await db
-			.select()
-			.from(workflowNodesTable)
-			.where(eq(workflowNodesTable.workflowId, workflowId));
-
-		const currentConnections = await db
-			.select()
-			.from(workflowConnectionsTable)
-			.where(eq(workflowConnectionsTable.workflowId, workflowId));
-
-		const snapshotNodesStr = JSON.stringify(snapshot.nodes);
-		const currentNodesStr = JSON.stringify(currentNodes);
-		const snapshotConnsStr = JSON.stringify(snapshot.connections);
-		const currentConnsStr = JSON.stringify(currentConnections);
-
-		hasDraftChanges =
-			snapshotNodesStr !== currentNodesStr ||
-			snapshotConnsStr !== currentConnsStr;
-	}
-
 	return res.status(200).json({
-		isPublished,
-		publishedAt,
-		hasDraftChanges,
+		isPublished: !!snapshot,
+		publishedAt: snapshot?.publishedAt ?? null,
+		snapshotNodes: snapshot?.nodes ?? null,
+		snapshotConnections: snapshot?.connections ?? null,
 	});
 };
