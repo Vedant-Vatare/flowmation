@@ -22,9 +22,12 @@ import {
 	deleteWorkflowNodeApi,
 	executeWorkflowApi,
 	executionLogs,
+	getPublishStatusApi,
 	getUserWorkflowsApi,
 	getWorkflowConnections,
 	getWorkflowNodes,
+	publishWorkflowApi,
+	unpublishWorkflowApi,
 	updateNodesPositionApi,
 	updateUserWorkflowApi,
 	updateWorkflowNodeApi,
@@ -207,5 +210,45 @@ export const useExecutionLogs = () => {
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, allPages) =>
 			lastPage.hasNextPage ? allPages.length + 1 : undefined,
+	});
+};
+
+export const usePublishStatus = (workflowId: string) =>
+	useQuery({
+		queryKey: ["publishStatus", { workflowId }],
+		queryFn: () => getPublishStatusApi(workflowId),
+	});
+
+export const usePublishWorkflow = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: publishWorkflowApi,
+		onSuccess: (_data, workflowId) => {
+			queryClient.invalidateQueries({
+				queryKey: ["publishStatus", { workflowId }],
+			});
+			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			toast.success("Workflow published");
+		},
+		onError: () => {
+			toast.error("Failed to publish workflow");
+		},
+	});
+};
+
+export const useUnpublishWorkflow = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
+		mutationFn: unpublishWorkflowApi,
+		onSuccess: (_data, workflowId) => {
+			queryClient.invalidateQueries({
+				queryKey: ["publishStatus", { workflowId }],
+			});
+			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			toast.success("Workflow unpublished");
+		},
+		onError: () => {
+			toast.error("Failed to unpublish workflow");
+		},
 	});
 };

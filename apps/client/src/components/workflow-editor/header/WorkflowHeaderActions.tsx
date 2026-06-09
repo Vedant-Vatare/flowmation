@@ -1,3 +1,5 @@
+import { WorkflowSnapShotButton } from "./WorkflowSnapShotButton";
+
 export const WorkflowHeaderActions = () => {
-	return null;
+	return <WorkflowSnapShotButton />;
 };

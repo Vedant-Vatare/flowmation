@@ -164,3 +164,30 @@ export const executionLogs = async (page: number) => {
 
 	return response.data;
 };
+
+export type PublishStatus = {
+	isPublished: boolean;
+	publishedAt: string | null;
+	hasDraftChanges: boolean;
+};
+
+export const publishWorkflowApi = async (workflowId: string) => {
+	const response = await api.post<{ message: string }>(
+		`/workflows/${workflowId}/publish`,
+	);
+	return response.data;
+};
+
+export const unpublishWorkflowApi = async (workflowId: string) => {
+	const response = await api.post<{ message: string }>(
+		`/workflows/${workflowId}/unpublish`,
+	);
+	return response.data;
+};
+
+export const getPublishStatusApi = async (workflowId: string) => {
+	const response = await api.get<PublishStatus>(
+		`/workflows/${workflowId}/publish-status`,
+	);
+	return response.data;
+};

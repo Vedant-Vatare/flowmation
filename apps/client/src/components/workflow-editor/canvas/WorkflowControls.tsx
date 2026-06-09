@@ -57,7 +57,6 @@ const ZoomControls = () => {
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const { applyLayout } = useLayoutContext();
-
 	const [zoom, setZoom] = useState(100);
 	const [zoomInput, setZoomInput] = useState("100");
 	const [isEditing, setIsEditing] = useState(false);

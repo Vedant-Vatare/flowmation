@@ -37,6 +37,7 @@ const statusVariant: Record<
 	"default" | "secondary" | "destructive" | "outline"
 > = {
 	active: "default",
+	inactive: "secondary",
 	failed: "destructive",
 	stopped: "secondary",
 	running: "outline",
