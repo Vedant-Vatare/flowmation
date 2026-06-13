@@ -125,7 +125,7 @@ type PublishStatusStore = {
 	snapshotNodes: WorkflowNode[] | null;
 	snapshotConnections: WorkflowConnection[] | null;
 	hasDraftChanges: boolean;
-	_snapshotDataId: string | null;
+	snapshotDataId: string | null;
 	setSnapshot: (
 		nodes: WorkflowNode[] | null,
 		connections: WorkflowConnection[] | null,
@@ -174,7 +174,7 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 	snapshotNodes: null,
 	snapshotConnections: null,
 	hasDraftChanges: false,
-	_snapshotDataId: null,
+			snapshotDataId: null,
 
 	setSnapshot: (nodes, connections) =>
 		set((state) => {
@@ -183,7 +183,7 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 				c: normalizeConnections(connections ?? []),
 			});
 
-			if (dataId === state._snapshotDataId) {
+			if (dataId === state.snapshotDataId) {
 				return {};
 			}
 
@@ -191,7 +191,7 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 				snapshotNodes: nodes,
 				snapshotConnections: connections,
 				hasDraftChanges: false,
-				_snapshotDataId: dataId,
+				snapshotDataId: dataId,
 			};
 		}),
 
@@ -224,6 +224,6 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 			snapshotNodes: null,
 			snapshotConnections: null,
 			hasDraftChanges: false,
-			_snapshotDataId: null,
+	snapshotDataId: null,
 		}),
 }));

@@ -1,9 +1,9 @@
 import type { Control, UseFormRegister } from "react-hook-form";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
+import { NodeActions, nodesWithActions } from "./NodeActions";
 import { NodeCredentials } from "./NodeCredentials";
 import { NodeField } from "./NodeEditor";
-import { NodeInfo, nodesWithInfo } from "./NodeInfoSection";
 import { NodeSettings } from "./NodeSettings";
 
 type NodeConfig = {
@@ -35,7 +35,11 @@ const checkNodeConfigs = (
 	if (nodeData.settings && Object.keys(nodeData.settings).length > 0)
 		return true;
 
-	if (nodesWithInfo.includes(nodeData.task as (typeof nodesWithInfo)[number]))
+	if (
+		nodesWithActions.includes(
+			nodeData.task as (typeof nodesWithActions)[number],
+		)
+	)
 		return true;
 
 	return false;
@@ -47,8 +51,8 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	const getCredentialProvider = useNodeCredentialProvider();
 	const credentialprovider = getCredentialProvider(nodeData.task);
 	const hasConfigs = checkNodeConfigs(nodeData, credentialprovider);
-	const showInfo = nodesWithInfo.includes(
-		nodeData.task as (typeof nodesWithInfo)[number],
+	const showInfo = nodesWithActions.includes(
+		nodeData.task as (typeof nodesWithActions)[number],
 	);
 	const showCredentials = !!credentialprovider;
 
@@ -68,7 +72,7 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 
 	return (
 		<>
-			<NodeInfo nodeData={nodeData} />
+			<NodeActions nodeData={nodeData} />
 			{showInfo && showCredentials && <SectionDivider />}
 			<NodeCredentials nodeData={nodeData} control={control} />
 			{showCredentials && nodeData.parameters.length > 0 && <SectionDivider />}
@@ -79,11 +83,7 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 			/>
 			{(showInfo || showCredentials || nodeData.parameters.length > 0) &&
 				showSettings && <SectionDivider />}
-			<NodeSettings
-				nodeData={nodeData}
-				register={register}
-				control={control}
-			/>
+			<NodeSettings nodeData={nodeData} register={register} control={control} />
 		</>
 	);
 };
