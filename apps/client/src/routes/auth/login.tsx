@@ -6,6 +6,6 @@ export const Route = createFileRoute("/auth/login")({
 	component: Login,
 	beforeLoad: () => {
 		const isAuthenticated = isUserAuthenticated();
-		if (isAuthenticated) return redirect({ to: "/dashboard" });
+		if (isAuthenticated) throw redirect({ to: "/dashboard" });
 	},
 });

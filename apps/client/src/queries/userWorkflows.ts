@@ -399,6 +399,7 @@ export const usePublishStatus = (workflowId: string) => {
 	const result = useQuery({
 		queryKey: ["publishStatus", { workflowId }],
 		queryFn: () => getPublishStatusApi(workflowId),
+		enabled: !!workflowId,
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 
