@@ -28,7 +28,6 @@
 	"devDependencies": {
 		"@nodebase/ts-config": "workspace:*",
 		"@types/node": "^25.0.10",
-		"tsc-alias": "^1.8.16",
-		"typescript": "^5.9.3"
+		"tsc-alias": "^1.8.16"
 	}
 }
