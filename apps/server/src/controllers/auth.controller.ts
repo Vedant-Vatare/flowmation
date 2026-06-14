@@ -22,15 +22,20 @@ type GoogleIdTokenPayload = {
 	name?: string;
 };
 
-const RP_NAME = process.env.RP_NAME;
-const RP_ID = process.env.RP_ID;
-const ORIGIN = process.env.CLIENT_URL;
+const getAuthConfig = () => {
+	const RP_NAME = process.env.RP_NAME;
+	const RP_ID = process.env.RP_ID;
+	const ORIGIN = process.env.CLIENT_URL;
 
-if (!RP_NAME || !RP_ID || !ORIGIN) {
-	throw new Error(
-		"Missing required environment variables: RP_NAME, RP_ID, CLIENT_URL",
-	);
-}
+	if (!RP_NAME || !RP_ID || !ORIGIN) {
+		console.log(
+			"Missing required environment variables: RP_NAME, RP_ID, CLIENT_URL",
+		);
+		throw new Error("Internal server error.");
+	}
+
+	return { RP_NAME, RP_ID, ORIGIN };
+};
 
 const COOKIE_SAME_SITE = "strict" as const;
 
@@ -269,6 +274,8 @@ export const passkeyInitiate = async (req: Request, res: Response) => {
 	const { email } = req.body;
 	if (!email) throw createHttpError.BadRequest("Email is required");
 
+	const { RP_NAME, RP_ID } = getAuthConfig();
+
 	const [existingUser] = await db
 		.select()
 		.from(usersTable)
@@ -363,6 +370,7 @@ const handlePasskeySignup = async (
 	expectedChallenge: string,
 	email: string,
 ) => {
+	const { RP_ID, ORIGIN } = getAuthConfig();
 	let verification: VerifiedRegistrationResponse;
 	try {
 		verification = await verifyRegistrationResponse({
@@ -430,6 +438,7 @@ const handlePasskeyLogin = async (
 	expectedChallenge: string,
 	email: string,
 ) => {
+	const { RP_ID, ORIGIN } = getAuthConfig();
 	const [existingUser] = await db
 		.select()
 		.from(usersTable)
@@ -496,6 +505,7 @@ export const generatePasskeyRegistration = async (
 	_req: Request,
 	res: Response,
 ) => {
+	const { RP_NAME, RP_ID } = getAuthConfig();
 	const userId = res.locals.userId;
 	if (!userId) throw createHttpError.Unauthorized("User not logged in");
 
@@ -536,6 +546,7 @@ export const verifyPasskeyRegistration = async (
 	req: Request,
 	res: Response,
 ) => {
+	const { RP_ID, ORIGIN } = getAuthConfig();
 	const userId = res.locals.userId;
 	if (!userId) throw createHttpError.Unauthorized("User not logged in");
 

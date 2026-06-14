@@ -1,6 +1,5 @@
 import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
 import { Queue } from "bullmq";
-import "dotenv/config";
 import type {
 	NodeExecutionConfig,
 	NodeJobPayload,

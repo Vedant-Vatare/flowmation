@@ -1,7 +1,6 @@
 import { Redis } from "ioredis";
-import "dotenv/config";
 
 export const redis = new Redis({
-	host: process.env.REDIS_HOST as string,
-	port: Number(process.env.REDIS_PORT),
+	host: process.env.REDIS_HOST || "localhost",
+	port: process.env.REDIS_PORT ? Number(process.env.REDIS_PORT) : 6379,
 });

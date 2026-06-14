@@ -5,9 +5,9 @@
 	"scripts": {
 		"build:db": "dotenv -e .env -- pnpm --filter @nodebase/db build",
 		"predev": "pnpm build:db && docker-compose up -d",
-		"dev": "dotenv -e .env -- turbo run dev --env-mode=loose",
-		"build": "dotenv -e .env turbo run build --env-mode=loose",
-		"start": "dotenv -e .env turbo run start --env-mode=loose",
+		"dev": "dotenv -e .env -- turbo run dev",
+		"build": "dotenv -e .env -- turbo run build",
+		"start": "dotenv -e .env -- turbo run start",
 		"typecheck": "turbo run typecheck",
 		"clean": "turbo run clean"
 	},
