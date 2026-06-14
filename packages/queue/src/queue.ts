@@ -1,3 +1,4 @@
+import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
 import { Queue } from "bullmq";
 import "dotenv/config";
 import type {
@@ -49,4 +50,25 @@ export async function addNodeInQueue(
 
 export const removeScheduledWorkflow = async (workflowId: string) => {
 	await workflowQueue.removeJobScheduler(`scheduler:${workflowId}`);
+};
+
+export const scheduleWorkflow = async (
+	workflowId: string,
+	userId: string,
+	nodes: WorkflowNode[],
+	connections: WorkflowConnection[],
+	repeat: { every?: number; pattern?: string; limit?: number },
+) => {
+	const triggerNodeId = nodes.find((n) => n.task === "trigger.cron")?.id;
+	await workflowQueue.upsertJobScheduler(`scheduler:${workflowId}`, repeat, {
+		name: `scheduled:${workflowId}`,
+		data: {
+			workflowId,
+			userId,
+			nodes,
+			connections,
+			triggerNodeId,
+			triggerType: "schedule",
+		} as WorkflowJobPayload,
+	});
 };

@@ -7,8 +7,9 @@ import {
 	workflowNodesTable,
 	workflowSnapshotsTable,
 } from "@nodebase/db";
-import { removeScheduledWorkflow } from "@nodebase/queue";
+import { removeScheduledWorkflow, scheduleWorkflow } from "@nodebase/queue";
 import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
+import { parseScheduleParams } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { isDBQueryError } from "@/utils/api.utils.js";
@@ -148,6 +149,14 @@ export const publishWorkflow = async (req: Request, res: Response) => {
 			connections,
 			publishedAt: new Date(),
 		});
+	}
+
+	const scheduleNode = nodes.find((n) => n.task === "trigger.cron");
+	if (scheduleNode) {
+		const repeat = parseScheduleParams(scheduleNode);
+		if (repeat) {
+			await scheduleWorkflow(workflowId, userId, nodes, connections, repeat);
+		}
 	}
 
 	await db

@@ -18,6 +18,7 @@ export const webhookExecution = async ({
 		.select({
 			userId: userWorkflowsTable.userId,
 			workflowId: userWorkflowsTable.id,
+			status: userWorkflowsTable.status,
 		})
 		.from(workflowNodesTable)
 		.where(eq(workflowNodesTable.id, webhookId))
@@ -29,6 +30,11 @@ export const webhookExecution = async ({
 
 	if (!result?.userId || !result?.workflowId)
 		throw createHttpError.NotFound("invalid webhook URL");
+
+	if (!liveUpdates && result.status !== "active")
+		throw createHttpError.NotFound(
+			"workflow is not published. Publish the workflow to activate the webhook.",
+		);
 
 	const workflowExecutionid = await enqueueWorkflow({
 		executionId,
