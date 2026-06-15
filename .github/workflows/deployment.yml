@@ -1,0 +1,98 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - deployment
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.6.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build project
+        run: |
+          touch .env
+          pnpm build
+
+      - name: Create .rsync-exclude
+        run: |
+          cat > .rsync-exclude << 'EOF'
+          .git
+          node_modules
+          .env
+          .env.*
+          apps/client
+          apps/server/src
+          apps/execution-engine/src
+          packages/*/src
+          packages/*/tsconfig.json
+          apps/*/tsconfig.json
+          *.md
+          biome.json
+          turbo.json
+          docker-compose.yaml
+          notes.md
+          .github
+          EOF
+
+      - name: Deploy to server
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
+          ssh-add - <<< "$SSH_PRIVATE_KEY"
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+          rsync -avz --delete \
+            --exclude-from=.rsync-exclude \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./ \
+            "$SSH_USER@$SSH_HOST:/home/$SSH_USER/flowmation/"
+
+      - name: Install production deps and restart on server
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          ssh -o StrictHostKeyChecking=yes \
+            "$SSH_USER@$SSH_HOST" \
+            'cd /home/'"$SSH_USER"'/flowmation && pnpm install --prod --frozen-lockfile && (pm2 start ecosystem.config.cjs 2>/dev/null || pm2 restart all) && pm2 save'
+
+      - name: Cleanup
+        if: always()
+        run: |
+          ssh-add -D 2>/dev/null || true
+          rm -f /tmp/ssh_agent.sock
