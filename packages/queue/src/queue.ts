@@ -7,9 +7,13 @@ import type {
 } from "./types.js";
 import { NODE_QUEUE_NAME, WORKFLOW_QUEUE_NAME } from "./types.js";
 
+if (!process.env.REDIS_URL) {
+	console.error("[queue] REDIS_URL is not set");
+	process.exit(1);
+}
+
 export const connection = {
-	host: process.env.REDIS_HOST || "localhost",
-	port: Number(process.env.REDIS_PORT) || 6379,
+	url: process.env.REDIS_URL,
 	maxRetriesPerRequest: null,
 };
 

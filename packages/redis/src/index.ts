@@ -1,6 +1,8 @@
 import { Redis } from "ioredis";
 
-export const redis = new Redis({
-	host: process.env.REDIS_HOST || "localhost",
-	port: process.env.REDIS_PORT ? Number(process.env.REDIS_PORT) : 6379,
-});
+if (!process.env.REDIS_URL) {
+	console.error("redis url is not set");
+	process.exit(1);
+}
+
+export const redis = new Redis(process.env.REDIS_URL);
