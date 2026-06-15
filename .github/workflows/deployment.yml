@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -64,35 +64,24 @@ jobs:
           .github
           EOF
 
-      - name: Deploy to server
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          ssh-agent -a "$SSH_AUTH_SOCK" > /dev/null
-          ssh-add - <<< "$SSH_PRIVATE_KEY"
-          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-
-          rsync -avz --delete \
-            --exclude-from=.rsync-exclude \
-            -e "ssh -o StrictHostKeyChecking=yes" \
-            ./ \
-            "$SSH_USER@$SSH_HOST:/home/$SSH_USER/flowmation/"
+      - name: Deploy to server via rsync
+        uses: Burnett01/rsync-deployments@v8
+        with:
+          switches: -avzr --delete --exclude-from=.rsync-exclude
+          path: ./
+          remote_path: /home/${{ secrets.SSH_USER }}/flowmation/
+          remote_host: ${{ secrets.SSH_HOST }}
+          remote_user: ${{ secrets.SSH_USER }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Install production deps and restart on server
-        env:
-          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-        run: |
-          ssh -o StrictHostKeyChecking=yes \
-            "$SSH_USER@$SSH_HOST" \
-            'cd /home/'"$SSH_USER"'/flowmation && pnpm install --prod --frozen-lockfile && (pm2 start ecosystem.config.cjs 2>/dev/null || pm2 restart all) && pm2 save'
-
-      - name: Cleanup
-        if: always()
-        run: |
-          ssh-add -D 2>/dev/null || true
-          rm -f /tmp/ssh_agent.sock
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.SSH_USER }}/flowmation
+            pnpm install --prod --frozen-lockfile
+            (pm2 start ecosystem.config.cjs 2>/dev/null || pm2 restart all)
+            pm2 save
