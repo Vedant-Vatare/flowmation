@@ -14,13 +14,13 @@ importers:
       dotenv:
         specifier: 17.2.3
         version: 17.2.3
+      dotenv-cli:
+        specifier: ^11.0.0
+        version: 11.0.0
     devDependencies:
       '@biomejs/biome':
         specifier: 2.3.11
         version: 2.3.11
-      dotenv-cli:
-        specifier: ^11.0.0
-        version: 11.0.0
       tsc-alias:
         specifier: ^1.8.17
         version: 1.8.17

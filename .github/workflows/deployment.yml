@@ -60,8 +60,9 @@ jobs:
           biome.json
           turbo.json
           docker-compose.yaml
-          notes.md
           .github
+          deployment.sh
+          ecosystem.config.cjs
           EOF
 
       - name: Deploy to server via rsync
@@ -74,14 +75,10 @@ jobs:
           remote_user: ${{ secrets.SSH_USER }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Install production deps and restart on server
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /home/${{ secrets.SSH_USER }}/flowmation
-            pnpm install --prod --frozen-lockfile
-            (pm2 start ecosystem.config.cjs 2>/dev/null || pm2 restart all)
-            pm2 save
+          script: /home/${{ secrets.SSH_USER }}/flowmation/deployment.sh
