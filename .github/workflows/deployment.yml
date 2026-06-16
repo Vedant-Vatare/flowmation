@@ -41,7 +41,7 @@ jobs:
       - name: Build project
         run: |
           touch .env
-          pnpm build
+          pnpm build --filter=!@nodebase/client
 
       - name: Create .rsync-exclude
         run: |
