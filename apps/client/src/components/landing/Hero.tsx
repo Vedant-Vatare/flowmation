@@ -22,7 +22,7 @@ export function Hero() {
 					The workflow automation platform
 				</h1>
 				<p
-					className="mt-5 text-neutral-400 mx-auto"
+					className="mt-5 text-neutral-400 mx-auto text-balance"
 					style={{
 						fontSize: "clamp(1rem, 1.5vw, 1.125rem)",
 						maxWidth: 540,
