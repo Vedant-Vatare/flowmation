@@ -1,4 +1,5 @@
 import { Hero } from "@/components/landing/Hero";
+import { Integrations } from "@/components/landing/Integrations";
 import { Navbar } from "@/components/landing/Navbar";
 
 export function LandingPage() {
@@ -6,6 +7,7 @@ export function LandingPage() {
 		<div className="min-h-screen bg-sidebar overflow-x-hidden">
 			<Navbar />
 			<Hero />
+			<Integrations />
 		</div>
 	);
 }
