@@ -103,7 +103,7 @@ export const userWorkflowsTable = pgTable(
 		userId: uuid("user_id")
 			.references(() => usersTable.id, { onDelete: "cascade" })
 			.notNull(),
-		name: varchar({ length: 255 }).unique(),
+		name: varchar({ length: 255 }),
 		description: text(),
 		status: workflowStatusEnum().$default(() => "active"),
 		executionCount: integer("execution_count").notNull().default(0),
@@ -111,7 +111,10 @@ export const userWorkflowsTable = pgTable(
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 	},
-	(t) => [index("user_id_idx").on(t.userId)],
+	(t) => [
+		index("user_id_idx").on(t.userId),
+		unique("user_workflows_user_id_name_unique").on(t.userId, t.name),
+	],
 );
 
 export const workflowNodesTable = pgTable(

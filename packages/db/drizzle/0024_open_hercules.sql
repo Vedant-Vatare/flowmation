@@ -1,0 +1,2 @@
+ALTER TABLE "user_workflows" DROP CONSTRAINT "user_workflows_name_unique";--> statement-breakpoint
+ALTER TABLE "user_workflows" ADD CONSTRAINT "user_workflows_user_id_name_unique" UNIQUE("user_id","name");
