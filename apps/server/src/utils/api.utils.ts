@@ -6,7 +6,6 @@ import type {
 	RequestHandler,
 	Response,
 } from "express";
-import { DatabaseError } from "pg";
 import { flattenError, type ZodType } from "zod";
 
 type RequestField = "body" | "params" | "query";
@@ -86,15 +85,17 @@ export const asyncHandler =
 		});
 	};
 
-export const isDBQueryError = (error: unknown): DatabaseError | null => {
+export const isDBQueryError = (error: unknown): { code: string } | null => {
 	if (
 		error instanceof DrizzleQueryError &&
-		error.cause instanceof DatabaseError
+		error.cause &&
+		typeof error.cause === "object" &&
+		"code" in error.cause &&
+		typeof (error.cause as Record<string, unknown>).code === "string"
 	) {
-		return error.cause;
-	} else {
-		return null;
+		return error.cause as { code: string };
 	}
+	return null;
 };
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
