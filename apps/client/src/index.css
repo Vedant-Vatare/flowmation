@@ -28,7 +28,13 @@
 	--popover: oklch(1 0 0);
 	--popover-foreground: oklch(0.25 0 0);
 
-	--primary: oklch(0.54 0.22 285);
+	--primary: oklch(0.5282 0.2628 262.87);
+	--primary-gradient: linear-gradient(
+		to right in oklch,
+		oklch(0.55 0.27 270),
+		oklch(0.62 0.24 290)
+	);
+
 	--primary-foreground: oklch(1 0 0);
 
 	--secondary: oklch(0.92 0 0);
@@ -99,6 +105,7 @@ body {
 	--color-popover-foreground: var(--popover-foreground);
 	--color-primary: var(--primary);
 	--color-primary-foreground: var(--primary-foreground);
+	--color-primary-gradient: var(--primary-gradient);
 	--color-secondary: var(--secondary);
 	--color-secondary-foreground: var(--secondary-foreground);
 	--color-muted: var(--muted);
@@ -140,7 +147,12 @@ body {
 		--popover: oklch(0.23 0.01 285);
 		--popover-foreground: oklch(0.95 0 0);
 
-		--primary: oklch(0.58 0.24 285);
+		--primary: oklch(0.5282 0.2628 262.87);
+		--primary-gradient: linear-gradient(
+			to right in oklch,
+			oklch(0.54 0.27 275),
+			oklch(0.58 0.25 285)
+		);
 		--primary-foreground: oklch(1 0 0);
 
 		--secondary: oklch(0.31 0.01 285);
@@ -414,4 +426,25 @@ input[type="text"]::-webkit-inner-spin-button {
 input[type="text"][inputmode="numeric"] {
 	-moz-appearance: textfield;
 	appearance: textfield;
+}
+
+/* Marquee animation for integrations */
+@keyframes marquee {
+	from {
+		transform: translateX(0);
+	}
+	to {
+		transform: translateX(-33.333%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@keyframes marquee {
+		from {
+			transform: translateX(0);
+		}
+		to {
+			transform: translateX(0);
+		}
+	}
 }

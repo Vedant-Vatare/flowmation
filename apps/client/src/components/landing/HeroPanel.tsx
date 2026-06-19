@@ -87,7 +87,8 @@ export function HeroPanel() {
 							<div className="flex items-center gap-2">
 								<button
 									type="button"
-									className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium bg-primary text-primary-foreground hover:opacity-90 transition-opacity min-w-30"
+									className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-medium text-primary-foreground hover:opacity-90 transition-opacity min-w-30"
+									style={{ background: "var(--primary-gradient)" }}
 								>
 									<HugeiconsIcon icon={Rocket01Icon} className="size-3.5" />
 									Publish

@@ -7,7 +7,9 @@ export function Navbar() {
 			<div className="flex items-center justify-between h-12 px-4 rounded-full border border-border bg-background/80 backdrop-blur-md w-full max-w-3xl">
 				<Link to="/" className="flex items-center gap-2.5 pl-1">
 					<img src={BrandIcon} alt="" className="h-5 w-5" />
-					<span className="text-sm font-medium text-foreground">Flowmation</span>
+					<span className="text-sm font-medium text-foreground">
+						Flowmation
+					</span>
 				</Link>
 
 				<nav className="flex items-center gap-1">
@@ -29,7 +31,8 @@ export function Navbar() {
 					</a>
 					<a
 						href="/auth/signup"
-						className="text-[13px] font-medium px-4 py-1.5 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-opacity duration-150"
+						className="text-[13px] font-medium px-4 py-1.5 rounded-full text-primary-foreground hover:opacity-90 transition-opacity duration-150"
+						style={{ background: "var(--primary-gradient)" }}
 					>
 						Get Started
 					</a>
