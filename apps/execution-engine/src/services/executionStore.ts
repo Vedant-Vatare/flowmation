@@ -1,4 +1,4 @@
-import { redis } from "@nodebase/redis";
+import { connection as redis } from "@nodebase/queue";
 
 export const storeNodeOutput = async (
 	executionId: string,
@@ -6,8 +6,7 @@ export const storeNodeOutput = async (
 	output: unknown,
 ) => {
 	const key = `exec:${executionId}`;
-	await redis.hset(key, nodeName, JSON.stringify(output));
-	await redis.expire(key, 3600);
+	await redis.pipeline().hset(key, nodeName, JSON.stringify(output)).expire(key, 3600).exec();
 };
 
 export const getNodeOutput = async (

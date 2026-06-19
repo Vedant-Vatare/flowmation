@@ -5,4 +5,7 @@ if (!process.env.REDIS_URL) {
 	process.exit(1);
 }
 
-export const redis = new Redis(process.env.REDIS_URL);
+export const redis = new Redis(process.env.REDIS_URL, {
+	enableReadyCheck: false,
+	lazyConnect: false,
+});

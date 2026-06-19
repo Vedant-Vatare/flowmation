@@ -187,9 +187,6 @@ importers:
       '@nodebase/queue':
         specifier: workspace:*
         version: link:../../packages/queue
-      '@nodebase/redis':
-        specifier: workspace:*
-        version: link:../../packages/redis
       '@nodebase/shared':
         specifier: workspace:*
         version: link:../../packages/shared

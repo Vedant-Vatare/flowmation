@@ -22,7 +22,6 @@
 	},
 	"dependencies": {
 		"@nodebase/db": "workspace:*",
-		"@nodebase/redis": "workspace:*",
 		"@nodebase/queue": "workspace:*",
 		"@nodebase/shared": "workspace:*",
 		"bullmq": "^5.5.0",

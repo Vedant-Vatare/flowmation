@@ -1,5 +1,6 @@
 import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
 import { Queue } from "bullmq";
+import { Redis } from "ioredis";
 import type {
 	NodeExecutionConfig,
 	NodeJobPayload,
@@ -12,10 +13,11 @@ if (!process.env.REDIS_URL) {
 	process.exit(1);
 }
 
-export const connection = {
-	url: process.env.REDIS_URL,
+export const connection = new Redis(process.env.REDIS_URL, {
 	maxRetriesPerRequest: null,
-};
+	enableReadyCheck: false,
+	lazyConnect: false,
+});
 
 const defaultJobOptions = {
 	removeOnComplete: {
