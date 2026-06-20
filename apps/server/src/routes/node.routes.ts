@@ -7,15 +7,19 @@ import {
 	updateNode,
 } from "@/controllers/node.controller.js";
 import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
+import { authenticateAdminUser } from "@/utils/auth.utils.js";
 
 const router = Router() as routerType;
+
+router.get("/all", asyncHandler(getAllNodes));
+
+router.use(authenticateAdminUser);
 
 router.post(
 	"/add",
 	validateRequest(baseNodeSchema, "body"),
 	asyncHandler(createNode),
 );
-router.get("/all", asyncHandler(getAllNodes));
 router.patch(
 	"/:id",
 	validateRequest(updateBaseNodeSchema, "body"),

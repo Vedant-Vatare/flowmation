@@ -49,6 +49,10 @@ export const updateNode: RequestHandler = async (
 		.where(eq(nodesTable.id, nodeId))
 		.returning();
 
+	if (updatedNode.length === 0) {
+		throw createHttpError.NotFound("Node not found");
+	}
+
 	return res
 		.status(200)
 		.json({ message: "node updated successfully", updatedNode });
