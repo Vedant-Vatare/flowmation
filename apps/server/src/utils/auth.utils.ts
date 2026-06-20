@@ -3,6 +3,18 @@ import { verifyJWT } from "@nodebase/shared/utils";
 import type { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
 
+export const getCookieDomain = (): string | undefined => {
+	const clientUrl = process.env.CLIENT_URL;
+	if (!clientUrl) return undefined;
+	try {
+		const { hostname } = new URL(clientUrl);
+		if (hostname === "localhost") return undefined;
+		return `.${hostname}`;
+	} catch {
+		return undefined;
+	}
+};
+
 export const authenticateUser = async (
 	req: Request,
 	res: Response,

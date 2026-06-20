@@ -15,6 +15,7 @@ import {
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
+import { getCookieDomain } from "@/utils/auth.utils.js";
 
 type GoogleIdTokenPayload = {
 	sub: string;
@@ -37,13 +38,15 @@ const getAuthConfig = () => {
 	return { RP_NAME, RP_ID, ORIGIN };
 };
 
-const COOKIE_SAME_SITE = "strict" as const;
+const COOKIE_DOMAIN = getCookieDomain();
+const COOKIE_SAME_SITE = "none" as const;
 
 const authCookieOpts = {
 	httpOnly: true,
 	secure: true,
 	sameSite: COOKIE_SAME_SITE,
 	maxAge: 14 * 24 * 60 * 60 * 1000,
+	domain: COOKIE_DOMAIN,
 };
 
 const challengeCookieOpts = {
@@ -51,6 +54,7 @@ const challengeCookieOpts = {
 	secure: true,
 	sameSite: COOKIE_SAME_SITE,
 	maxAge: 5 * 60 * 1000,
+	domain: COOKIE_DOMAIN,
 };
 
 const CHALLENGE_COOKIES = [
@@ -59,8 +63,15 @@ const CHALLENGE_COOKIES = [
 	"passkey_auth_email",
 ] as const;
 
+const clearCookieOpts = {
+	domain: COOKIE_DOMAIN,
+	path: "/",
+	sameSite: "none" as const,
+	secure: true,
+};
+
 const clearChallengeCookies = (res: Response) => {
-	for (const name of CHALLENGE_COOKIES) res.clearCookie(name);
+	for (const name of CHALLENGE_COOKIES) res.clearCookie(name, clearCookieOpts);
 };
 
 const buildExcludeCredentials = (
@@ -122,8 +133,9 @@ export const googleLogin = async (_req: Request, res: Response) => {
 
 	res.cookie("oauth_google_login_state", state, {
 		httpOnly: true,
-		secure: process.env.NODE_ENV === "production",
+		secure: true,
 		sameSite: "lax",
+		domain: COOKIE_DOMAIN,
 		maxAge: 10 * 60 * 1000,
 	});
 
@@ -142,10 +154,10 @@ export const googleLogin = async (_req: Request, res: Response) => {
 };
 
 export const logout = async (_req: Request, res: Response) => {
-	res.clearCookie("auth_token");
-	res.clearCookie("is_authenticated");
+	res.clearCookie("auth_token", clearCookieOpts);
+	res.clearCookie("is_authenticated", clearCookieOpts);
 	clearChallengeCookies(res);
-	res.clearCookie("passkey_reg_challenge");
+	res.clearCookie("passkey_reg_challenge", clearCookieOpts);
 	return res.status(200).json({ message: "Logged out successfully" });
 };
 
@@ -166,7 +178,12 @@ export const googleCallback = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("Invalid OAuth state");
 	}
 
-	res.clearCookie("oauth_google_login_state");
+	res.clearCookie("oauth_google_login_state", {
+		domain: COOKIE_DOMAIN,
+		path: "/",
+		sameSite: "lax",
+		secure: true,
+	});
 
 	const clientId = process.env.GOOGLE_CLIENT_ID;
 	const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -265,9 +282,7 @@ export const googleCallback = async (req: Request, res: Response) => {
 
 	setAuthCookies(res, token);
 
-	return res.redirect(
-		`${process.env.CLIENT_URL || "http://localhost:5173/dashboard"}`,
-	);
+	return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
 };
 
 export const passkeyInitiate = async (req: Request, res: Response) => {
@@ -568,13 +583,13 @@ export const verifyPasskeyRegistration = async (
 		});
 	} catch (error) {
 		console.error("verifyRegistrationResponse error", error);
-		res.clearCookie("passkey_reg_challenge");
+		res.clearCookie("passkey_reg_challenge", clearCookieOpts);
 		throw createHttpError.BadRequest((error as Error).message);
 	}
 
 	const { verified, registrationInfo } = verification;
 	if (!verified || !registrationInfo) {
-		res.clearCookie("passkey_reg_challenge");
+		res.clearCookie("passkey_reg_challenge", clearCookieOpts);
 		throw createHttpError.BadRequest("Passkey registration failed");
 	}
 
@@ -594,7 +609,7 @@ export const verifyPasskeyRegistration = async (
 		transports: credential.transports,
 	});
 
-	res.clearCookie("passkey_reg_challenge");
+	res.clearCookie("passkey_reg_challenge", clearCookieOpts);
 
 	return res.status(200).json({ verified });
 };

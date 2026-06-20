@@ -8,6 +8,7 @@ import {
 import { encrypt } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
+import { getCookieDomain } from "@/utils/auth.utils.js";
 
 export const getCredentials = async (_req: Request, res: Response) => {
 	const userId = res.locals.userId;
@@ -59,6 +60,8 @@ export const connectOAuth = async (req: Request, res: Response) => {
 	const cookieOptions = {
 		httpOnly: true,
 		secure: true,
+		sameSite: "none" as const,
+		domain: getCookieDomain(),
 		maxAge: 10 * 60 * 1000,
 	};
 
@@ -126,10 +129,17 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("Missing PKCE code verifier.");
 	}
 
-	res.clearCookie(`oauth_${provider}_state`);
-	res.clearCookie(`oauth_${provider}_verifier`);
-	res.clearCookie(`oauth_${provider}_isPopup`);
-	res.clearCookie(`oauth_${provider}_label`);
+	const clearOpts = {
+		domain: getCookieDomain(),
+		path: "/",
+		sameSite: "none" as const,
+		secure: true,
+	};
+
+	res.clearCookie(`oauth_${provider}_state`, clearOpts);
+	res.clearCookie(`oauth_${provider}_verifier`, clearOpts);
+	res.clearCookie(`oauth_${provider}_isPopup`, clearOpts);
+	res.clearCookie(`oauth_${provider}_label`, clearOpts);
 
 	const stateStr = Buffer.from(state, "base64url").toString("utf8");
 	const stateObj = JSON.parse(stateStr);
