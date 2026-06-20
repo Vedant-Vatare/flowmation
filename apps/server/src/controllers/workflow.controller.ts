@@ -64,6 +64,7 @@ export const updateUserWorkflow = async (req: Request, res: Response) => {
 		if (queryError?.code === "23503") {
 			throw createHttpError.NotFound("workflow not found");
 		}
+		throw e;
 	}
 };
 

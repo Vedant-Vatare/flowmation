@@ -89,6 +89,7 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 
 		if (dbError?.code === "22P02")
 			throw createHttpError.NotFound("workflow not found");
+		throw e;
 	}
 };
 

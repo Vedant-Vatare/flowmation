@@ -2,6 +2,7 @@ import { adminstable, db, eq } from "@nodebase/db";
 import { verifyJWT } from "@nodebase/shared/utils";
 import type { NextFunction, Request, Response } from "express";
 import createHttpError from "http-errors";
+import { asyncHandler } from "./api.utils.js";
 
 export const getCookieDomain = (): string | undefined => {
 	const clientUrl = process.env.CLIENT_URL;
@@ -15,7 +16,7 @@ export const getCookieDomain = (): string | undefined => {
 	}
 };
 
-export const authenticateUser = async (
+export const authenticateUser = asyncHandler(async (
 	req: Request,
 	res: Response,
 	next: NextFunction,
@@ -39,9 +40,9 @@ export const authenticateUser = async (
 		}
 		throw createHttpError.Unauthorized("Authentication failed");
 	}
-};
+});
 
-export const authenticateAdminUser = async (
+export const authenticateAdminUser = asyncHandler(async (
 	req: Request,
 	res: Response,
 	next: NextFunction,
@@ -73,4 +74,4 @@ export const authenticateAdminUser = async (
 		}
 		throw createHttpError.Unauthorized("Authentication failed");
 	}
-};
+});

@@ -24,7 +24,7 @@ router.use(authenticateUser);
 router.post(
 	"/new",
 	validateRequest(createWorkflowSchema, "body"),
-	createWorkflow,
+	asyncHandler(createWorkflow),
 );
 router.post(
 	"/run/:id",
@@ -34,10 +34,10 @@ router.post(
 router.patch(
 	"/:id",
 	validateRequest(updateWorkflowSchema, "body"),
-	updateUserWorkflow,
+	asyncHandler(updateUserWorkflow),
 );
-router.get("/all", getAllUserWorkflow);
-router.get("/:id", getUserWorkflow);
+router.get("/all", asyncHandler(getAllUserWorkflow));
+router.get("/:id", asyncHandler(getUserWorkflow));
 router.post("/:id/publish", asyncHandler(publishWorkflow));
 router.post("/:id/unpublish", asyncHandler(unpublishWorkflow));
 router.get("/:id/publish-status", asyncHandler(getPublishStatus));
