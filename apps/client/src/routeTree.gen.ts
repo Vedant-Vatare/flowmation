@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
@@ -17,6 +18,11 @@ import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
 import { Route as MainLayoutDashboardRouteImport } from './routes/_mainLayout/dashboard'
 import { Route as MainLayoutWorkflowWorkflowIdRouteImport } from './routes/_mainLayout/workflow/$workflowId'
 
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MainLayoutRoute = MainLayoutRouteImport.update({
   id: '/_mainLayout',
   getParentRoute: () => rootRouteImport,
@@ -55,6 +61,7 @@ const MainLayoutWorkflowWorkflowIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -63,6 +70,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacy': typeof PrivacyRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -73,6 +81,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_mainLayout': typeof MainLayoutRouteWithChildren
+  '/privacy': typeof PrivacyRoute
   '/_mainLayout/dashboard': typeof MainLayoutDashboardRoute
   '/_mainLayout/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -83,6 +92,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/privacy'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
@@ -91,6 +101,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/privacy'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
@@ -100,6 +111,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_mainLayout'
+    | '/privacy'
     | '/_mainLayout/dashboard'
     | '/_mainLayout/logs'
     | '/auth/login'
@@ -110,12 +122,20 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MainLayoutRoute: typeof MainLayoutRouteWithChildren
+  PrivacyRoute: typeof PrivacyRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_mainLayout': {
       id: '/_mainLayout'
       path: ''
@@ -187,6 +207,7 @@ const MainLayoutRouteWithChildren = MainLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MainLayoutRoute: MainLayoutRouteWithChildren,
+  PrivacyRoute: PrivacyRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
 }
