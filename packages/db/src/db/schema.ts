@@ -61,6 +61,13 @@ export const usersTable = pgTable("users", {
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+export const adminstable = pgTable("admins", {
+	id: uuid().defaultRandom().primaryKey(),
+	userId: uuid("user_id")
+		.references(() => usersTable.id, { onDelete: "cascade" })
+		.notNull(),
+});
+
 export const passkeysTable = pgTable(
 	"passkeys",
 	{

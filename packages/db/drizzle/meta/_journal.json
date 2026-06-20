@@ -176,6 +176,13 @@
       "when": 1781776129919,
       "tag": "0024_open_hercules",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1781935898566,
+      "tag": "0025_nifty_marauders",
+      "breakpoints": true
     }
   ]
 }
