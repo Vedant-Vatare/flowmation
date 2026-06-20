@@ -114,7 +114,7 @@ const Nodes = memo(() => {
 			});
 
 			setNodes(resolvedNodes);
-			fitView({ padding: 20, duration: 300 });
+			fitView({ padding: 0.2, duration: 300 });
 
 			const resolvedCanvasNode =
 				resolvedNodes.find((n) => n.id === canvasNode.id) || canvasNode;
