@@ -14,21 +14,23 @@ import {
 	useReactFlow,
 } from "@xyflow/react";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
 
 import Loader from "@/components/ui/Loader";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
+import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import {
 	useAddWorkflowConn,
 	useDeleteWorkflowConn,
 	useDeleteWorkflowNode,
 	useUpdateNodesPositions,
 	useUpdateWorkflowConn,
-	useUpdateWorkflowNode,
 	useWorkflowConnectionsQuery,
 	useWorkflowNodesQuery,
+	workflowNodesOptions,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
@@ -61,12 +63,12 @@ const WorkflowCanvas = () => {
 		useWorkflowNodesQuery(workflowId);
 	const { data: workflowConnections, isLoading: connectionsLoading } =
 		useWorkflowConnectionsQuery(workflowId);
-	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const { mutate: deleteNode } = useDeleteWorkflowNode();
 	const { mutate: createNewConnection } = useAddWorkflowConn();
 	const { mutate: updateConnection } = useUpdateWorkflowConn();
 	const { mutate: deleteConnection } = useDeleteWorkflowConn();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
+	const queryClient = useQueryClient();
 
 	const { fitView, getNodes, setNodes, setEdges } =
 		useReactFlow<WorkflowCanvasNode>();
@@ -113,26 +115,6 @@ const WorkflowCanvas = () => {
 		useWorkflowStore.getState().setSelectedNode(node);
 		useWorkflowSidbarTabsStore.getState().setTabOpen("editor");
 	};
-
-	const saveNodePosition = useCallback(
-		(canvasNode: WorkflowCanvasNode) => {
-			updateNode({
-				workflowId,
-				node: {
-					id: canvasNode.id,
-					task: canvasNode.data.task,
-					positionX: Math.round(canvasNode.position.x),
-					positionY: Math.round(canvasNode.position.y),
-				},
-			});
-		},
-		[updateNode, workflowId],
-	);
-
-	const debouncedSaveNode = useDebounce(
-		saveNodePosition,
-		(node: WorkflowCanvasNode) => node.id,
-	);
 
 	const isConnectionChanged = useCallback(
 		(oldEdge: Edge, newConnection: Connection) => {
@@ -204,8 +186,17 @@ const WorkflowCanvas = () => {
 		[deleteNode, workflowId],
 	);
 
+	const debouncedUpdatePositions = useDebounce(
+		updateNodesPositions,
+		undefined,
+		500,
+	);
+
 	const onNodeDragStop = useCallback(
-		(_e: React.MouseEvent<Element, MouseEvent>, node: WorkflowCanvasNode) => {
+		(
+			_e: React.MouseEvent<Element, MouseEvent>,
+			_draggedNode: WorkflowCanvasNode,
+		) => {
 			const currentNodes = getNodes();
 			const resolvedPositions = resolveCollisions([...currentNodes], {
 				maxIterations: 50,
@@ -215,30 +206,35 @@ const WorkflowCanvas = () => {
 
 			setNodes(resolvedPositions);
 
-			const finalNode = resolvedPositions.find((n) => n.id === node.id) ?? node;
-			debouncedSaveNode(finalNode as WorkflowCanvasNode);
+			const cachedNodes = queryClient.getQueryData<WorkflowNodeRecord[]>(
+				workflowNodesOptions(workflowId).queryKey,
+			);
+			if (!cachedNodes) return;
 
-			const changedNodes = resolvedPositions
+			const cachedMap = new Map(
+				cachedNodes.map((n) => [n.id, n]),
+			);
+
+			const nodesToUpdate = resolvedPositions
 				.filter((n) => {
-					const original = currentNodes.find((on) => on.id === n.id);
+					const cached = cachedMap.get(n.id);
+					if (!cached) return false;
 					return (
-						original &&
-						(Math.round(original.position.x) !== Math.round(n.position.x) ||
-							Math.round(original.position.y) !== Math.round(n.position.y))
+						Math.round(n.position.x) !== cached.positionX ||
+						Math.round(n.position.y) !== cached.positionY
 					);
 				})
-				.filter((n) => n.id !== node.id)
 				.map((n) => ({
 					id: n.id,
 					positionX: Math.round(n.position.x),
 					positionY: Math.round(n.position.y),
 				}));
 
-			if (changedNodes.length > 0) {
-				updateNodesPositions({ workflowId, nodes: changedNodes });
+			if (nodesToUpdate.length > 0) {
+				debouncedUpdatePositions({ workflowId, nodes: nodesToUpdate });
 			}
 		},
-		[updateNodesPositions, workflowId, debouncedSaveNode, setNodes, getNodes],
+		[debouncedUpdatePositions, workflowId, setNodes, getNodes, queryClient],
 	);
 
 	if (nodesLoading || connectionsLoading) {
