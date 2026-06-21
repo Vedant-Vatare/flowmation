@@ -63,15 +63,7 @@ Bun.serve({
 					return new Response("Forbidden", { status: 403 });
 				}
 
-				return new Response(null, {
-					status: 200,
-					headers: {
-						"Access-Control-Allow-Origin": process.env.CLIENT_URL,
-						"Access-Control-Allow-Methods": "GET, OPTIONS",
-						"Access-Control-Allow-Headers": "Content-Type, Authorization",
-						"Access-Control-Allow-Credentials": "true",
-					},
-				});
+				return new Response(null, { status: 204 });
 			},
 
 			GET: async (req, server) => {
@@ -121,9 +113,6 @@ Bun.serve({
 
 				return new Response(stream, {
 					headers: {
-						"Access-Control-Allow-Origin": process.env.CLIENT_URL,
-						"Access-Control-Allow-Headers": "Content-Type, Authorization",
-						"Access-Control-Allow-Credentials": "true",
 						"Content-Type": "text/event-stream; charset=utf-8",
 						"Cache-Control": "no-cache, no-transform",
 						Connection: "keep-alive",
