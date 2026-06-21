@@ -1,4 +1,4 @@
-import { and, db, eq, or, workflowExecutionTable } from "@nodebase/db";
+import { and, db, eq, workflowExecutionTable } from "@nodebase/db";
 import { verifyJWT } from "@nodebase/shared/utils";
 
 type HandleUserAuth = {
@@ -32,7 +32,6 @@ const checkWorkflowStatus = async (executionId: string, userId: string) => {
 			await db.query.workflowExecutionTable.findFirst({
 				where: and(
 					eq(workflowExecutionTable.id, executionId),
-					or(eq(workflowExecutionTable.status, "running")),
 					eq(workflowExecutionTable.userId, userId),
 				),
 			});
