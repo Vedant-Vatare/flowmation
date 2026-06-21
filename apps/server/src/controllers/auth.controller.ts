@@ -161,6 +161,28 @@ export const logout = async (_req: Request, res: Response) => {
 	return res.status(200).json({ message: "Logged out successfully" });
 };
 
+export const getCurrentUser = async (_req: Request, res: Response) => {
+	const userId = res.locals.userId;
+	if (!userId)
+		throw createHttpError.Unauthorized(
+			"please login to get the user information.",
+		);
+
+	const [user] = await db
+		.select({
+			id: usersTable.id,
+			email: usersTable.email,
+			name: usersTable.name,
+		})
+		.from(usersTable)
+		.where(eq(usersTable.id, userId))
+		.limit(1);
+
+	if (!user) throw createHttpError.NotFound("User not found");
+
+	return res.status(200).json({ user });
+};
+
 export const googleCallback = async (req: Request, res: Response) => {
 	const { code, state } = req.query;
 	const savedState = req.cookies.oauth_google_login_state;

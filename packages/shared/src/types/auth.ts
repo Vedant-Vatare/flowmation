@@ -4,3 +4,9 @@ import type { userLoginSchema, userSignupSchema } from "@/schemas/auth.js";
 export type userSignup = z.infer<typeof userSignupSchema>;
 
 export type userLogin = z.infer<typeof userLoginSchema>;
+
+export type User = {
+	id: string;
+	email: string;
+	name: string;
+};

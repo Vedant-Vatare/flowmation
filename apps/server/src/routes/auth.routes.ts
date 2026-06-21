@@ -1,6 +1,7 @@
 import { Router, type Router as routerType } from "express";
 import {
 	generatePasskeyRegistration,
+	getCurrentUser,
 	googleCallback,
 	googleLogin,
 	logout,
@@ -13,6 +14,7 @@ import { authenticateUser } from "@/utils/auth.utils.js";
 
 const router = Router() as routerType;
 
+router.get("/me", authenticateUser, asyncHandler(getCurrentUser));
 router.get("/google", asyncHandler(googleLogin));
 router.get("/google/callback", asyncHandler(googleCallback));
 router.post("/logout", asyncHandler(logout));
