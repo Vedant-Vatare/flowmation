@@ -60,7 +60,7 @@ function NodeGroupSection({
 						>
 							<div
 								className="size-6 p-0.5 rounded-sm shrink-0 flex items-center justify-center"
-								style={{ background: ui.background }}
+								style={{ background: ui.iconBackground ?? ui.background }}
 							>
 								{ui.branded ? (
 									<Icon className="size-5 rounded-sm shrink-0" />

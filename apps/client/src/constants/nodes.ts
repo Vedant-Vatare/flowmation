@@ -29,6 +29,7 @@ export type NodeUI = {
 	icon: FC<SVGProps<SVGSVGElement>>;
 	color?: string;
 	background?: string;
+	iconBackground?: string;
 	fill?: string;
 	branded?: boolean;
 };
@@ -69,6 +70,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Cal.com",
 		icon: CalComIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#3B82F6",
 		branded: true,
 	},
@@ -136,6 +138,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Google Drive",
 		icon: GoogleDriveIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#1a73e8",
 		branded: true,
 	},
@@ -143,6 +146,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Google Calendar",
 		icon: GoogleCalendarIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#1a73e8",
 		branded: true,
 	},
@@ -150,6 +154,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Google Sheets",
 		icon: GoogleSheetsIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#155724",
 		branded: true,
 	},
@@ -157,6 +162,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Gmail",
 		icon: GmailIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#EA4335",
 		branded: true,
 	},
@@ -164,6 +170,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "GitHub",
 		icon: GitHubIcon,
 		background: "#f8f9fa",
+		iconBackground: "#fff",
 		color: "#24292e",
 		branded: true,
 	},
@@ -171,6 +178,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Discord",
 		icon: DiscordIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#5865F2",
 		branded: true,
 	},
@@ -178,6 +186,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Notion",
 		icon: NotionIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#000000",
 		branded: true,
 	},
@@ -185,6 +194,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Razorpay",
 		icon: RazorpayIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#3399FF",
 		branded: true,
 	},
@@ -192,6 +202,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Slack",
 		icon: SlackIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#E01E5A",
 		branded: true,
 	},
@@ -199,6 +210,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Telegram",
 		icon: TelegramIcon,
 		background: "#f8f9fa",
+		iconBackground: "transparent",
 		color: "#26A5E4",
 		branded: true,
 	},
