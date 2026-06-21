@@ -1,10 +1,20 @@
-import { useMutation } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery } from "@tanstack/react-query";
 import {
 	generatePasskeyRegistration,
+	getCurrentUserApi,
 	initiatePasskeyAuth,
 	verifyPasskeyAuth,
 	verifyPasskeyRegistration as verifyPasskeyRegistrationApi,
 } from "../apis/auth";
+
+export const currentUserOptions = () =>
+	queryOptions({
+		queryKey: ["current-user"],
+		queryFn: getCurrentUserApi,
+		staleTime: 5 * 60 * 1000,
+	});
+
+export const useCurrentUserQuery = () => useQuery(currentUserOptions());
 
 export const usePasskeyAuth = () => {
 	const initiate = useMutation({

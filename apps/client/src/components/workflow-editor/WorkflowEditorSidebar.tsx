@@ -44,17 +44,19 @@ const NodeItem = ({
 			className="flex gap-2 items-center w-full cursor-pointer"
 			onClick={onClick}
 		>
-			{ui.branded ? (
-				<Icon className="size-5 rounded-sm shrink-0" />
-			) : (
-				<Icon
-					className="size-5 p-0.5 rounded-sm shrink-0"
-					style={{
-						color: ui.color ?? "currentColor",
-						background: ui.background ?? "#21212A",
-					}}
-				/>
-			)}
+			<div
+				className="size-6 p-0.5 rounded-sm shrink-0 flex items-center justify-center"
+				style={{ background: ui.iconBackground ?? ui.background }}
+			>
+				{ui.branded ? (
+					<Icon className="size-5 rounded-sm shrink-0" />
+				) : (
+					<Icon
+						className="size-5 p-0.5 rounded-sm shrink-0"
+						style={{ color: ui.color ?? "currentColor" }}
+					/>
+				)}
+			</div>
 			<span className="capitalize">{node.name}</span>
 		</button>
 	);
