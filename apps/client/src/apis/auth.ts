@@ -1,3 +1,4 @@
+import type { User } from "@nodebase/shared";
 import type {
 	AuthenticationResponseJSON,
 	PublicKeyCredentialCreationOptionsJSON,
@@ -8,6 +9,11 @@ import api from "./axios";
 
 export const logOutUserApi = async () => {
 	return api.post("/auth/logout");
+};
+
+export const getCurrentUserApi = async () => {
+	const res = await api.get<{ user: User }>("/auth/me");
+	return res.data.user;
 };
 
 type PasskeyInitiateResponse = (

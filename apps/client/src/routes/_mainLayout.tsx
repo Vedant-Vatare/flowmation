@@ -3,6 +3,7 @@ import {
 	DiscoverCircleIcon,
 	Settings01Icon,
 	TimelineListIcon,
+	User03Icon,
 	Workflow,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
@@ -51,7 +52,7 @@ import {
 } from "@/components/ui/sidebar";
 import { WorkflowHeaderActions } from "@/components/workflow-editor/header/WorkflowHeaderActions";
 import { WorkflowNameSection } from "@/components/workflow-editor/header/WorkflowNameSection";
-import { usePasskeyRegistration } from "@/queries/auth";
+import { useCurrentUserQuery, usePasskeyRegistration } from "@/queries/auth";
 import { useUserWorkflowQuery } from "@/queries/userWorkflows";
 import { clearAuthCookie, isUserAuthenticated } from "@/utils/auth";
 
@@ -95,6 +96,7 @@ function NavItem({
 
 function AppSidebar() {
 	const { data: userWorkflows } = useUserWorkflowQuery();
+	const { data: user } = useCurrentUserQuery();
 	const { generate, verify } = usePasskeyRegistration();
 
 	const handleRegisterPasskey = async () => {
@@ -112,6 +114,13 @@ function AppSidebar() {
 			);
 		}
 	};
+
+	const userInitials = user?.name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
 
 	return (
 		<Sidebar collapsible="icon">
@@ -195,13 +204,17 @@ function AppSidebar() {
 								>
 									<Avatar className="size-7 rounded-lg">
 										<AvatarFallback className="rounded-lg bg-violet-100 text-indigo-500 text-xs font-semibold">
-											JD
+											{userInitials ?? (
+												<HugeiconsIcon icon={User03Icon} className="size-3.5" />
+											)}
 										</AvatarFallback>
 									</Avatar>
 									<div className="flex flex-col gap-0.5 leading-none text-left">
-										<span className="font-medium text-sm">Jane Doe</span>
+										<span className="font-medium text-sm">
+											{user?.name || "Loading..."}
+										</span>
 										<span className="text-xs text-muted-foreground">
-											jane@example.com
+											{user?.email || ""}
 										</span>
 									</div>
 									<ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
