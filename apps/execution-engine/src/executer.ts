@@ -12,6 +12,8 @@ import type {
 	GoogleSheetsNode,
 	HttpNode,
 	InputNode,
+	JiraNode,
+	LinearNode,
 	MergeNode,
 	NotionNode,
 	RazorpayNode,
@@ -31,6 +33,8 @@ import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
 import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
+import { jiraNodeExecutor } from "./nodes/actions/integrations/jira.node.js";
+import { linearNodeExecutor } from "./nodes/actions/integrations/linear.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
@@ -90,6 +94,10 @@ export const executeNode = ({
 			return githubNodeExecutor(node as GitHubNode, executionId);
 		case "action.discord":
 			return discordNodeExecutor(node as DiscordNode, executionId);
+		case "action.jira":
+			return jiraNodeExecutor(node as JiraNode, executionId);
+		case "action.linear":
+			return linearNodeExecutor(node as LinearNode, executionId);
 		case "action.notion":
 			return notionNodeExecutor(node as NotionNode, executionId);
 		case "action.razorpay":
