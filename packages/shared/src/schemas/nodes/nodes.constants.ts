@@ -16,11 +16,10 @@ import { googleDriveNodeSchema, googleDriveNodeValueSchemas } from "./integratio
 import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.schema.js";
 import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
 import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
+import { jiraNodeSchema, jiraNodeValueSchemas } from "./integrations/jira.schema.js";
+import { linearNodeSchema, linearNodeValueSchemas } from "./integrations/linear.schema.js";
 import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
-import {
-	razorpayNodeSchema,
-	razorpayNodeValueSchemas,
-} from "./integrations/razorpay.schema.js";
+import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/razorpay.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
 import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
@@ -51,6 +50,8 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.google_calendar", googleCalendarNodeSchema],
 	["action.google_sheets", googleSheetsNodeSchema],
 	["action.discord", discordNodeSchema],
+	["action.jira", jiraNodeSchema],
+	["action.linear", linearNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.razorpay", razorpayNodeSchema],
 	["action.slack", slackNodeSchema],
@@ -73,6 +74,8 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.google_calendar", googleCalendarNodeValueSchemas],
 	["action.google_sheets", googleSheetsNodeValueSchemas],
 	["action.discord", discordNodeValueSchemas],
+	["action.jira", jiraNodeValueSchemas],
+	["action.linear", linearNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
 	["action.razorpay", razorpayNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],

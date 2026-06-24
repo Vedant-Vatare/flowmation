@@ -9,6 +9,8 @@ export * from "./integrations/google-sheets.schema.js";
 export * from "./integrations/github.schema.js";
 export * from "./integrations/google-drive.schema.js";
 export * from "./integrations/gmail.schema.js";
+export * from "./integrations/jira.schema.js";
+export * from "./integrations/linear.schema.js";
 export * from "./integrations/notion.schema.js";
 export * from "./integrations/razorpay.schema.js";
 export * from "./integrations/slack.schema.js";

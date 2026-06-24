@@ -13,6 +13,8 @@ import GoogleDriveIcon from "@/assets/icons/nodes/google-drive.svg?react";
 import GoogleSheetsIcon from "@/assets/icons/nodes/google-sheets.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
+import JiraIcon from "@/assets/icons/nodes/jira.svg?react";
+import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
@@ -180,6 +182,22 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#5865F2",
+		branded: true,
+	},
+	"action.jira": {
+		name: "Jira",
+		icon: JiraIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#0052CC",
+		branded: true,
+	},
+	"action.linear": {
+		name: "Linear",
+		icon: LinearIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#5E6AD2",
 		branded: true,
 	},
 	"action.notion": {

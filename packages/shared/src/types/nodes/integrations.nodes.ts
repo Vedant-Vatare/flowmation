@@ -6,6 +6,8 @@ import type { discordNodeSchema } from "@/schemas/nodes/integrations/discord.sch
 import type { googleCalendarNodeSchema } from "@/schemas/nodes/integrations/google-calendar.schema.js";
 import type { googleDriveNodeSchema } from "@/schemas/nodes/integrations/google-drive.schema.js";
 import type { googleSheetsNodeSchema } from "@/schemas/nodes/integrations/google-sheets.schema.js";
+import type { jiraNodeSchema } from "@/schemas/nodes/integrations/jira.schema.js";
+import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schema.js";
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
 import type { telegramNodeSchema } from "@/schemas/nodes/integrations/telegram.schema.js";
@@ -18,6 +20,8 @@ export type GoogleSheetsNode = z.infer<typeof googleSheetsNodeSchema>;
 export type GmailNode = z.infer<typeof gmailNodeSchema>;
 export type GitHubNode = z.infer<typeof gitHubNodeSchema>;
 export type DiscordNode = z.infer<typeof discordNodeSchema>;
+export type JiraNode = z.infer<typeof jiraNodeSchema>;
+export type LinearNode = z.infer<typeof linearNodeSchema>;
 export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;
 export type SlackNode = z.infer<typeof slackNodeSchema>;

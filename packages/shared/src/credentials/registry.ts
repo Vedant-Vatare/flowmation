@@ -2,6 +2,8 @@ import { aiCredential } from "./providers/ai.js";
 import { calcomCredential } from "./providers/calcom.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
+import { jiraOAuthCredential } from "./providers/jira-oauth.js";
+import { linearOAuthCredential } from "./providers/linear-oauth.js";
 import { notionCredential } from "./providers/notion.js";
 import { razorpayCredential } from "./providers/razorpay.js";
 import { slackCredential } from "./providers/slack.js";
@@ -13,6 +15,8 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	calcom: calcomCredential,
 	google: googleCredential,
 	github: githubCredential,
+	jira: jiraOAuthCredential,
+	linear: linearOAuthCredential,
 	notion: notionCredential,
 	razorpay: razorpayCredential,
 	slack: slackCredential,

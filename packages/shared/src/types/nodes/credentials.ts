@@ -5,6 +5,8 @@ export const CREDENTIALS_PROVIDER = [
 	"calcom",
 	"google",
 	"github",
+	"jira",
+	"linear",
 	"notion",
 	"razorpay",
 	"slack",
