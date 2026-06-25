@@ -1,6 +1,8 @@
+import { Redo03Icon, Undo03Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useLayoutContext } from "@jalez/react-flow-automated-layout";
 import type { NodeIdsWithPosition } from "@nodebase/shared";
-import { useReactFlow, useViewport } from "@xyflow/react";
+import { type Edge, type Node, useReactFlow, useViewport } from "@xyflow/react";
 import { Maximize2, Minus, Play, Plus, Waypoints } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,10 +12,17 @@ import { ShineBorder } from "@/components/ui/shine-border";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
 import {
+	useAddWorkflowConn,
+	useDeleteWorkflowConn,
 	useUpdateNodesPositions,
 	useWorkflowNodesQuery,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import {
+	type CanvasSnapshot,
+	captureSnapshot,
+	useCanvasHistoryStore,
+} from "@/store/workflow/useCanvasHistoryStore";
 import {
 	useWorkflowExecutionStore,
 	useWorkflowTriggerStore,
@@ -53,10 +62,12 @@ function ControlButton({
 
 const ZoomControls = () => {
 	const { workflowId } = Route.useParams();
-	const { zoomIn, zoomOut, fitView, setViewport, getNodes } = useReactFlow();
+	const { zoomIn, zoomOut, fitView, setViewport, getNodes, getEdges } =
+		useReactFlow();
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const { applyLayout } = useLayoutContext();
+	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
 	const [zoom, setZoom] = useState(100);
 	const [zoomInput, setZoomInput] = useState("100");
 	const [isEditing, setIsEditing] = useState(false);
@@ -115,6 +126,8 @@ const ZoomControls = () => {
 	);
 
 	const handleApplyLayout = useCallback(async () => {
+		pushSnapshot(captureSnapshot(getNodes(), getEdges()));
+
 		const nodesBefore = getNodes().reduce<
 			Record<string, { x: number; y: number }>
 		>((acc, n) => {
@@ -139,7 +152,14 @@ const ZoomControls = () => {
 
 		if (changed.length > 0)
 			updateNodesPositions({ workflowId, nodes: changed });
-	}, [applyLayout, getNodes, workflowId, updateNodesPositions]);
+	}, [
+		applyLayout,
+		getNodes,
+		getEdges,
+		pushSnapshot,
+		workflowId,
+		updateNodesPositions,
+	]);
 
 	useEffect(() => {
 		const current = Math.round((viewport.zoom || 1) * 100);
@@ -209,6 +229,178 @@ const ZoomControls = () => {
 				title="Arrange nodes automatically"
 			>
 				<Waypoints size={15} strokeWidth={1.75} />
+			</ControlButton>
+		</div>
+	);
+};
+
+const UndoRedoControls = () => {
+	const { workflowId } = Route.useParams();
+	const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
+	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
+	const { mutate: addConnection } = useAddWorkflowConn();
+	const { mutate: deleteConnection } = useDeleteWorkflowConn();
+	const undo = useCanvasHistoryStore((s) => s.undo);
+	const redo = useCanvasHistoryStore((s) => s.redo);
+	const canUndo = useCanvasHistoryStore((s) => s.undoStack.length > 0);
+	const canRedo = useCanvasHistoryStore((s) => s.redoStack.length > 0);
+
+	const pendingSyncRef = useRef<{
+		edgesToAdd: Array<{
+			id: string;
+			workflowId: string;
+			sourceId: string;
+			targetId: string;
+			sourcePort: string;
+			targetPort: string;
+		}>;
+		edgesToRemove: string[];
+		nodes: NodeIdsWithPosition;
+	} | null>(null);
+
+	const flushSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const flushSync = useCallback(() => {
+		if (flushSyncTimerRef.current) clearTimeout(flushSyncTimerRef.current);
+		flushSyncTimerRef.current = setTimeout(() => {
+			const pending = pendingSyncRef.current;
+			if (!pending) return;
+			pendingSyncRef.current = null;
+
+			if (pending.edgesToAdd.length > 0) {
+				for (const edge of pending.edgesToAdd) {
+					addConnection(edge);
+				}
+			}
+
+			if (pending.edgesToRemove.length > 0) {
+				for (const id of pending.edgesToRemove) {
+					deleteConnection({ id, workflowId });
+				}
+			}
+
+			if (pending.nodes.length > 0) {
+				updateNodesPositions({ workflowId, nodes: pending.nodes });
+			}
+		}, 300);
+	}, [addConnection, deleteConnection, updateNodesPositions, workflowId]);
+
+	const restoreSnapshot = useCallback(
+		(snapshot: CanvasSnapshot) => {
+			const currentNodes = getNodes();
+			const currentEdges = getEdges();
+
+			const nodeMap = new Map(currentNodes.map((n) => [n.id, n]));
+			const restoredNodes: Node[] = snapshot.nodes
+				.map((sn) => {
+					const current = nodeMap.get(sn.id);
+					if (!current) return null;
+					return {
+						...current,
+						position: { x: sn.positionX, y: sn.positionY },
+					};
+				})
+				.filter((n): n is Node => n !== null);
+
+			setNodes(restoredNodes);
+
+			const currentEdgeIds = new Set(currentEdges.map((e) => e.id));
+			const snapshotEdgeIds = new Set(snapshot.edges.map((e) => e.id));
+
+			const edgesToAdd = snapshot.edges.filter(
+				(e) => !currentEdgeIds.has(e.id),
+			);
+			const edgesToRemove = currentEdges
+				.filter((e) => !snapshotEdgeIds.has(e.id))
+				.map((e) => e.id);
+
+			const restoredEdges: Edge[] = snapshot.edges.map((se) => ({
+				id: se.id,
+				source: se.source,
+				target: se.target,
+				sourceHandle: se.sourceHandle,
+				targetHandle: se.targetHandle,
+				type: "workflow",
+			}));
+			setEdges(restoredEdges);
+
+			const posUpdates = snapshot.nodes
+				.filter((sn) => {
+					const current = nodeMap.get(sn.id);
+					if (!current) return false;
+					return (
+						Math.round(current.position.x) !== sn.positionX ||
+						Math.round(current.position.y) !== sn.positionY
+					);
+				})
+				.map((sn) => ({
+					id: sn.id,
+					positionX: sn.positionX,
+					positionY: sn.positionY,
+				}));
+
+			pendingSyncRef.current = {
+				edgesToAdd: edgesToAdd.map((e) => ({
+					id: e.id,
+					workflowId,
+					sourceId: e.source,
+					targetId: e.target,
+					sourcePort: e.sourceHandle ?? "default",
+					targetPort: e.targetHandle ?? "default",
+				})),
+				edgesToRemove,
+				nodes: posUpdates,
+			};
+			flushSync();
+		},
+		[getNodes, getEdges, setNodes, setEdges, workflowId, flushSync],
+	);
+
+	const handleUndo = useCallback(() => {
+		const snapshot = undo(captureSnapshot(getNodes(), getEdges()));
+		if (snapshot) restoreSnapshot(snapshot);
+	}, [undo, restoreSnapshot, getNodes, getEdges]);
+
+	const handleRedo = useCallback(() => {
+		const snapshot = redo(captureSnapshot(getNodes(), getEdges()));
+		if (snapshot) restoreSnapshot(snapshot);
+	}, [redo, restoreSnapshot, getNodes, getEdges]);
+
+	useEffect(() => {
+		const handler = (e: KeyboardEvent) => {
+			const mod = e.metaKey || e.ctrlKey;
+			if (!mod) return;
+
+			if (e.key === "z" && !e.shiftKey) {
+				e.preventDefault();
+				handleUndo();
+			} else if (e.key === "z" && e.shiftKey) {
+				e.preventDefault();
+				handleRedo();
+			} else if (e.key === "y" && mod) {
+				e.preventDefault();
+				handleRedo();
+			}
+		};
+
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [handleUndo, handleRedo]);
+
+	return (
+		<div className="flex h-9 items-center gap-1 rounded-lg border border-border bg-sidebar-accent px-1.5 py-1">
+			<ControlButton
+				onClick={handleUndo}
+				disabled={!canUndo}
+				title="Undo (Ctrl+Z)"
+			>
+				<HugeiconsIcon icon={Undo03Icon} size={16} strokeWidth={1.75} />
+			</ControlButton>
+			<ControlButton
+				onClick={handleRedo}
+				disabled={!canRedo}
+				title="Redo (Ctrl+Y)"
+			>
+				<HugeiconsIcon icon={Redo03Icon} size={16} strokeWidth={1.75} />
 			</ControlButton>
 		</div>
 	);
@@ -315,6 +507,7 @@ export function WorkflowControls() {
 		<div className="absolute bottom-7 left-1/2 z-5 -translate-x-1/2">
 			<div className="flex items-center gap-3">
 				<ZoomControls />
+				<UndoRedoControls />
 				<TestWorkflowButton />
 				<LiveLogsButton />
 			</div>

@@ -1,4 +1,5 @@
 import { LayoutProvider } from "@jalez/react-flow-automated-layout";
+import { useQueryClient } from "@tanstack/react-query";
 import {
 	Background,
 	type Connection,
@@ -13,15 +14,13 @@ import {
 	useNodes,
 	useReactFlow,
 } from "@xyflow/react";
-
-import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
 
+import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import Loader from "@/components/ui/Loader";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
-import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import {
 	useAddWorkflowConn,
 	useDeleteWorkflowConn,
@@ -33,6 +32,10 @@ import {
 	workflowNodesOptions,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import {
+	captureSnapshot,
+	useCanvasHistoryStore,
+} from "@/store/workflow/useCanvasHistoryStore";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
 import {
 	useWorkflowStore,
@@ -70,7 +73,10 @@ const WorkflowCanvas = () => {
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const queryClient = useQueryClient();
 
-	const { fitView, getNodes, setNodes, setEdges } =
+	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
+	const clearHistory = useCanvasHistoryStore((s) => s.clear);
+
+	const { fitView, getNodes, getEdges, setNodes, setEdges } =
 		useReactFlow<WorkflowCanvasNode>();
 	const nodes = useNodes();
 
@@ -87,6 +93,10 @@ const WorkflowCanvas = () => {
 		if (!workflowConnections) return;
 		setEdges(toCanvasEdges(workflowConnections));
 	}, [workflowConnections, setEdges]);
+
+	useEffect(() => {
+		clearHistory();
+	}, [clearHistory]);
 
 	const canvasNodes = workflowNodes ? toCanvasNodes(workflowNodes) : [];
 	const canvasEdges = workflowConnections
@@ -131,6 +141,7 @@ const WorkflowCanvas = () => {
 	const onConnect = useCallback(
 		(connection: Connection) => {
 			if (!connection.sourceHandle || !connection.targetHandle) return;
+			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			createNewConnection({
 				id: crypto.randomUUID(),
 				workflowId,
@@ -140,7 +151,7 @@ const WorkflowCanvas = () => {
 				targetPort: connection.targetHandle,
 			});
 		},
-		[createNewConnection, workflowId],
+		[createNewConnection, workflowId, pushSnapshot, getNodes, getEdges],
 	);
 
 	const onReconnect = useCallback(
@@ -152,6 +163,7 @@ const WorkflowCanvas = () => {
 			)
 				return;
 
+			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			updateConnection({
 				id: oldEdge.id,
 				workflowId,
@@ -161,20 +173,29 @@ const WorkflowCanvas = () => {
 				targetPort: newConnection.targetHandle,
 			});
 		},
-		[isConnectionChanged, workflowId, updateConnection],
+		[
+			isConnectionChanged,
+			workflowId,
+			updateConnection,
+			pushSnapshot,
+			getNodes,
+			getEdges,
+		],
 	);
 
 	const onEdgesDelete: OnEdgesDelete<Edge> = useCallback(
 		(deletedEdges) => {
+			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			for (const edge of deletedEdges) {
 				deleteConnection({ id: edge.id, workflowId });
 			}
 		},
-		[deleteConnection, workflowId],
+		[deleteConnection, workflowId, pushSnapshot, getNodes, getEdges],
 	);
 
 	const onNodesDelete = useCallback(
 		(deletedNodes: WorkflowCanvasNode[]) => {
+			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			for (const canvasNode of deletedNodes) {
 				deleteNode({ id: canvasNode.data.id, workflowId });
 				const selectedNode = useWorkflowStore.getState().selectedNode;
@@ -183,7 +204,7 @@ const WorkflowCanvas = () => {
 				}
 			}
 		},
-		[deleteNode, workflowId],
+		[deleteNode, workflowId, pushSnapshot, getNodes, getEdges],
 	);
 
 	const debouncedUpdatePositions = useDebounce(
@@ -192,12 +213,23 @@ const WorkflowCanvas = () => {
 		500,
 	);
 
+	const onNodeDragStart = useCallback(
+		(
+			_e: React.MouseEvent<Element, MouseEvent>,
+			_draggedNode: WorkflowCanvasNode,
+		) => {
+			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
+		},
+		[pushSnapshot, getNodes, getEdges],
+	);
+
 	const onNodeDragStop = useCallback(
 		(
 			_e: React.MouseEvent<Element, MouseEvent>,
 			_draggedNode: WorkflowCanvasNode,
 		) => {
 			const currentNodes = getNodes();
+
 			const resolvedPositions = resolveCollisions([...currentNodes], {
 				maxIterations: 50,
 				overlapThreshold: 0.5,
@@ -211,9 +243,7 @@ const WorkflowCanvas = () => {
 			);
 			if (!cachedNodes) return;
 
-			const cachedMap = new Map(
-				cachedNodes.map((n) => [n.id, n]),
-			);
+			const cachedMap = new Map(cachedNodes.map((n) => [n.id, n]));
 
 			const nodesToUpdate = resolvedPositions
 				.filter((n) => {
@@ -258,6 +288,7 @@ const WorkflowCanvas = () => {
 			maxZoom={2}
 			minZoom={0.5}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
+			onNodeDragStart={onNodeDragStart}
 			onNodesDelete={onNodesDelete}
 			onNodeDragStop={onNodeDragStop}
 			onEdgesDelete={onEdgesDelete}
