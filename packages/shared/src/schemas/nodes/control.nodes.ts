@@ -23,6 +23,30 @@ export const conditionalNodeValueSchemas = {
 	operator: withExpr(comparisonOperatorsEnum),
 } as const;
 
+export const loopNodeValueSchemas = {
+	field: withExpr(z.string()),
+} as const;
+
+export const loopNodeSchema = baseNodeSchema.extend({
+	type: z.literal("action"),
+	task: z.literal("action.loop"),
+	parameters: z.array(
+		z.discriminatedUnion("name", [
+			nodeParameterSchema.extend({
+				label: z.literal("Field"),
+				name: z.literal("field"),
+				type: z.literal("input"),
+				value: loopNodeValueSchemas.field,
+				required: z.boolean(),
+			}),
+		]),
+	),
+	outputPorts: z.array(nodeOutputPortsSchema).default([
+		{ name: "loop", label: "Loop" },
+		{ name: "done", label: "Done" },
+	]),
+});
+
 export const conditionalNodeSchema = baseNodeSchema.extend({
 	type: z.literal("action"),
 	task: z.literal("action.condition"),

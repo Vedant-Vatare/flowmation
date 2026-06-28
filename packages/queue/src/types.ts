@@ -35,6 +35,12 @@ export type PreviousExecution = {
 	output?: unknown;
 } | null;
 
+export type LoopState = {
+	_index: number;
+	_items: unknown[];
+	done: boolean;
+};
+
 export type NodeJobPayload = {
 	executionId: string;
 	workflowId: string;
@@ -42,5 +48,8 @@ export type NodeJobPayload = {
 	nodeExecutionId?: string;
 	liveUpdates?: boolean;
 	previousNodeExecution?: PreviousExecution;
-	nodeData?: { inputNodeNames: string[] };
+	nodeData?: {
+		inputNodeNames?: string[];
+		loopState?: LoopState;
+	};
 };

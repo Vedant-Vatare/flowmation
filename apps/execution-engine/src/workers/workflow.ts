@@ -1,6 +1,7 @@
 import {
 	addNodeInQueue,
 	connection,
+	type LoopState,
 	NODE_QUEUE_NAME,
 	type NodeExecutionConfig,
 	type PreviousExecution,
@@ -16,9 +17,14 @@ import {
 	deleteWorkflowExecutionQuery,
 	updateWorkflowStatusQuery,
 } from "@/queries/workflow.executions.js";
-import { getNodesOutputsByName } from "@/services/executionStore.js";
+import {
+	getNodeOutput,
+	getNodesOutputsByName,
+	storeNodeOutput,
+} from "@/services/executionStore.js";
 import type { TriggerNodeExecutorOutput } from "@/types/nodes.js";
 import {
+	getResolvedParams,
 	handlePreviousNodeExecution,
 	nodeExecutionConfig,
 } from "@/utils/node.executor.utils.js";
@@ -341,7 +347,10 @@ type CurrentNodePreExecution = {
 type CurrentNodePreExecutionResult = {
 	skipCurrent: boolean;
 	nextNode?: WorkflowNode;
-	data?: { inputNodeNames: string[] };
+	data?: {
+		inputNodeNames?: string[];
+		loopState?: LoopState;
+	};
 };
 
 const currentNodePreExecution = async ({
@@ -381,6 +390,68 @@ const currentNodePreExecution = async ({
 		return {
 			skipCurrent: false,
 			data: { inputNodeNames },
+		};
+	}
+
+	if (node.task === "action.loop") {
+		const existingState = (await getNodeOutput(
+			jobData.executionId,
+			node.name,
+		)) as LoopState | null;
+
+		if (existingState?.done) {
+			return {
+				skipCurrent: false,
+				data: { loopState: existingState },
+			};
+		}
+
+		if (existingState?._items) {
+			const nextIndex = existingState._index + 1;
+			const done = nextIndex >= existingState._items.length;
+			const updatedState: LoopState = {
+				_index: nextIndex,
+				_items: existingState._items,
+				done,
+			};
+			await storeNodeOutput(jobData.executionId, node.name, updatedState);
+			return {
+				skipCurrent: false,
+				data: { loopState: updatedState },
+			};
+		}
+
+		const params = await getResolvedParams(node, jobData.executionId);
+		const rawValue = params.field?.value;
+
+		const items = Array.isArray(rawValue)
+			? rawValue
+			: rawValue !== null && rawValue !== undefined
+				? [rawValue]
+				: null;
+
+		if (!items || items.length === 0) {
+			const emptyState: LoopState = {
+				_index: 0,
+				_items: [],
+				done: true,
+			};
+			await storeNodeOutput(jobData.executionId, node.name, emptyState);
+			return {
+				skipCurrent: false,
+				data: { loopState: emptyState },
+			};
+		}
+
+		const initialState: LoopState = {
+			_index: 0,
+			_items: items,
+			done: false,
+		};
+		await storeNodeOutput(jobData.executionId, node.name, initialState);
+		return {
+			skipCurrent: false,
+			data: { loopState: initialState },
 		};
 	}
 

@@ -7,7 +7,7 @@ import {
 	waitingNodeSchema,
 	waitingNodeValueSchemas,
 } from "./action.nodes.js";
-import { conditionalNodeSchema, conditionalNodeValueSchemas } from "./control.nodes.js";
+import { conditionalNodeSchema, conditionalNodeValueSchemas, loopNodeSchema, loopNodeValueSchemas } from "./control.nodes.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
 import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
@@ -40,6 +40,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.set_variable", setVariableNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
 	["action.condition", conditionalNodeSchema],
+	["action.loop", loopNodeSchema],
 	["action.merge", mergeDataNodeSchema],
 	["trigger.webhook", webhookNodeSchema],
 	["action.ai", aiNodeSchema],
@@ -65,6 +66,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.wait", waitingNodeValueSchemas],
 	["action.set_variable", setVariableNodeValueSchemas],
 	["action.condition", conditionalNodeValueSchemas],
+	["action.loop", loopNodeValueSchemas],
 	["action.merge", mergeDataNodeValueSchemas],
 	["action.ai", aiNodeValueSchemas],
 	["action.calcom", calcomNodeValueSchemas],
