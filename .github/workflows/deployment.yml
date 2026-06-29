@@ -81,4 +81,4 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: /home/${{ secrets.SSH_USER }}/flowmation/deployment.sh
+          script: /home/${{ secrets.SSH_USER }}/deployment.sh
