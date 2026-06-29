@@ -15,6 +15,7 @@ import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import JiraIcon from "@/assets/icons/nodes/jira.svg?react";
 import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
+import LoopIcon from "@/assets/icons/nodes/loop.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
@@ -110,6 +111,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Condition",
 		icon: ConditionalIcon,
 		background: "#8338EC",
+		color: "#ffffff",
+	},
+	"action.loop": {
+		name: "Loop",
+		icon: LoopIcon,
+		background: "#E63946",
 		color: "#ffffff",
 	},
 	"action.wait": {
