@@ -6,6 +6,18 @@ import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const AIRTABLE_API = "https://api.airtable.com/v0";
 
+const parseAirtableError = async (res: Response): Promise<string> => {
+	try {
+		const body = (await res.json()) as Record<string, unknown>;
+		const error = body.error as Record<string, unknown> | undefined;
+		if (error?.type) return `Airtable error: ${error.type}`;
+		if (error?.message) return `Airtable error: ${error.message}`;
+		return `Airtable error: ${JSON.stringify(error)}`;
+	} catch {
+		return `Airtable error: HTTP ${res.status}`;
+	}
+};
+
 export const airtableNodeExecutor = async (
 	node: AirtableNode,
 	executionId: string,
@@ -56,7 +68,8 @@ export const airtableNodeExecutor = async (
 			const sort = params.sort?.value as string;
 			if (sort) {
 				url.searchParams.set("sort[0][field]", sort);
-				url.searchParams.set("sort[0][direction]", "asc");
+				const sortDirection = (params.sortDirection?.value as string) || "asc";
+				url.searchParams.set("sort[0][direction]", sortDirection);
 			}
 
 			const maxRecords = params.maxRecords?.value as string;
@@ -74,14 +87,15 @@ export const airtableNodeExecutor = async (
 			}
 
 			if (!response.ok) {
-				const error = (await response.json()) as Record<string, unknown>;
-				return {
-					success: false,
-					message: `Airtable error: ${(error as { error: { message: string } }).error?.message ?? "Unknown error"}`,
-				};
+				return { success: false, message: await parseAirtableError(response) };
 			}
 
-			const data = await response.json();
+			let data: unknown;
+			try {
+				data = await response.json();
+			} catch {
+				return { success: false, message: "Failed to parse Airtable response" };
+			}
 			return { success: true, output: data, status: "completed" };
 		}
 
@@ -104,14 +118,15 @@ export const airtableNodeExecutor = async (
 			}
 
 			if (!response.ok) {
-				const error = (await response.json()) as Record<string, unknown>;
-				return {
-					success: false,
-					message: `Airtable error: ${(error as { error: { message: string } }).error?.message ?? "Unknown error"}`,
-				};
+				return { success: false, message: await parseAirtableError(response) };
 			}
 
-			const data = await response.json();
+			let data: unknown;
+			try {
+				data = await response.json();
+			} catch {
+				return { success: false, message: "Failed to parse Airtable response" };
+			}
 			return { success: true, output: data, status: "completed" };
 		}
 
@@ -145,14 +160,15 @@ export const airtableNodeExecutor = async (
 			}
 
 			if (!response.ok) {
-				const error = (await response.json()) as Record<string, unknown>;
-				return {
-					success: false,
-					message: `Airtable error: ${(error as { error: { message: string } }).error?.message ?? "Unknown error"}`,
-				};
+				return { success: false, message: await parseAirtableError(response) };
 			}
 
-			const data = await response.json();
+			let data: unknown;
+			try {
+				data = await response.json();
+			} catch {
+				return { success: false, message: "Failed to parse Airtable response" };
+			}
 			return { success: true, output: data, status: "completed" };
 		}
 
@@ -191,14 +207,15 @@ export const airtableNodeExecutor = async (
 			}
 
 			if (!response.ok) {
-				const error = (await response.json()) as Record<string, unknown>;
-				return {
-					success: false,
-					message: `Airtable error: ${(error as { error: { message: string } }).error?.message ?? "Unknown error"}`,
-				};
+				return { success: false, message: await parseAirtableError(response) };
 			}
 
-			const data = await response.json();
+			let data: unknown;
+			try {
+				data = await response.json();
+			} catch {
+				return { success: false, message: "Failed to parse Airtable response" };
+			}
 			return { success: true, output: data, status: "completed" };
 		}
 
@@ -221,14 +238,15 @@ export const airtableNodeExecutor = async (
 			}
 
 			if (!response.ok) {
-				const error = (await response.json()) as Record<string, unknown>;
-				return {
-					success: false,
-					message: `Airtable error: ${(error as { error: { message: string } }).error?.message ?? "Unknown error"}`,
-				};
+				return { success: false, message: await parseAirtableError(response) };
 			}
 
-			const data = await response.json();
+			let data: unknown;
+			try {
+				data = await response.json();
+			} catch {
+				return { success: false, message: "Failed to parse Airtable response" };
+			}
 			return { success: true, output: data, status: "completed" };
 		}
 

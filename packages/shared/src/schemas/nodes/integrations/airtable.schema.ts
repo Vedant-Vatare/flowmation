@@ -10,6 +10,7 @@ export const airtableNodeValueSchemas = {
 	fields: withExpr(z.string()),
 	filterByFormula: withExpr(z.string()),
 	sort: withExpr(z.string()),
+	sortDirection: withExpr(z.string()),
 	maxRecords: withExpr(z.string()),
 } as const;
 
@@ -117,6 +118,28 @@ export const airtableNodeSchema = baseNodeSchema.extend({
 				value: airtableNodeValueSchemas.sort,
 				required: z.boolean(),
 				placeholder: z.string().optional(),
+				dependsOn: z
+					.array(
+						z.object({
+							parameter: z.literal("operation"),
+							values: z.array(z.literal("list_records")),
+						}),
+					)
+					.optional(),
+			}),
+			nodeParameterSchema.extend({
+				label: z.literal("Sort Direction"),
+				name: z.literal("sortDirection"),
+				type: z.literal("dropdown"),
+				value: airtableNodeValueSchemas.sortDirection,
+				default: z.literal("asc").optional(),
+				options: z
+					.array(z.object({ label: z.string(), value: z.string() }))
+					.default([
+						{ label: "Ascending", value: "asc" },
+						{ label: "Descending", value: "desc" },
+					]),
+				required: z.boolean(),
 				dependsOn: z
 					.array(
 						z.object({
