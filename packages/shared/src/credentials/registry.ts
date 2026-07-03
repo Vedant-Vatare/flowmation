@@ -9,6 +9,7 @@ import { notionCredential } from "./providers/notion.js";
 import { razorpayCredential } from "./providers/razorpay.js";
 import { slackCredential } from "./providers/slack.js";
 import { telegramCredential } from "./providers/telegram.js";
+import { twilioCredential } from "./providers/twilio.js";
 import type { CredentialDef } from "./types.js";
 
 export const credentialRegistry: Record<string, CredentialDef> = {
@@ -23,6 +24,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	razorpay: razorpayCredential,
 	slack: slackCredential,
 	telegram: telegramCredential,
+	twilio: twilioCredential,
 };
 
 export const API_KEY_PROVIDERS = Object.entries(credentialRegistry)

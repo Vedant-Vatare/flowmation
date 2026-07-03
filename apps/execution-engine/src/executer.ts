@@ -21,6 +21,7 @@ import type {
 	RazorpayNode,
 	SlackNode,
 	TelegramNode,
+	TwilioNode,
 	WaitNode,
 	WorkflowNode,
 } from "@nodebase/shared";
@@ -42,6 +43,7 @@ import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js"
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
+import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
@@ -114,6 +116,8 @@ export const executeNode = ({
 			return slackNodeExecutor(node as SlackNode, executionId);
 		case "action.telegram":
 			return telegramNodeExecutor(node as TelegramNode, executionId);
+		case "action.twilio":
+			return twilioNodeExecutor(node as TwilioNode, executionId);
 
 		default:
 			return {

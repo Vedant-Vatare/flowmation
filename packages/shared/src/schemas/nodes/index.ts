@@ -16,6 +16,7 @@ export * from "./integrations/notion.schema.js";
 export * from "./integrations/razorpay.schema.js";
 export * from "./integrations/slack.schema.js";
 export * from "./integrations/telegram.schema.js";
+export * from "./integrations/twilio.schema.js";
 export * from "./nodes.constants.js";
 export * from "./transform.nodes.js";
 export * from "./trigger.nodes.js";

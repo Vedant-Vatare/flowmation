@@ -8,6 +8,7 @@ import {
 	waitingNodeValueSchemas,
 } from "./action.nodes.js";
 import { conditionalNodeSchema, conditionalNodeValueSchemas, loopNodeSchema, loopNodeValueSchemas } from "./control.nodes.js";
+import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/airtable.schema.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
 import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
@@ -22,7 +23,7 @@ import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.
 import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/razorpay.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
-import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/airtable.schema.js";
+import { twilioNodeSchema, twilioNodeValueSchemas } from "./integrations/twilio.schema.js";
 import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -59,6 +60,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.razorpay", razorpayNodeSchema],
 	["action.slack", slackNodeSchema],
 	["action.telegram", telegramNodeSchema],
+	["action.twilio", twilioNodeSchema],
 ]);
 
 export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>([
@@ -85,4 +87,5 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.razorpay", razorpayNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],
 	["action.telegram", telegramNodeValueSchemas],
+	["action.twilio", twilioNodeValueSchemas],
 ]);

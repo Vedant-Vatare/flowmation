@@ -12,6 +12,7 @@ export const CREDENTIALS_PROVIDER = [
 	"razorpay",
 	"slack",
 	"telegram",
+	"twilio",
 ] as const;
 
 export type CredentialType = (typeof CREDENTIALS_TYPE)[number];

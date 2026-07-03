@@ -12,6 +12,7 @@ import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schem
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
 import type { telegramNodeSchema } from "@/schemas/nodes/integrations/telegram.schema.js";
+import type { twilioNodeSchema } from "@/schemas/nodes/integrations/twilio.schema.js";
 
 export type AirtableNode = z.infer<typeof airtableNodeSchema>;
 export type AiNode = z.infer<typeof aiNodeSchema>;
@@ -28,3 +29,4 @@ export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;
 export type SlackNode = z.infer<typeof slackNodeSchema>;
 export type TelegramNode = z.infer<typeof telegramNodeSchema>;
+export type TwilioNode = z.infer<typeof twilioNodeSchema>;
