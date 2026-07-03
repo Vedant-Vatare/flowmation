@@ -2,6 +2,7 @@ import type { WorkflowNode } from "@nodebase/shared";
 import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
 import AiIcon from "@/assets/icons/nodes/ai.svg?react";
+import AirtableIcon from "@/assets/icons/nodes/airtable.svg?react";
 import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
@@ -68,6 +69,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: AiIcon,
 		background: "#778da9",
 		color: "#ffffff",
+	},
+	"action.airtable": {
+		name: "Airtable",
+		icon: AirtableIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#FCBF49",
+		branded: true,
 	},
 	"action.calcom": {
 		name: "Cal.com",

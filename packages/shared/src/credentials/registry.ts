@@ -1,3 +1,4 @@
+import { airtableCredential } from "./providers/airtable.js";
 import { aiCredential } from "./providers/ai.js";
 import { calcomCredential } from "./providers/calcom.js";
 import { githubCredential } from "./providers/github.js";
@@ -11,6 +12,7 @@ import { telegramCredential } from "./providers/telegram.js";
 import type { CredentialDef } from "./types.js";
 
 export const credentialRegistry: Record<string, CredentialDef> = {
+	airtable: airtableCredential,
 	ai: aiCredential,
 	calcom: calcomCredential,
 	google: googleCredential,

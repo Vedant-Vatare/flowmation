@@ -22,6 +22,7 @@ import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.
 import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/razorpay.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
+import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/airtable.schema.js";
 import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
 import {
 	clickNodeSchema,
@@ -43,6 +44,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.loop", loopNodeSchema],
 	["action.merge", mergeDataNodeSchema],
 	["trigger.webhook", webhookNodeSchema],
+	["action.airtable", airtableNodeSchema],
 	["action.ai", aiNodeSchema],
 	["action.calcom", calcomNodeSchema],
 	["action.github", gitHubNodeSchema],
@@ -68,6 +70,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.condition", conditionalNodeValueSchemas],
 	["action.loop", loopNodeValueSchemas],
 	["action.merge", mergeDataNodeValueSchemas],
+	["action.airtable", airtableNodeValueSchemas],
 	["action.ai", aiNodeValueSchemas],
 	["action.calcom", calcomNodeValueSchemas],
 	["action.github", gitHubNodeValueSchemas],

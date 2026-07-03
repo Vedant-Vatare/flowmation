@@ -1,5 +1,6 @@
 import type z from "zod";
 import type { gitHubNodeSchema, gmailNodeSchema, notionNodeSchema } from "@/schemas/index.js";
+import type { airtableNodeSchema } from "@/schemas/nodes/integrations/airtable.schema.js";
 import type { aiNodeSchema } from "@/schemas/nodes/integrations/ai.schema.js";
 import type { calcomNodeSchema } from "@/schemas/nodes/integrations/calcom.schema.js";
 import type { discordNodeSchema } from "@/schemas/nodes/integrations/discord.schema.js";
@@ -12,6 +13,7 @@ import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.s
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
 import type { telegramNodeSchema } from "@/schemas/nodes/integrations/telegram.schema.js";
 
+export type AirtableNode = z.infer<typeof airtableNodeSchema>;
 export type AiNode = z.infer<typeof aiNodeSchema>;
 export type CalcomNode = z.infer<typeof calcomNodeSchema>;
 export type GoogleDriveNode = z.infer<typeof googleDriveNodeSchema>;
