@@ -10,6 +10,7 @@ export const CREDENTIALS_PROVIDER = [
 	"linear",
 	"notion",
 	"razorpay",
+	"sentry",
 	"slack",
 	"telegram",
 	"twilio",

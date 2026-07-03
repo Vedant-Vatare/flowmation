@@ -22,6 +22,7 @@ import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
+import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
 import TelegramIcon from "@/assets/icons/nodes/telegram.svg?react";
@@ -231,6 +232,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#3399FF",
+		branded: true,
+	},
+	"action.sentry": {
+		name: "Sentry",
+		icon: SentryIcon,
+		background: "#362D59",
+		iconBackground: "transparent",
+		color: "#ffffff",
 		branded: true,
 	},
 	"action.slack": {

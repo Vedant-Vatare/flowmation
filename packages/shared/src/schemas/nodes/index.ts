@@ -14,6 +14,7 @@ export * from "./integrations/jira.schema.js";
 export * from "./integrations/linear.schema.js";
 export * from "./integrations/notion.schema.js";
 export * from "./integrations/razorpay.schema.js";
+export * from "./integrations/sentry.schema.js";
 export * from "./integrations/slack.schema.js";
 export * from "./integrations/telegram.schema.js";
 export * from "./integrations/twilio.schema.js";

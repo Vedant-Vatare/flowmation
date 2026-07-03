@@ -7,6 +7,7 @@ import { jiraOAuthCredential } from "./providers/jira-oauth.js";
 import { linearOAuthCredential } from "./providers/linear-oauth.js";
 import { notionCredential } from "./providers/notion.js";
 import { razorpayCredential } from "./providers/razorpay.js";
+import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
 import { telegramCredential } from "./providers/telegram.js";
 import { twilioCredential } from "./providers/twilio.js";
@@ -22,6 +23,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	linear: linearOAuthCredential,
 	notion: notionCredential,
 	razorpay: razorpayCredential,
+	sentry: sentryCredential,
 	slack: slackCredential,
 	telegram: telegramCredential,
 	twilio: twilioCredential,

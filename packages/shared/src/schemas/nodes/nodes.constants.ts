@@ -21,6 +21,7 @@ import { jiraNodeSchema, jiraNodeValueSchemas } from "./integrations/jira.schema
 import { linearNodeSchema, linearNodeValueSchemas } from "./integrations/linear.schema.js";
 import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
 import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/razorpay.schema.js";
+import { sentryNodeSchema, sentryNodeValueSchemas } from "./integrations/sentry.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
 import { twilioNodeSchema, twilioNodeValueSchemas } from "./integrations/twilio.schema.js";
@@ -58,6 +59,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.linear", linearNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.razorpay", razorpayNodeSchema],
+	["action.sentry", sentryNodeSchema],
 	["action.slack", slackNodeSchema],
 	["action.telegram", telegramNodeSchema],
 	["action.twilio", twilioNodeSchema],
@@ -85,6 +87,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.linear", linearNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
 	["action.razorpay", razorpayNodeValueSchemas],
+	["action.sentry", sentryNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],
 	["action.telegram", telegramNodeValueSchemas],
 	["action.twilio", twilioNodeValueSchemas],
