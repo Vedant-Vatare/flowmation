@@ -7,6 +7,7 @@ export const CREDENTIALS_PROVIDER = [
 	"calcom",
 	"google",
 	"github",
+	"hubspot",
 	"jira",
 	"linear",
 	"notion",

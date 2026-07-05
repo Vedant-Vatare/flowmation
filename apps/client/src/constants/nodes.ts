@@ -14,6 +14,7 @@ import GoogleCalendarIcon from "@/assets/icons/nodes/google-calendar.svg?react";
 import GoogleDriveIcon from "@/assets/icons/nodes/google-drive.svg?react";
 import GoogleSheetsIcon from "@/assets/icons/nodes/google-sheets.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
+import HubSpotIcon from "@/assets/icons/nodes/hubspot.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import JiraIcon from "@/assets/icons/nodes/jira.svg?react";
 import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
@@ -201,6 +202,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "#fff",
 		color: "#24292e",
+		branded: true,
+	},
+	"action.hubspot": {
+		name: "HubSpot",
+		icon: HubSpotIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#FF7A59",
 		branded: true,
 	},
 	"action.discord": {

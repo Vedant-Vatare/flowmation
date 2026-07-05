@@ -13,6 +13,7 @@ import type {
 	GoogleDriveNode,
 	GoogleSheetsNode,
 	HttpNode,
+	HubSpotNode,
 	InputNode,
 	JiraNode,
 	LinearNode,
@@ -40,6 +41,7 @@ import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
 import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
+import { hubspotNodeExecutor } from "./nodes/actions/integrations/hubspot.node.js";
 import { jiraNodeExecutor } from "./nodes/actions/integrations/jira.node.js";
 import { linearNodeExecutor } from "./nodes/actions/integrations/linear.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
@@ -106,6 +108,8 @@ export const executeNode = ({
 			);
 		case "action.google_sheets":
 			return googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId);
+		case "action.hubspot":
+			return hubspotNodeExecutor(node as HubSpotNode, executionId);
 		case "action.github":
 			return githubNodeExecutor(node as GitHubNode, executionId);
 		case "action.discord":

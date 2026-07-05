@@ -4,6 +4,7 @@ import { asanaCredential } from "./providers/asana.js";
 import { calcomCredential } from "./providers/calcom.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
+import { hubspotCredential } from "./providers/hubspot.js";
 import { jiraOAuthCredential } from "./providers/jira-oauth.js";
 import { linearOAuthCredential } from "./providers/linear-oauth.js";
 import { notionCredential } from "./providers/notion.js";
@@ -21,6 +22,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	calcom: calcomCredential,
 	google: googleCredential,
 	github: githubCredential,
+	hubspot: hubspotCredential,
 	jira: jiraOAuthCredential,
 	linear: linearOAuthCredential,
 	notion: notionCredential,

@@ -18,6 +18,7 @@ import { googleDriveNodeSchema, googleDriveNodeValueSchemas } from "./integratio
 import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.schema.js";
 import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
 import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
+import { hubspotNodeSchema, hubspotNodeValueSchemas } from "./integrations/hubspot.schema.js";
 import { jiraNodeSchema, jiraNodeValueSchemas } from "./integrations/jira.schema.js";
 import { linearNodeSchema, linearNodeValueSchemas } from "./integrations/linear.schema.js";
 import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
@@ -57,6 +58,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.google_calendar", googleCalendarNodeSchema],
 	["action.google_sheets", googleSheetsNodeSchema],
 	["action.discord", discordNodeSchema],
+	["action.hubspot", hubspotNodeSchema],
 	["action.jira", jiraNodeSchema],
 	["action.linear", linearNodeSchema],
 	["action.notion", notionNodeSchema],
@@ -86,6 +88,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.google_calendar", googleCalendarNodeValueSchemas],
 	["action.google_sheets", googleSheetsNodeValueSchemas],
 	["action.discord", discordNodeValueSchemas],
+	["action.hubspot", hubspotNodeValueSchemas],
 	["action.jira", jiraNodeValueSchemas],
 	["action.linear", linearNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
