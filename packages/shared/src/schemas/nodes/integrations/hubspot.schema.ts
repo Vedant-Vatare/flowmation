@@ -33,7 +33,7 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				label: z.literal("Operation"),
 				type: z.literal("dropdown"),
 				value: hubspotNodeValueSchemas.operation,
-				default: z.literal("create_contact"),
+				default: z.literal("create_contact").optional(),
 				required: z.boolean().default(true),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
@@ -66,7 +66,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				value: hubspotNodeValueSchemas.firstName,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact"],
+					},
 				]),
 			}),
 
@@ -77,7 +80,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				value: hubspotNodeValueSchemas.lastName,
 				required: z.boolean().default(true),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact"],
+					},
 				]),
 			}),
 
@@ -89,7 +95,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				required: z.boolean().default(true),
 				description: z.string().optional(),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact", "get_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact", "get_contact"],
+					},
 				]),
 			}),
 
@@ -100,7 +109,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				value: hubspotNodeValueSchemas.phone,
 				required: z.boolean().default(false),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact"],
+					},
 				]),
 			}),
 
@@ -111,7 +123,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				value: hubspotNodeValueSchemas.company,
 				required: z.boolean().default(false),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact"],
+					},
 				]),
 			}),
 
@@ -122,7 +137,10 @@ export const hubspotNodeSchema = baseNodeSchema.extend({
 				value: hubspotNodeValueSchemas.jobTitle,
 				required: z.boolean().default(false),
 				dependsOn: dependsOnSchema.default([
-					{ parameter: "operation", values: ["create_contact", "update_contact"] },
+					{
+						parameter: "operation",
+						values: ["create_contact", "update_contact"],
+					},
 				]),
 			}),
 

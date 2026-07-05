@@ -27,7 +27,7 @@ export const notionNodeSchema = baseNodeSchema.extend({
 				label: z.literal("operation"),
 				type: z.literal("dropdown"),
 				value: notionNodeValueSchemas.operation,
-				default: z.literal("get_page_content"),
+				default: z.literal("get_page_content").optional(),
 				required: z.boolean().default(true),
 				options: z
 					.array(z.object({ label: z.string(), value: z.string() }))
