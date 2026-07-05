@@ -2,6 +2,7 @@ import type z from "zod";
 import type { gitHubNodeSchema, gmailNodeSchema, notionNodeSchema } from "@/schemas/index.js";
 import type { airtableNodeSchema } from "@/schemas/nodes/integrations/airtable.schema.js";
 import type { aiNodeSchema } from "@/schemas/nodes/integrations/ai.schema.js";
+import type { asanaNodeSchema } from "@/schemas/nodes/integrations/asana.schema.js";
 import type { calcomNodeSchema } from "@/schemas/nodes/integrations/calcom.schema.js";
 import type { discordNodeSchema } from "@/schemas/nodes/integrations/discord.schema.js";
 import type { googleCalendarNodeSchema } from "@/schemas/nodes/integrations/google-calendar.schema.js";
@@ -17,6 +18,7 @@ import type { twilioNodeSchema } from "@/schemas/nodes/integrations/twilio.schem
 
 export type AirtableNode = z.infer<typeof airtableNodeSchema>;
 export type AiNode = z.infer<typeof aiNodeSchema>;
+export type AsanaNode = z.infer<typeof asanaNodeSchema>;
 export type CalcomNode = z.infer<typeof calcomNodeSchema>;
 export type GoogleDriveNode = z.infer<typeof googleDriveNodeSchema>;
 export type GoogleCalendarNode = z.infer<typeof googleCalendarNodeSchema>;

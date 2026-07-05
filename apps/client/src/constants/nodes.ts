@@ -3,6 +3,7 @@ import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
 import AiIcon from "@/assets/icons/nodes/ai.svg?react";
 import AirtableIcon from "@/assets/icons/nodes/airtable.svg?react";
+import AsanaIcon from "@/assets/icons/nodes/asana.svg?react";
 import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
@@ -78,6 +79,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#FCBF49",
+		branded: true,
+	},
+	"action.asana": {
+		name: "Asana",
+		icon: AsanaIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#F06A6A",
 		branded: true,
 	},
 	"action.calcom": {

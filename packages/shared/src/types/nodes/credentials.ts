@@ -3,6 +3,7 @@ export const CREDENTIALS_TYPE = ["apiKey", "oauth"] as const;
 export const CREDENTIALS_PROVIDER = [
 	"airtable",
 	"ai",
+	"asana",
 	"calcom",
 	"google",
 	"github",

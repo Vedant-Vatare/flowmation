@@ -10,6 +10,7 @@ import {
 import { conditionalNodeSchema, conditionalNodeValueSchemas, loopNodeSchema, loopNodeValueSchemas } from "./control.nodes.js";
 import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/airtable.schema.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
+import { asanaNodeSchema, asanaNodeValueSchemas } from "./integrations/asana.schema.js";
 import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
 import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
 import { gitHubNodeSchema, gitHubNodeValueSchemas } from "./integrations/github.schema.js";
@@ -48,6 +49,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.webhook", webhookNodeSchema],
 	["action.airtable", airtableNodeSchema],
 	["action.ai", aiNodeSchema],
+	["action.asana", asanaNodeSchema],
 	["action.calcom", calcomNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.google_drive", googleDriveNodeSchema],
@@ -76,6 +78,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.merge", mergeDataNodeValueSchemas],
 	["action.airtable", airtableNodeValueSchemas],
 	["action.ai", aiNodeValueSchemas],
+	["action.asana", asanaNodeValueSchemas],
 	["action.calcom", calcomNodeValueSchemas],
 	["action.github", gitHubNodeValueSchemas],
 	["action.google_drive", googleDriveNodeValueSchemas],

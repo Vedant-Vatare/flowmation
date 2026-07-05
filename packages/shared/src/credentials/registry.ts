@@ -1,5 +1,6 @@
 import { airtableCredential } from "./providers/airtable.js";
 import { aiCredential } from "./providers/ai.js";
+import { asanaCredential } from "./providers/asana.js";
 import { calcomCredential } from "./providers/calcom.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
@@ -16,6 +17,7 @@ import type { CredentialDef } from "./types.js";
 export const credentialRegistry: Record<string, CredentialDef> = {
 	airtable: airtableCredential,
 	ai: aiCredential,
+	asana: asanaCredential,
 	calcom: calcomCredential,
 	google: googleCredential,
 	github: githubCredential,

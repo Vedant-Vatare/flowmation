@@ -2,6 +2,7 @@ import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
 import type {
 	AiNode,
 	AirtableNode,
+	AsanaNode,
 	CalcomNode,
 	ConditionNode,
 	CronNode,
@@ -31,6 +32,7 @@ import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
 import { aiNodeExecutor } from "./nodes/actions/integrations/ai.node.js";
 import { airtableNodeExecutor } from "./nodes/actions/integrations/airtable.node.js";
+import { asanaNodeExecutor } from "./nodes/actions/integrations/asana.node.js";
 import { calcomNodeExecutor } from "./nodes/actions/integrations/calcom.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
@@ -75,6 +77,8 @@ export const executeNode = ({
 			return airtableNodeExecutor(node as AirtableNode, executionId);
 		case "action.ai":
 			return aiNodeExecutor(node as AiNode, executionId);
+		case "action.asana":
+			return asanaNodeExecutor(node as AsanaNode, executionId);
 		case "action.calcom":
 			return calcomNodeExecutor(node as CalcomNode, executionId);
 		case "action.http":
