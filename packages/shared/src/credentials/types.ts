@@ -12,7 +12,6 @@ export type OAuth2CredentialDef = {
 	tokenContentType?: "json" | "form";
 	getAccountIdentifier?: (accessToken: string) => Promise<string | null>;
 	customAuthParams?: Record<string, string>;
-	redirectUri?: string;
 };
 
 export type ApiKeyCredentialDef = {

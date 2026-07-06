@@ -11,5 +11,4 @@ export const clickupCredential: OAuth2CredentialDef = {
 	scopeSeparator: " ",
 	authMethod: "body",
 	pkce: true,
-	redirectUri: "http://localhost:3000",
 };
