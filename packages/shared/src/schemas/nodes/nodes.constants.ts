@@ -26,6 +26,7 @@ import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/raz
 import { sentryNodeSchema, sentryNodeValueSchemas } from "./integrations/sentry.schema.js";
 import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
+import { trelloNodeSchema, trelloNodeValueSchemas } from "./integrations/trello.schema.js";
 import { twilioNodeSchema, twilioNodeValueSchemas } from "./integrations/twilio.schema.js";
 import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
 import {
@@ -66,6 +67,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.sentry", sentryNodeSchema],
 	["action.slack", slackNodeSchema],
 	["action.telegram", telegramNodeSchema],
+	["action.trello", trelloNodeSchema],
 	["action.twilio", twilioNodeSchema],
 ]);
 
@@ -96,5 +98,6 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.sentry", sentryNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],
 	["action.telegram", telegramNodeValueSchemas],
+	["action.trello", trelloNodeValueSchemas],
 	["action.twilio", twilioNodeValueSchemas],
 ]);

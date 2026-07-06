@@ -28,6 +28,7 @@ import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
 import TelegramIcon from "@/assets/icons/nodes/telegram.svg?react";
+import TrelloIcon from "@/assets/icons/nodes/trello.svg?react";
 import TwilioIcon from "@/assets/icons/nodes/twilio.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
 import WebhookIcon from "@/assets/icons/nodes/webhook.svg?react";
@@ -274,6 +275,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#26A5E4",
+		branded: true,
+	},
+	"action.trello": {
+		name: "Trello",
+		icon: TrelloIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#0079BF",
 		branded: true,
 	},
 	"action.twilio": {

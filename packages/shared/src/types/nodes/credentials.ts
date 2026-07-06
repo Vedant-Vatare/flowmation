@@ -15,6 +15,7 @@ export const CREDENTIALS_PROVIDER = [
 	"sentry",
 	"slack",
 	"telegram",
+	"trello",
 	"twilio",
 ] as const;
 

@@ -24,6 +24,7 @@ import type {
 	SentryNode,
 	SlackNode,
 	TelegramNode,
+	TrelloNode,
 	TwilioNode,
 	WaitNode,
 	WorkflowNode,
@@ -49,6 +50,7 @@ import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node
 import { sentryNodeExecutor } from "./nodes/actions/integrations/sentry.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
+import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js";
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
@@ -128,6 +130,8 @@ export const executeNode = ({
 			return slackNodeExecutor(node as SlackNode, executionId);
 		case "action.telegram":
 			return telegramNodeExecutor(node as TelegramNode, executionId);
+		case "action.trello":
+			return trelloNodeExecutor(node as TrelloNode, executionId);
 		case "action.twilio":
 			return twilioNodeExecutor(node as TwilioNode, executionId);
 
