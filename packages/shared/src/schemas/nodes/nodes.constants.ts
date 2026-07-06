@@ -12,6 +12,7 @@ import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/air
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import { asanaNodeSchema, asanaNodeValueSchemas } from "./integrations/asana.schema.js";
 import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
+import { clickupNodeSchema, clickupNodeValueSchemas } from "./integrations/clickup.schema.js";
 import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
 import { firebaseNodeSchema, firebaseNodeValueSchemas } from "./integrations/firebase.schema.js";
 import { gitHubNodeSchema, gitHubNodeValueSchemas } from "./integrations/github.schema.js";
@@ -55,6 +56,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.ai", aiNodeSchema],
 	["action.asana", asanaNodeSchema],
 	["action.calcom", calcomNodeSchema],
+	["action.clickup", clickupNodeSchema],
 	["action.github", gitHubNodeSchema],
 	["action.google_drive", googleDriveNodeSchema],
 	["action.gmail", gmailNodeSchema],
@@ -88,6 +90,7 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.ai", aiNodeValueSchemas],
 	["action.asana", asanaNodeValueSchemas],
 	["action.calcom", calcomNodeValueSchemas],
+	["action.clickup", clickupNodeValueSchemas],
 	["action.github", gitHubNodeValueSchemas],
 	["action.google_drive", googleDriveNodeValueSchemas],
 	["action.gmail", gmailNodeValueSchemas],

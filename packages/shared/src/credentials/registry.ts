@@ -2,6 +2,7 @@ import { airtableCredential } from "./providers/airtable.js";
 import { aiCredential } from "./providers/ai.js";
 import { asanaCredential } from "./providers/asana.js";
 import { calcomCredential } from "./providers/calcom.js";
+import { clickupCredential } from "./providers/clickup.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
 import { hubspotCredential } from "./providers/hubspot.js";
@@ -23,6 +24,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	ai: aiCredential,
 	asana: asanaCredential,
 	calcom: calcomCredential,
+	clickup: clickupCredential,
 	google: googleCredential,
 	github: githubCredential,
 	hubspot: hubspotCredential,

@@ -4,6 +4,7 @@ import type {
 	AirtableNode,
 	AsanaNode,
 	CalcomNode,
+	ClickUpNode,
 	ConditionNode,
 	CronNode,
 	DiscordNode,
@@ -38,6 +39,7 @@ import { aiNodeExecutor } from "./nodes/actions/integrations/ai.node.js";
 import { airtableNodeExecutor } from "./nodes/actions/integrations/airtable.node.js";
 import { asanaNodeExecutor } from "./nodes/actions/integrations/asana.node.js";
 import { calcomNodeExecutor } from "./nodes/actions/integrations/calcom.node.js";
+import { clickupNodeExecutor } from "./nodes/actions/integrations/clickup.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
 import { firebaseNodeExecutor } from "./nodes/actions/integrations/firebase.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
@@ -89,6 +91,8 @@ export const executeNode = ({
 			return asanaNodeExecutor(node as AsanaNode, executionId);
 		case "action.calcom":
 			return calcomNodeExecutor(node as CalcomNode, executionId);
+		case "action.clickup":
+			return clickupNodeExecutor(node as ClickUpNode, executionId);
 		case "action.http":
 			return httpNodeExecutor(node as HttpNode, executionId);
 		case "action.wait":

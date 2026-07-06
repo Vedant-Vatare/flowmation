@@ -47,7 +47,9 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		);
 	}
 
-	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
+	const redirectUri =
+		credentialDefinition.redirectUri ??
+		`${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
 
 	const stateObj = { userId, nonce: crypto.randomBytes(16).toString("hex") };
 	const state = Buffer.from(JSON.stringify(stateObj)).toString("base64url");
@@ -152,7 +154,9 @@ export const oauthCallback = async (req: Request, res: Response) => {
 
 	const clientId = process.env[`${provider.toUpperCase()}_CLIENT_ID`];
 	const clientSecret = process.env[`${provider.toUpperCase()}_CLIENT_SECRET`];
-	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
+	const redirectUri =
+		def.redirectUri ??
+		`${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
 
 	if (!clientId || !clientSecret) {
 		throw createHttpError.InternalServerError(

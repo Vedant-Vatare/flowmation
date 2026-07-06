@@ -5,6 +5,7 @@ import AiIcon from "@/assets/icons/nodes/ai.svg?react";
 import AirtableIcon from "@/assets/icons/nodes/airtable.svg?react";
 import AsanaIcon from "@/assets/icons/nodes/asana.svg?react";
 import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
+import ClickUpIcon from "@/assets/icons/nodes/clickup.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
@@ -99,6 +100,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#3B82F6",
+		branded: true,
+	},
+	"action.clickup": {
+		name: "ClickUp",
+		icon: ClickUpIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#7B68EE",
 		branded: true,
 	},
 	"action.click": {
