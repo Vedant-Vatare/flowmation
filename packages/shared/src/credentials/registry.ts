@@ -11,6 +11,7 @@ import { notionCredential } from "./providers/notion.js";
 import { razorpayCredential } from "./providers/razorpay.js";
 import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
+import { supabaseCredential } from "./providers/supabase.js";
 import { telegramCredential } from "./providers/telegram.js";
 import { firebaseCredential } from "./providers/firebase.js";
 import { trelloCredential } from "./providers/trello.js";
@@ -31,6 +32,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	razorpay: razorpayCredential,
 	sentry: sentryCredential,
 	slack: slackCredential,
+	supabase: supabaseCredential,
 	telegram: telegramCredential,
 	firebase: firebaseCredential,
 	trello: trelloCredential,

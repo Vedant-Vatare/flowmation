@@ -15,6 +15,7 @@ import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schem
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { sentryNodeSchema } from "@/schemas/nodes/integrations/sentry.schema.js";
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
+import type { supabaseNodeSchema } from "@/schemas/nodes/integrations/supabase.schema.js";
 import type { telegramNodeSchema } from "@/schemas/nodes/integrations/telegram.schema.js";
 import type { trelloNodeSchema } from "@/schemas/nodes/integrations/trello.schema.js";
 import type { twilioNodeSchema } from "@/schemas/nodes/integrations/twilio.schema.js";
@@ -37,6 +38,7 @@ export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;
 export type SentryNode = z.infer<typeof sentryNodeSchema>;
 export type SlackNode = z.infer<typeof slackNodeSchema>;
+export type SupabaseNode = z.infer<typeof supabaseNodeSchema>;
 export type TelegramNode = z.infer<typeof telegramNodeSchema>;
 export type TrelloNode = z.infer<typeof trelloNodeSchema>;
 export type TwilioNode = z.infer<typeof twilioNodeSchema>;

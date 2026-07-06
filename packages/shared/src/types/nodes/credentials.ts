@@ -15,6 +15,7 @@ export const CREDENTIALS_PROVIDER = [
 	"razorpay",
 	"sentry",
 	"slack",
+	"supabase",
 	"telegram",
 	"trello",
 	"twilio",

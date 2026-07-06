@@ -24,6 +24,7 @@ import type {
 	RazorpayNode,
 	SentryNode,
 	SlackNode,
+	SupabaseNode,
 	TelegramNode,
 	TrelloNode,
 	TwilioNode,
@@ -51,6 +52,7 @@ import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js"
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
 import { sentryNodeExecutor } from "./nodes/actions/integrations/sentry.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
+import { supabaseNodeExecutor } from "./nodes/actions/integrations/supabase.node.js";
 import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
 import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js";
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
@@ -132,6 +134,8 @@ export const executeNode = ({
 			return sentryNodeExecutor(node as SentryNode, executionId);
 		case "action.slack":
 			return slackNodeExecutor(node as SlackNode, executionId);
+		case "action.supabase":
+			return supabaseNodeExecutor(node as SupabaseNode, executionId);
 		case "action.telegram":
 			return telegramNodeExecutor(node as TelegramNode, executionId);
 		case "action.trello":
