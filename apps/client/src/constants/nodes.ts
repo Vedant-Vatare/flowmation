@@ -8,6 +8,7 @@ import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
+import FirebaseIcon from "@/assets/icons/nodes/firebase.svg?react";
 import GitHubIcon from "@/assets/icons/nodes/github.svg?react";
 import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
 import GoogleCalendarIcon from "@/assets/icons/nodes/google-calendar.svg?react";
@@ -219,6 +220,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#5865F2",
+		branded: true,
+	},
+	"action.firebase": {
+		name: "Firebase",
+		icon: FirebaseIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#FFCA28",
 		branded: true,
 	},
 	"action.jira": {

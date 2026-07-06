@@ -6,6 +6,7 @@ export * from "./integrations/ai.schema.js";
 export * from "./integrations/asana.schema.js";
 export * from "./integrations/calcom.schema.js";
 export * from "./integrations/discord.schema.js";
+export * from "./integrations/firebase.schema.js";
 export * from "./integrations/google-calendar.schema.js";
 export * from "./integrations/google-sheets.schema.js";
 export * from "./integrations/github.schema.js";

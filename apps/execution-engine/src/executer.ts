@@ -7,6 +7,7 @@ import type {
 	ConditionNode,
 	CronNode,
 	DiscordNode,
+	FirebaseNode,
 	GitHubNode,
 	GmailNode,
 	GoogleCalendarNode,
@@ -37,6 +38,7 @@ import { airtableNodeExecutor } from "./nodes/actions/integrations/airtable.node
 import { asanaNodeExecutor } from "./nodes/actions/integrations/asana.node.js";
 import { calcomNodeExecutor } from "./nodes/actions/integrations/calcom.node.js";
 import { discordNodeExecutor } from "./nodes/actions/integrations/discord.node.js";
+import { firebaseNodeExecutor } from "./nodes/actions/integrations/firebase.node.js";
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
@@ -116,6 +118,8 @@ export const executeNode = ({
 			return githubNodeExecutor(node as GitHubNode, executionId);
 		case "action.discord":
 			return discordNodeExecutor(node as DiscordNode, executionId);
+		case "action.firebase":
+			return firebaseNodeExecutor(node as FirebaseNode, executionId);
 		case "action.jira":
 			return jiraNodeExecutor(node as JiraNode, executionId);
 		case "action.linear":

@@ -5,6 +5,7 @@ export const CREDENTIALS_PROVIDER = [
 	"ai",
 	"asana",
 	"calcom",
+	"firebase",
 	"google",
 	"github",
 	"hubspot",

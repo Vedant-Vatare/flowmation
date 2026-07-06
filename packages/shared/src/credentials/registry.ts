@@ -12,6 +12,7 @@ import { razorpayCredential } from "./providers/razorpay.js";
 import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
 import { telegramCredential } from "./providers/telegram.js";
+import { firebaseCredential } from "./providers/firebase.js";
 import { trelloCredential } from "./providers/trello.js";
 import { twilioCredential } from "./providers/twilio.js";
 import type { CredentialDef } from "./types.js";
@@ -31,6 +32,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	sentry: sentryCredential,
 	slack: slackCredential,
 	telegram: telegramCredential,
+	firebase: firebaseCredential,
 	trello: trelloCredential,
 	twilio: twilioCredential,
 };
