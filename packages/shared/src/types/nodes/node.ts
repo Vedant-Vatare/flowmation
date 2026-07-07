@@ -35,4 +35,5 @@ export type BaseNode = z.infer<typeof baseNodeSchema>;
 export * from "./action.nodes.js";
 export * from "./credentials.js";
 export * from "./integrations.nodes.js";
+export * from "./transform.nodes.js";
 export * from "./trigger.nodes.js";

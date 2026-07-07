@@ -3,12 +3,15 @@ import type { Node } from "@xyflow/react";
 import type { FC, SVGProps } from "react";
 import AiIcon from "@/assets/icons/nodes/ai.svg?react";
 import AirtableIcon from "@/assets/icons/nodes/airtable.svg?react";
+import ArrayIcon from "@/assets/icons/nodes/array.svg?react";
 import AsanaIcon from "@/assets/icons/nodes/asana.svg?react";
 import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
-import ClickUpIcon from "@/assets/icons/nodes/clickup.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
+import ClickUpIcon from "@/assets/icons/nodes/clickup.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
+import DateTimeIcon from "@/assets/icons/nodes/date-time.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
+import FilterIcon from "@/assets/icons/nodes/filter.svg?react";
 import FirebaseIcon from "@/assets/icons/nodes/firebase.svg?react";
 import GitHubIcon from "@/assets/icons/nodes/github.svg?react";
 import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
@@ -19,10 +22,12 @@ import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
 import HubSpotIcon from "@/assets/icons/nodes/hubspot.svg?react";
 import InputIcon from "@/assets/icons/nodes/input.svg?react";
 import JiraIcon from "@/assets/icons/nodes/jira.svg?react";
+import JsonIcon from "@/assets/icons/nodes/json.svg?react";
 import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
 import LoopIcon from "@/assets/icons/nodes/loop.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
+import NumberIcon from "@/assets/icons/nodes/number.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
@@ -31,6 +36,7 @@ import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
 import SupabaseIcon from "@/assets/icons/nodes/supabase.svg?react";
 import TelegramIcon from "@/assets/icons/nodes/telegram.svg?react";
+import TextIcon from "@/assets/icons/nodes/text.svg?react";
 import TrelloIcon from "@/assets/icons/nodes/trello.svg?react";
 import TwilioIcon from "@/assets/icons/nodes/twilio.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
@@ -162,6 +168,42 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		name: "Set Variable",
 		icon: SetVarIcon,
 		background: "#119DA4",
+		color: "#ffffff",
+	},
+	"action.json_transform": {
+		name: "JSON Transform",
+		icon: JsonIcon,
+		background: "#E76F51",
+		color: "#ffffff",
+	},
+	"action.text_transform": {
+		name: "Text Transform",
+		icon: TextIcon,
+		background: "#2A9D8F",
+		color: "#ffffff",
+	},
+	"action.number_transform": {
+		name: "Number Transform",
+		icon: NumberIcon,
+		background: "#264653",
+		color: "#ffffff",
+	},
+	"action.array_transform": {
+		name: "Array Transform",
+		icon: ArrayIcon,
+		background: "#E9C46A",
+		color: "#264653",
+	},
+	"action.date_time": {
+		name: "Date/Time",
+		icon: DateTimeIcon,
+		background: "#F4A261",
+		color: "#ffffff",
+	},
+	"action.filter": {
+		name: "Filter",
+		icon: FilterIcon,
+		background: "#1982C4",
 		color: "#ffffff",
 	},
 	"action.random_number": {

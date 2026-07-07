@@ -2,12 +2,15 @@ import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
 import type {
 	AiNode,
 	AirtableNode,
+	ArrayTransformNode,
 	AsanaNode,
 	CalcomNode,
 	ClickUpNode,
 	ConditionNode,
 	CronNode,
+	DateTimeNode,
 	DiscordNode,
+	FilterNode,
 	FirebaseNode,
 	GitHubNode,
 	GmailNode,
@@ -18,15 +21,18 @@ import type {
 	HubSpotNode,
 	InputNode,
 	JiraNode,
+	JsonTransformNode,
 	LinearNode,
 	LoopNode,
 	MergeNode,
 	NotionNode,
+	NumberTransformNode,
 	RazorpayNode,
 	SentryNode,
 	SlackNode,
 	SupabaseNode,
 	TelegramNode,
+	TextTransformNode,
 	TrelloNode,
 	TwilioNode,
 	WaitNode,
@@ -60,6 +66,12 @@ import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js"
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
+import { arrayTransformNodeExecutor } from "./nodes/actions/transform/array-transform.node.js";
+import { dateTimeNodeExecutor } from "./nodes/actions/transform/date-time.node.js";
+import { filterNodeExecutor } from "./nodes/actions/transform/filter.node.js";
+import { jsonTransformNodeExecutor } from "./nodes/actions/transform/json-transform.node.js";
+import { numberTransformNodeExecutor } from "./nodes/actions/transform/number-transform.node.js";
+import { textTransformNodeExecutor } from "./nodes/actions/transform/text-transform.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
 import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
@@ -146,6 +158,24 @@ export const executeNode = ({
 			return trelloNodeExecutor(node as TrelloNode, executionId);
 		case "action.twilio":
 			return twilioNodeExecutor(node as TwilioNode, executionId);
+		case "action.json_transform":
+			return jsonTransformNodeExecutor(node as JsonTransformNode, executionId);
+		case "action.text_transform":
+			return textTransformNodeExecutor(node as TextTransformNode, executionId);
+		case "action.number_transform":
+			return numberTransformNodeExecutor(
+				node as NumberTransformNode,
+				executionId,
+			);
+		case "action.array_transform":
+			return arrayTransformNodeExecutor(
+				node as ArrayTransformNode,
+				executionId,
+			);
+		case "action.date_time":
+			return dateTimeNodeExecutor(node as DateTimeNode, executionId);
+		case "action.filter":
+			return filterNodeExecutor(node as FilterNode, executionId);
 
 		default:
 			return {

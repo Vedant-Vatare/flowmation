@@ -31,7 +31,22 @@ import { supabaseNodeSchema, supabaseNodeValueSchemas } from "./integrations/sup
 import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
 import { trelloNodeSchema, trelloNodeValueSchemas } from "./integrations/trello.schema.js";
 import { twilioNodeSchema, twilioNodeValueSchemas } from "./integrations/twilio.schema.js";
-import { setVariableNodeSchema, setVariableNodeValueSchemas } from "./transform.nodes.js";
+import {
+	arrayTransformNodeSchema,
+	arrayTransformNodeValueSchemas,
+	dateTimeNodeSchema,
+	dateTimeNodeValueSchemas,
+	filterNodeSchema,
+	filterNodeValueSchemas,
+	jsonTransformNodeSchema,
+	jsonTransformNodeValueSchemas,
+	numberTransformNodeSchema,
+	numberTransformNodeValueSchemas,
+	setVariableNodeSchema,
+	setVariableNodeValueSchemas,
+	textTransformNodeSchema,
+	textTransformNodeValueSchemas,
+} from "./transform/index.js";
 import {
 	clickNodeSchema,
 	cronJobNodeSchema,
@@ -47,6 +62,12 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.http", httpNodeSchema],
 	["action.wait", waitingNodeSchema],
 	["action.set_variable", setVariableNodeSchema],
+	["action.json_transform", jsonTransformNodeSchema],
+	["action.text_transform", textTransformNodeSchema],
+	["action.number_transform", numberTransformNodeSchema],
+	["action.array_transform", arrayTransformNodeSchema],
+	["action.date_time", dateTimeNodeSchema],
+	["action.filter", filterNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
 	["action.condition", conditionalNodeSchema],
 	["action.loop", loopNodeSchema],
@@ -83,6 +104,12 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.http", httpNodeValueSchemas],
 	["action.wait", waitingNodeValueSchemas],
 	["action.set_variable", setVariableNodeValueSchemas],
+	["action.json_transform", jsonTransformNodeValueSchemas],
+	["action.text_transform", textTransformNodeValueSchemas],
+	["action.number_transform", numberTransformNodeValueSchemas],
+	["action.array_transform", arrayTransformNodeValueSchemas],
+	["action.date_time", dateTimeNodeValueSchemas],
+	["action.filter", filterNodeValueSchemas],
 	["action.condition", conditionalNodeValueSchemas],
 	["action.loop", loopNodeValueSchemas],
 	["action.merge", mergeDataNodeValueSchemas],
