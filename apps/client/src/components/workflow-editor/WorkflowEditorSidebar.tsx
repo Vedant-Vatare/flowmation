@@ -1,6 +1,8 @@
 import type { BaseNode } from "@nodebase/shared";
 import { useReactFlow } from "@xyflow/react";
-import { memo, useCallback } from "react";
+import { SearchIcon, XIcon } from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
 import {
 	Sidebar,
 	SidebarContent,
@@ -62,6 +64,44 @@ const NodeItem = ({
 	);
 };
 
+const SearchNode = ({ onChange }: { onChange: (query: string) => void }) => {
+	const [query, setQuery] = useState("");
+
+	const handleChange = useCallback(
+		(value: string) => {
+			setQuery(value);
+			onChange(value);
+		},
+		[onChange],
+	);
+
+	return (
+		<div className="px-3 pb-2 group">
+			<div className="relative">
+				<SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none group-focus-within:text-foreground transition-colors" />
+				<Input
+					value={query}
+					onChange={(e) => handleChange(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === "Escape") handleChange("");
+					}}
+					placeholder="Search nodes"
+					className="h-8 pl-8 pr-7 text-sm rounded-[10px] bg-muted border-2 border-transparent shadow-none ring-0 focus-visible:ring-0 placeholder:text-muted-foreground/60 hover:bg-secondary/60 focus-visible:bg-secondary/80 focus-visible:border-white/80 transition-colors"
+				/>
+				{query && (
+					<button
+						type="button"
+						onClick={() => handleChange("")}
+						className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+					>
+						<XIcon className="size-3.5" />
+					</button>
+				)}
+			</div>
+		</div>
+	);
+};
+
 const NodeGroupSkeleton = ({
 	label,
 	widths,
@@ -93,6 +133,25 @@ const Nodes = memo(() => {
 	const { getNodes, fitView, setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const ALL_NODES = useSortedNodes();
 	const { mutate } = useAddWorkflowNode();
+	const [query, setQuery] = useState("");
+
+	const filteredNodes = useMemo(() => {
+		if (!ALL_NODES) return { triggers: [], actions: [] };
+		if (!query.trim()) return ALL_NODES;
+		const q = query.toLowerCase();
+		return {
+			triggers: ALL_NODES.triggers.filter((n) =>
+				n.name.toLowerCase().includes(q),
+			),
+			actions: ALL_NODES.actions.filter((n) =>
+				n.name.toLowerCase().includes(q),
+			),
+		};
+	}, [ALL_NODES, query]);
+
+	const hasResults =
+		filteredNodes.triggers.length > 0 || filteredNodes.actions.length > 0;
+
 	const handleAddNode = useCallback(
 		(apiNode: BaseNode) => {
 			const nodes = getNodes();
@@ -140,33 +199,45 @@ const Nodes = memo(() => {
 
 	return (
 		<>
-			<SidebarGroup>
-				<SidebarGroupLabel>Triggers</SidebarGroupLabel>
-				<SidebarMenu className="gap-1 text-sm tracking-tight [word-spacing:0.125rem]">
-					{ALL_NODES.triggers.map((node) => (
-						<SidebarMenuItem
-							key={node.task}
-							className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5 transition-colors"
-						>
-							<NodeItem node={node} onClick={() => handleAddNode(node)} />
-						</SidebarMenuItem>
-					))}
-				</SidebarMenu>
-			</SidebarGroup>
+			<SearchNode onChange={setQuery} />
 
-			<SidebarGroup>
-				<SidebarGroupLabel>Actions</SidebarGroupLabel>
-				<SidebarMenu className="text-sm gap-1 tracking-tight">
-					{ALL_NODES.actions.map((node) => (
-						<SidebarMenuItem
-							key={node.task}
-							className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5 transition-colors"
-						>
-							<NodeItem node={node} onClick={() => handleAddNode(node)} />
-						</SidebarMenuItem>
-					))}
-				</SidebarMenu>
-			</SidebarGroup>
+			{filteredNodes.triggers.length > 0 && (
+				<SidebarGroup>
+					<SidebarGroupLabel>Triggers</SidebarGroupLabel>
+					<SidebarMenu className="gap-1 text-sm tracking-tight [word-spacing:0.125rem]">
+						{filteredNodes.triggers.map((node) => (
+							<SidebarMenuItem
+								key={node.task}
+								className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5 transition-colors"
+							>
+								<NodeItem node={node} onClick={() => handleAddNode(node)} />
+							</SidebarMenuItem>
+						))}
+					</SidebarMenu>
+				</SidebarGroup>
+			)}
+
+			{filteredNodes.actions.length > 0 && (
+				<SidebarGroup>
+					<SidebarGroupLabel>Actions</SidebarGroupLabel>
+					<SidebarMenu className="text-sm gap-1 tracking-tight">
+						{filteredNodes.actions.map((node) => (
+							<SidebarMenuItem
+								key={node.task}
+								className="cursor-pointer hover:bg-background p-1.5 rounded-sm pl-2.5 transition-colors"
+							>
+								<NodeItem node={node} onClick={() => handleAddNode(node)} />
+							</SidebarMenuItem>
+						))}
+					</SidebarMenu>
+				</SidebarGroup>
+			)}
+
+			{!hasResults && (
+				<p className="px-3 py-6 text-sm text-muted-foreground text-center">
+					No nodes found
+				</p>
+			)}
 		</>
 	);
 });
