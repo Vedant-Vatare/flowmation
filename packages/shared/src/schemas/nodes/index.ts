@@ -9,6 +9,7 @@ export * from "./integrations/clickup.schema.js";
 export * from "./integrations/discord.schema.js";
 export * from "./integrations/firebase.schema.js";
 export * from "./integrations/google-calendar.schema.js";
+export * from "./integrations/google-docs.schema.js";
 export * from "./integrations/google-sheets.schema.js";
 export * from "./integrations/github.schema.js";
 export * from "./integrations/google-drive.schema.js";

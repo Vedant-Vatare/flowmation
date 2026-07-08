@@ -16,6 +16,7 @@ import FirebaseIcon from "@/assets/icons/nodes/firebase.svg?react";
 import GitHubIcon from "@/assets/icons/nodes/github.svg?react";
 import GmailIcon from "@/assets/icons/nodes/gmail.svg?react";
 import GoogleCalendarIcon from "@/assets/icons/nodes/google-calendar.svg?react";
+import GoogleDocsIcon from "@/assets/icons/nodes/google-docs.svg?react";
 import GoogleDriveIcon from "@/assets/icons/nodes/google-drive.svg?react";
 import GoogleSheetsIcon from "@/assets/icons/nodes/google-sheets.svg?react";
 import HTTPIcon from "@/assets/icons/nodes/http.svg?react";
@@ -232,6 +233,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#1a73e8",
+		branded: true,
+	},
+	"action.google_docs": {
+		name: "Google Docs",
+		icon: GoogleDocsIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#4285F4",
 		branded: true,
 	},
 	"action.google_sheets": {

@@ -19,6 +19,7 @@ import { gitHubNodeSchema, gitHubNodeValueSchemas } from "./integrations/github.
 import { googleDriveNodeSchema, googleDriveNodeValueSchemas } from "./integrations/google-drive.schema.js";
 import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.schema.js";
 import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
+import { googleDocsNodeSchema, googleDocsNodeValueSchemas } from "./integrations/google-docs.schema.js";
 import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
 import { hubspotNodeSchema, hubspotNodeValueSchemas } from "./integrations/hubspot.schema.js";
 import { jiraNodeSchema, jiraNodeValueSchemas } from "./integrations/jira.schema.js";
@@ -81,8 +82,9 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.github", gitHubNodeSchema],
 	["action.google_drive", googleDriveNodeSchema],
 	["action.gmail", gmailNodeSchema],
-	["action.google_calendar", googleCalendarNodeSchema],
-	["action.google_sheets", googleSheetsNodeSchema],
+["action.google_calendar", googleCalendarNodeSchema],
+["action.google_docs", googleDocsNodeSchema],
+["action.google_sheets", googleSheetsNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.firebase", firebaseNodeSchema],
 	["action.hubspot", hubspotNodeSchema],
@@ -121,8 +123,9 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.github", gitHubNodeValueSchemas],
 	["action.google_drive", googleDriveNodeValueSchemas],
 	["action.gmail", gmailNodeValueSchemas],
-	["action.google_calendar", googleCalendarNodeValueSchemas],
-	["action.google_sheets", googleSheetsNodeValueSchemas],
+["action.google_calendar", googleCalendarNodeValueSchemas],
+["action.google_docs", googleDocsNodeValueSchemas],
+["action.google_sheets", googleSheetsNodeValueSchemas],
 	["action.discord", discordNodeValueSchemas],
 	["action.firebase", firebaseNodeValueSchemas],
 	["action.hubspot", hubspotNodeValueSchemas],

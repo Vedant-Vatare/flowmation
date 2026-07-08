@@ -8,6 +8,7 @@ import type { clickupNodeSchema } from "@/schemas/nodes/integrations/clickup.sch
 import type { discordNodeSchema } from "@/schemas/nodes/integrations/discord.schema.js";
 import type { firebaseNodeSchema } from "@/schemas/nodes/integrations/firebase.schema.js";
 import type { googleCalendarNodeSchema } from "@/schemas/nodes/integrations/google-calendar.schema.js";
+import type { googleDocsNodeSchema } from "@/schemas/nodes/integrations/google-docs.schema.js";
 import type { googleDriveNodeSchema } from "@/schemas/nodes/integrations/google-drive.schema.js";
 import type { googleSheetsNodeSchema } from "@/schemas/nodes/integrations/google-sheets.schema.js";
 import type { hubspotNodeSchema } from "@/schemas/nodes/integrations/hubspot.schema.js";
@@ -28,6 +29,7 @@ export type CalcomNode = z.infer<typeof calcomNodeSchema>;
 export type ClickUpNode = z.infer<typeof clickupNodeSchema>;
 export type GoogleDriveNode = z.infer<typeof googleDriveNodeSchema>;
 export type GoogleCalendarNode = z.infer<typeof googleCalendarNodeSchema>;
+export type GoogleDocsNode = z.infer<typeof googleDocsNodeSchema>;
 export type GoogleSheetsNode = z.infer<typeof googleSheetsNodeSchema>;
 export type HubSpotNode = z.infer<typeof hubspotNodeSchema>;
 export type GmailNode = z.infer<typeof gmailNodeSchema>;

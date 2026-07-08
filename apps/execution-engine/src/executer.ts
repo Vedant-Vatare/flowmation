@@ -15,6 +15,7 @@ import type {
 	GitHubNode,
 	GmailNode,
 	GoogleCalendarNode,
+	GoogleDocsNode,
 	GoogleDriveNode,
 	GoogleSheetsNode,
 	HttpNode,
@@ -51,6 +52,7 @@ import { firebaseNodeExecutor } from "./nodes/actions/integrations/firebase.node
 import { githubNodeExecutor } from "./nodes/actions/integrations/github.node.js";
 import { gmailNodeExecutor } from "./nodes/actions/integrations/gmail.node.js";
 import { googleCalendarNodeExecutor } from "./nodes/actions/integrations/google-calendar.node.js";
+import { googleDocsNodeExecutor } from "./nodes/actions/integrations/google-docs.node.js";
 import { googleDriveNodeExecutor } from "./nodes/actions/integrations/google-drive.node.js";
 import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sheets.node.js";
 import { hubspotNodeExecutor } from "./nodes/actions/integrations/hubspot.node.js";
@@ -128,6 +130,8 @@ export const executeNode = ({
 				node as GoogleCalendarNode,
 				executionId,
 			);
+		case "action.google_docs":
+			return googleDocsNodeExecutor(node as GoogleDocsNode, executionId);
 		case "action.google_sheets":
 			return googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId);
 		case "action.hubspot":
