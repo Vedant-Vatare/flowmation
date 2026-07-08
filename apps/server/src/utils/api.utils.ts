@@ -132,3 +132,20 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 
 	return res.status(statusCode).json({ message });
 };
+
+const REQUEST_TIMEOUT_MS = 30_000;
+
+export const RequestTimeOutHandler = (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+) => {
+	req.setTimeout(REQUEST_TIMEOUT_MS);
+	res.setTimeout(REQUEST_TIMEOUT_MS);
+	res.on("timeout", () => {
+		if (!res.headersSent) {
+			res.status(504).json({ message: "Request timed out" });
+		}
+	});
+	next();
+};
