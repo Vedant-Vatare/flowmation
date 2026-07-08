@@ -18,6 +18,7 @@ export const CREDENTIALS_PROVIDER = [
 	"slack",
 	"supabase",
 	"telegram",
+	"todoist",
 	"trello",
 	"twilio",
 ] as const;

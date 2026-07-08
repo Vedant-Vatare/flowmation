@@ -14,6 +14,7 @@ import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
 import { supabaseCredential } from "./providers/supabase.js";
 import { telegramCredential } from "./providers/telegram.js";
+import { todoistCredential } from "./providers/todoist.js";
 import { firebaseCredential } from "./providers/firebase.js";
 import { trelloCredential } from "./providers/trello.js";
 import { twilioCredential } from "./providers/twilio.js";
@@ -36,6 +37,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	slack: slackCredential,
 	supabase: supabaseCredential,
 	telegram: telegramCredential,
+	todoist: todoistCredential,
 	firebase: firebaseCredential,
 	trello: trelloCredential,
 	twilio: twilioCredential,

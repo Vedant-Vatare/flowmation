@@ -34,6 +34,7 @@ import type {
 	SupabaseNode,
 	TelegramNode,
 	TextTransformNode,
+	TodoistNode,
 	TrelloNode,
 	TwilioNode,
 	WaitNode,
@@ -64,6 +65,7 @@ import { sentryNodeExecutor } from "./nodes/actions/integrations/sentry.node.js"
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { supabaseNodeExecutor } from "./nodes/actions/integrations/supabase.node.js";
 import { telegramNodeExecutor } from "./nodes/actions/integrations/telegram.node.js";
+import { todoistNodeExecutor } from "./nodes/actions/integrations/todoist.node.js";
 import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js";
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
@@ -158,6 +160,8 @@ export const executeNode = ({
 			return supabaseNodeExecutor(node as SupabaseNode, executionId);
 		case "action.telegram":
 			return telegramNodeExecutor(node as TelegramNode, executionId);
+		case "action.todoist":
+			return todoistNodeExecutor(node as TodoistNode, executionId);
 		case "action.trello":
 			return trelloNodeExecutor(node as TrelloNode, executionId);
 		case "action.twilio":

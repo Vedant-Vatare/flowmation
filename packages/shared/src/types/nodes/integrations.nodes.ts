@@ -19,6 +19,7 @@ import type { sentryNodeSchema } from "@/schemas/nodes/integrations/sentry.schem
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
 import type { supabaseNodeSchema } from "@/schemas/nodes/integrations/supabase.schema.js";
 import type { telegramNodeSchema } from "@/schemas/nodes/integrations/telegram.schema.js";
+import type { todoistNodeSchema } from "@/schemas/nodes/integrations/todoist.schema.js";
 import type { trelloNodeSchema } from "@/schemas/nodes/integrations/trello.schema.js";
 import type { twilioNodeSchema } from "@/schemas/nodes/integrations/twilio.schema.js";
 
@@ -44,5 +45,6 @@ export type SentryNode = z.infer<typeof sentryNodeSchema>;
 export type SlackNode = z.infer<typeof slackNodeSchema>;
 export type SupabaseNode = z.infer<typeof supabaseNodeSchema>;
 export type TelegramNode = z.infer<typeof telegramNodeSchema>;
+export type TodoistNode = z.infer<typeof todoistNodeSchema>;
 export type TrelloNode = z.infer<typeof trelloNodeSchema>;
 export type TwilioNode = z.infer<typeof twilioNodeSchema>;
