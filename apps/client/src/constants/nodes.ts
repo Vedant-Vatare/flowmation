@@ -29,6 +29,7 @@ import LoopIcon from "@/assets/icons/nodes/loop.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import NumberIcon from "@/assets/icons/nodes/number.svg?react";
+import PostgresIcon from "@/assets/icons/nodes/postgresql.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
@@ -314,6 +315,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#000000",
+		branded: true,
+	},
+	"action.postgres": {
+		name: "PostgreSQL",
+		icon: PostgresIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#336791",
 		branded: true,
 	},
 	"action.razorpay": {

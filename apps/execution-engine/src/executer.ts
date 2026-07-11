@@ -28,6 +28,7 @@ import type {
 	MergeNode,
 	NotionNode,
 	NumberTransformNode,
+	PostgresNode,
 	RazorpayNode,
 	SentryNode,
 	SlackNode,
@@ -60,6 +61,7 @@ import { hubspotNodeExecutor } from "./nodes/actions/integrations/hubspot.node.j
 import { jiraNodeExecutor } from "./nodes/actions/integrations/jira.node.js";
 import { linearNodeExecutor } from "./nodes/actions/integrations/linear.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
+import { postgresNodeExecutor } from "./nodes/actions/integrations/postgres.node.js";
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
 import { sentryNodeExecutor } from "./nodes/actions/integrations/sentry.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
@@ -150,6 +152,8 @@ export const executeNode = ({
 			return linearNodeExecutor(node as LinearNode, executionId);
 		case "action.notion":
 			return notionNodeExecutor(node as NotionNode, executionId);
+		case "action.postgres":
+			return postgresNodeExecutor(node as PostgresNode, executionId);
 		case "action.razorpay":
 			return razorpayNodeExecutor(node as RazorpayNode, executionId);
 		case "action.sentry":

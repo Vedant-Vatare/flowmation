@@ -14,6 +14,7 @@ import type { googleSheetsNodeSchema } from "@/schemas/nodes/integrations/google
 import type { hubspotNodeSchema } from "@/schemas/nodes/integrations/hubspot.schema.js";
 import type { jiraNodeSchema } from "@/schemas/nodes/integrations/jira.schema.js";
 import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schema.js";
+import type { postgresNodeSchema } from "@/schemas/nodes/integrations/postgres.schema.js";
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { sentryNodeSchema } from "@/schemas/nodes/integrations/sentry.schema.js";
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
@@ -39,6 +40,7 @@ export type DiscordNode = z.infer<typeof discordNodeSchema>;
 export type FirebaseNode = z.infer<typeof firebaseNodeSchema>;
 export type JiraNode = z.infer<typeof jiraNodeSchema>;
 export type LinearNode = z.infer<typeof linearNodeSchema>;
+export type PostgresNode = z.infer<typeof postgresNodeSchema>;
 export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;
 export type SentryNode = z.infer<typeof sentryNodeSchema>;

@@ -18,6 +18,7 @@ export * from "./integrations/hubspot.schema.js";
 export * from "./integrations/jira.schema.js";
 export * from "./integrations/linear.schema.js";
 export * from "./integrations/notion.schema.js";
+export * from "./integrations/postgres.schema.js";
 export * from "./integrations/razorpay.schema.js";
 export * from "./integrations/sentry.schema.js";
 export * from "./integrations/slack.schema.js";

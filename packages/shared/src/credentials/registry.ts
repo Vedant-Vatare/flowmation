@@ -1,21 +1,22 @@
-import { airtableCredential } from "./providers/airtable.js";
 import { aiCredential } from "./providers/ai.js";
+import { airtableCredential } from "./providers/airtable.js";
 import { asanaCredential } from "./providers/asana.js";
 import { calcomCredential } from "./providers/calcom.js";
 import { clickupCredential } from "./providers/clickup.js";
+import { firebaseCredential } from "./providers/firebase.js";
 import { githubCredential } from "./providers/github.js";
 import { googleCredential } from "./providers/google.js";
 import { hubspotCredential } from "./providers/hubspot.js";
 import { jiraOAuthCredential } from "./providers/jira-oauth.js";
 import { linearOAuthCredential } from "./providers/linear-oauth.js";
 import { notionCredential } from "./providers/notion.js";
+import { postgresCredential } from "./providers/postgres.js";
 import { razorpayCredential } from "./providers/razorpay.js";
 import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
 import { supabaseCredential } from "./providers/supabase.js";
 import { telegramCredential } from "./providers/telegram.js";
 import { todoistCredential } from "./providers/todoist.js";
-import { firebaseCredential } from "./providers/firebase.js";
 import { trelloCredential } from "./providers/trello.js";
 import { twilioCredential } from "./providers/twilio.js";
 import type { CredentialDef } from "./types.js";
@@ -32,6 +33,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	jira: jiraOAuthCredential,
 	linear: linearOAuthCredential,
 	notion: notionCredential,
+	postgres: postgresCredential,
 	razorpay: razorpayCredential,
 	sentry: sentryCredential,
 	slack: slackCredential,
@@ -45,6 +47,10 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 
 export const API_KEY_PROVIDERS = Object.entries(credentialRegistry)
 	.filter(([, def]) => def.type === "apiKey")
+	.map(([name]) => name);
+
+export const DATABASE_PROVIDERS = Object.entries(credentialRegistry)
+	.filter(([, def]) => def.type === "database")
 	.map(([name]) => name);
 
 export * from "./types.js";
