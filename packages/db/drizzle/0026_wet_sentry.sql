@@ -1,0 +1,1 @@
+ALTER TYPE "public"."credentialTypes" ADD VALUE 'database';
