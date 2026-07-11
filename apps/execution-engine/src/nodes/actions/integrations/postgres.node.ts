@@ -16,7 +16,10 @@ export const postgresNodeExecutor = async (
 
 	try {
 		const credential = await getDecryptedCredential(node.credentialId);
-		if (credential.type !== "database" || !credential.fields?.connectionString) {
+		if (
+			credential.type !== "database" ||
+			!credential.fields?.connectionString
+		) {
 			return {
 				success: false,
 				message: "Invalid credential format for PostgreSQL",
@@ -33,9 +36,9 @@ export const postgresNodeExecutor = async (
 		}
 
 		const parametersStr = params.parameters?.value as string;
-		let queryParams: unknown[] = [];
+		let queryParams: unknown[] | undefined;
 
-		if (parametersStr) {
+		if (parametersStr?.trim()) {
 			queryParams = parametersStr.split(",").map((p) => p.trim());
 		}
 
@@ -45,7 +48,9 @@ export const postgresNodeExecutor = async (
 		await client.connect();
 
 		try {
-			const result = await client.query(query, queryParams);
+			const result = queryParams
+				? await client.query(query, queryParams)
+				: await client.query(query);
 			return { success: true, output: result, status: "completed" };
 		} finally {
 			await client.end();
