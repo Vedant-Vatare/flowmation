@@ -12,11 +12,11 @@ export const getDecryptedCredential = async (credentialId: string) => {
 		throw new Error(`Credential with id ${credentialId} not found`);
 	}
 
-	if (credential.type === "apiKey") {
+	if (credential.type === "apiKey" || credential.type === "database") {
 		const fields = credential.fields || {};
 
 		const def = credentialRegistry[credential.provider] as
-			| { type: "apiKey"; fields: { key: string; secret: boolean }[] }
+			| { type: "apiKey" | "database"; fields: { key: string; secret: boolean }[] }
 			| undefined;
 
 		const decryptedFields: Record<string, string> = {};
@@ -26,7 +26,7 @@ export const getDecryptedCredential = async (credentialId: string) => {
 			decryptedFields[key] = fieldDef?.secret ? decrypt(value) : value;
 		}
 
-		return { type: "apiKey", fields: decryptedFields };
+		return { type: credential.type, fields: decryptedFields };
 	}
 
 	if (credential.type === "oauth") {

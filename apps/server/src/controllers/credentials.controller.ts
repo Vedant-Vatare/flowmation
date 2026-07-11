@@ -271,8 +271,8 @@ export const saveApiKey = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("Unknown provider");
 
 	const def = credentialRegistry[provider];
-	if (!def || def.type !== "apiKey") {
-		throw createHttpError.BadRequest("Invalid API Key provider");
+	if (!def || (def.type !== "apiKey" && def.type !== "database")) {
+		throw createHttpError.BadRequest("Invalid credential provider type");
 	}
 
 	const encryptedFields: Record<string, string> = {};
@@ -286,13 +286,15 @@ export const saveApiKey = async (req: Request, res: Response) => {
 		}
 	}
 
+	const credentialType = def.type === "database" ? "database" : "apiKey";
+
 	const [credential] = await db
 		.insert(credentialsTable)
 		.values({
 			userId,
 			provider,
 			name,
-			type: "apiKey",
+			type: credentialType,
 			fields: encryptedFields,
 		})
 		.returning({ id: credentialsTable.id });

@@ -1,4 +1,4 @@
-export const CREDENTIALS_TYPE = ["apiKey", "oauth"] as const;
+export const CREDENTIALS_TYPE = ["apiKey", "oauth", "database"] as const;
 
 export const CREDENTIALS_PROVIDER = [
 	"airtable",
@@ -13,6 +13,7 @@ export const CREDENTIALS_PROVIDER = [
 	"jira",
 	"linear",
 	"notion",
+	"postgres",
 	"razorpay",
 	"sentry",
 	"slack",

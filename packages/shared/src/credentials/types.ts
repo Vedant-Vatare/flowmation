@@ -27,4 +27,17 @@ export type ApiKeyCredentialDef = {
 	}[];
 };
 
-export type CredentialDef = OAuth2CredentialDef | ApiKeyCredentialDef;
+export type DatabaseCredentialDef = {
+	type: "database";
+	name: string;
+	displayName: string;
+	icon: string;
+	fields: {
+		key: string;
+		label: string;
+		placeholder?: string;
+		secret: boolean;
+	}[];
+};
+
+export type CredentialDef = OAuth2CredentialDef | ApiKeyCredentialDef | DatabaseCredentialDef;

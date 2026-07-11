@@ -11,8 +11,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
-import { API_KEY_PROVIDERS, credentialRegistry } from "@nodebase/shared";
-import type { ApiKeyCredentialDef } from "@nodebase/shared";
+import { API_KEY_PROVIDERS, DATABASE_PROVIDERS, credentialRegistry } from "@nodebase/shared";
+import type { ApiKeyCredentialDef, DatabaseCredentialDef } from "@nodebase/shared";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { useGetCredentials, useSaveApiKey } from "@/queries/credentials";
 
@@ -64,8 +64,12 @@ export const NodeCredentials = memo(
 			? API_KEY_PROVIDERS.includes(provider)
 			: false;
 
+		const isDatabaseProvider = provider
+			? DATABASE_PROVIDERS.includes(provider)
+			: false;
+
 		const credentialDef = provider
-			? (credentialRegistry[provider] as ApiKeyCredentialDef | undefined)
+			? (credentialRegistry[provider] as ApiKeyCredentialDef | DatabaseCredentialDef | undefined)
 			: undefined;
 
 		const handleSaveApiKey = useCallback(async () => {
@@ -152,7 +156,7 @@ export const NodeCredentials = memo(
 					/>
 				)}
 
-				{isApiKeyProvider ? (
+				{isApiKeyProvider || isDatabaseProvider ? (
 					showForm ? (
 						<div className="flex flex-col gap-2">
 							<Input
@@ -207,7 +211,7 @@ export const NodeCredentials = memo(
 							type="button"
 						>
 							<Icon className="size-4" />
-							Add {provider} API Key
+							Add {provider} {isDatabaseProvider ? "Connection" : "API Key"}
 						</Button>
 					)
 				) : (
