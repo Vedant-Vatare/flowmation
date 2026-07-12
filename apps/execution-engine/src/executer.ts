@@ -26,6 +26,7 @@ import type {
 	LinearNode,
 	LoopNode,
 	MergeNode,
+	MongodbNode,
 	NotionNode,
 	NumberTransformNode,
 	PostgresNode,
@@ -60,6 +61,7 @@ import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sh
 import { hubspotNodeExecutor } from "./nodes/actions/integrations/hubspot.node.js";
 import { jiraNodeExecutor } from "./nodes/actions/integrations/jira.node.js";
 import { linearNodeExecutor } from "./nodes/actions/integrations/linear.node.js";
+import { mongodbNodeExecutor } from "./nodes/actions/integrations/mongodb.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { postgresNodeExecutor } from "./nodes/actions/integrations/postgres.node.js";
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
@@ -150,6 +152,8 @@ export const executeNode = ({
 			return jiraNodeExecutor(node as JiraNode, executionId);
 		case "action.linear":
 			return linearNodeExecutor(node as LinearNode, executionId);
+		case "action.mongodb":
+			return mongodbNodeExecutor(node as MongodbNode, executionId);
 		case "action.notion":
 			return notionNodeExecutor(node as NotionNode, executionId);
 		case "action.postgres":

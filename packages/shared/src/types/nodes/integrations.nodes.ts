@@ -1,7 +1,11 @@
 import type z from "zod";
-import type { gitHubNodeSchema, gmailNodeSchema, notionNodeSchema } from "@/schemas/index.js";
-import type { airtableNodeSchema } from "@/schemas/nodes/integrations/airtable.schema.js";
+import type {
+	gitHubNodeSchema,
+	gmailNodeSchema,
+	notionNodeSchema,
+} from "@/schemas/index.js";
 import type { aiNodeSchema } from "@/schemas/nodes/integrations/ai.schema.js";
+import type { airtableNodeSchema } from "@/schemas/nodes/integrations/airtable.schema.js";
 import type { asanaNodeSchema } from "@/schemas/nodes/integrations/asana.schema.js";
 import type { calcomNodeSchema } from "@/schemas/nodes/integrations/calcom.schema.js";
 import type { clickupNodeSchema } from "@/schemas/nodes/integrations/clickup.schema.js";
@@ -14,6 +18,7 @@ import type { googleSheetsNodeSchema } from "@/schemas/nodes/integrations/google
 import type { hubspotNodeSchema } from "@/schemas/nodes/integrations/hubspot.schema.js";
 import type { jiraNodeSchema } from "@/schemas/nodes/integrations/jira.schema.js";
 import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schema.js";
+import type { mongodbNodeSchema } from "@/schemas/nodes/integrations/mongodb.schema.js";
 import type { postgresNodeSchema } from "@/schemas/nodes/integrations/postgres.schema.js";
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { sentryNodeSchema } from "@/schemas/nodes/integrations/sentry.schema.js";
@@ -40,6 +45,7 @@ export type DiscordNode = z.infer<typeof discordNodeSchema>;
 export type FirebaseNode = z.infer<typeof firebaseNodeSchema>;
 export type JiraNode = z.infer<typeof jiraNodeSchema>;
 export type LinearNode = z.infer<typeof linearNodeSchema>;
+export type MongodbNode = z.infer<typeof mongodbNodeSchema>;
 export type PostgresNode = z.infer<typeof postgresNodeSchema>;
 export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;

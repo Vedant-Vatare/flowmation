@@ -7,33 +7,117 @@ import {
 	waitingNodeSchema,
 	waitingNodeValueSchemas,
 } from "./action.nodes.js";
-import { conditionalNodeSchema, conditionalNodeValueSchemas, loopNodeSchema, loopNodeValueSchemas } from "./control.nodes.js";
-import { airtableNodeSchema, airtableNodeValueSchemas } from "./integrations/airtable.schema.js";
+import {
+	conditionalNodeSchema,
+	conditionalNodeValueSchemas,
+	loopNodeSchema,
+	loopNodeValueSchemas,
+} from "./control.nodes.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
-import { asanaNodeSchema, asanaNodeValueSchemas } from "./integrations/asana.schema.js";
-import { calcomNodeSchema, calcomNodeValueSchemas } from "./integrations/calcom.schema.js";
-import { clickupNodeSchema, clickupNodeValueSchemas } from "./integrations/clickup.schema.js";
-import { discordNodeSchema, discordNodeValueSchemas } from "./integrations/discord.schema.js";
-import { firebaseNodeSchema, firebaseNodeValueSchemas } from "./integrations/firebase.schema.js";
-import { gitHubNodeSchema, gitHubNodeValueSchemas } from "./integrations/github.schema.js";
-import { googleDriveNodeSchema, googleDriveNodeValueSchemas } from "./integrations/google-drive.schema.js";
-import { gmailNodeSchema, gmailNodeValueSchemas } from "./integrations/gmail.schema.js";
-import { googleCalendarNodeSchema, googleCalendarNodeValueSchemas } from "./integrations/google-calendar.schema.js";
-import { googleDocsNodeSchema, googleDocsNodeValueSchemas } from "./integrations/google-docs.schema.js";
-import { googleSheetsNodeSchema, googleSheetsNodeValueSchemas } from "./integrations/google-sheets.schema.js";
-import { hubspotNodeSchema, hubspotNodeValueSchemas } from "./integrations/hubspot.schema.js";
-import { jiraNodeSchema, jiraNodeValueSchemas } from "./integrations/jira.schema.js";
-import { linearNodeSchema, linearNodeValueSchemas } from "./integrations/linear.schema.js";
-import { notionNodeSchema, notionNodeValueSchemas } from "./integrations/notion.schema.js";
-import { postgresNodeSchema, postgresNodeValueSchemas } from "./integrations/postgres.schema.js";
-import { razorpayNodeSchema, razorpayNodeValueSchemas } from "./integrations/razorpay.schema.js";
-import { sentryNodeSchema, sentryNodeValueSchemas } from "./integrations/sentry.schema.js";
-import { slackNodeSchema, slackNodeValueSchemas } from "./integrations/slack.schema.js";
-import { supabaseNodeSchema, supabaseNodeValueSchemas } from "./integrations/supabase.schema.js";
-import { telegramNodeSchema, telegramNodeValueSchemas } from "./integrations/telegram.schema.js";
-import { todoistNodeSchema, todoistNodeValueSchemas } from "./integrations/todoist.schema.js";
-import { trelloNodeSchema, trelloNodeValueSchemas } from "./integrations/trello.schema.js";
-import { twilioNodeSchema, twilioNodeValueSchemas } from "./integrations/twilio.schema.js";
+import {
+	airtableNodeSchema,
+	airtableNodeValueSchemas,
+} from "./integrations/airtable.schema.js";
+import {
+	asanaNodeSchema,
+	asanaNodeValueSchemas,
+} from "./integrations/asana.schema.js";
+import {
+	calcomNodeSchema,
+	calcomNodeValueSchemas,
+} from "./integrations/calcom.schema.js";
+import {
+	clickupNodeSchema,
+	clickupNodeValueSchemas,
+} from "./integrations/clickup.schema.js";
+import {
+	discordNodeSchema,
+	discordNodeValueSchemas,
+} from "./integrations/discord.schema.js";
+import {
+	firebaseNodeSchema,
+	firebaseNodeValueSchemas,
+} from "./integrations/firebase.schema.js";
+import {
+	gitHubNodeSchema,
+	gitHubNodeValueSchemas,
+} from "./integrations/github.schema.js";
+import {
+	gmailNodeSchema,
+	gmailNodeValueSchemas,
+} from "./integrations/gmail.schema.js";
+import {
+	googleCalendarNodeSchema,
+	googleCalendarNodeValueSchemas,
+} from "./integrations/google-calendar.schema.js";
+import {
+	googleDocsNodeSchema,
+	googleDocsNodeValueSchemas,
+} from "./integrations/google-docs.schema.js";
+import {
+	googleDriveNodeSchema,
+	googleDriveNodeValueSchemas,
+} from "./integrations/google-drive.schema.js";
+import {
+	googleSheetsNodeSchema,
+	googleSheetsNodeValueSchemas,
+} from "./integrations/google-sheets.schema.js";
+import {
+	hubspotNodeSchema,
+	hubspotNodeValueSchemas,
+} from "./integrations/hubspot.schema.js";
+import {
+	jiraNodeSchema,
+	jiraNodeValueSchemas,
+} from "./integrations/jira.schema.js";
+import {
+	linearNodeSchema,
+	linearNodeValueSchemas,
+} from "./integrations/linear.schema.js";
+import {
+	mongodbNodeSchema,
+	mongodbNodeValueSchemas,
+} from "./integrations/mongodb.schema.js";
+import {
+	notionNodeSchema,
+	notionNodeValueSchemas,
+} from "./integrations/notion.schema.js";
+import {
+	postgresNodeSchema,
+	postgresNodeValueSchemas,
+} from "./integrations/postgres.schema.js";
+import {
+	razorpayNodeSchema,
+	razorpayNodeValueSchemas,
+} from "./integrations/razorpay.schema.js";
+import {
+	sentryNodeSchema,
+	sentryNodeValueSchemas,
+} from "./integrations/sentry.schema.js";
+import {
+	slackNodeSchema,
+	slackNodeValueSchemas,
+} from "./integrations/slack.schema.js";
+import {
+	supabaseNodeSchema,
+	supabaseNodeValueSchemas,
+} from "./integrations/supabase.schema.js";
+import {
+	telegramNodeSchema,
+	telegramNodeValueSchemas,
+} from "./integrations/telegram.schema.js";
+import {
+	todoistNodeSchema,
+	todoistNodeValueSchemas,
+} from "./integrations/todoist.schema.js";
+import {
+	trelloNodeSchema,
+	trelloNodeValueSchemas,
+} from "./integrations/trello.schema.js";
+import {
+	twilioNodeSchema,
+	twilioNodeValueSchemas,
+} from "./integrations/twilio.schema.js";
 import {
 	arrayTransformNodeSchema,
 	arrayTransformNodeValueSchemas,
@@ -84,14 +168,15 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.github", gitHubNodeSchema],
 	["action.google_drive", googleDriveNodeSchema],
 	["action.gmail", gmailNodeSchema],
-["action.google_calendar", googleCalendarNodeSchema],
-["action.google_docs", googleDocsNodeSchema],
-["action.google_sheets", googleSheetsNodeSchema],
+	["action.google_calendar", googleCalendarNodeSchema],
+	["action.google_docs", googleDocsNodeSchema],
+	["action.google_sheets", googleSheetsNodeSchema],
 	["action.discord", discordNodeSchema],
 	["action.firebase", firebaseNodeSchema],
 	["action.hubspot", hubspotNodeSchema],
 	["action.jira", jiraNodeSchema],
 	["action.linear", linearNodeSchema],
+	["action.mongodb", mongodbNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.postgres", postgresNodeSchema],
 	["action.razorpay", razorpayNodeSchema],
@@ -104,7 +189,10 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.twilio", twilioNodeSchema],
 ]);
 
-export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>([
+export const nodeParamValueRegistry = new Map<
+	string,
+	Record<string, z.ZodType>
+>([
 	["trigger.cron", cronJobNodeValueSchemas],
 	["trigger.input", inputNodeValueSchemas],
 	["action.http", httpNodeValueSchemas],
@@ -127,14 +215,15 @@ export const nodeParamValueRegistry = new Map<string, Record<string, z.ZodType>>
 	["action.github", gitHubNodeValueSchemas],
 	["action.google_drive", googleDriveNodeValueSchemas],
 	["action.gmail", gmailNodeValueSchemas],
-["action.google_calendar", googleCalendarNodeValueSchemas],
-["action.google_docs", googleDocsNodeValueSchemas],
-["action.google_sheets", googleSheetsNodeValueSchemas],
+	["action.google_calendar", googleCalendarNodeValueSchemas],
+	["action.google_docs", googleDocsNodeValueSchemas],
+	["action.google_sheets", googleSheetsNodeValueSchemas],
 	["action.discord", discordNodeValueSchemas],
 	["action.firebase", firebaseNodeValueSchemas],
 	["action.hubspot", hubspotNodeValueSchemas],
 	["action.jira", jiraNodeValueSchemas],
 	["action.linear", linearNodeValueSchemas],
+	["action.mongodb", mongodbNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
 	["action.postgres", postgresNodeValueSchemas],
 	["action.razorpay", razorpayNodeValueSchemas],

@@ -27,6 +27,7 @@ import JsonIcon from "@/assets/icons/nodes/json.svg?react";
 import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
 import LoopIcon from "@/assets/icons/nodes/loop.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
+import MongodbIcon from "@/assets/icons/nodes/mongodb.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
 import NumberIcon from "@/assets/icons/nodes/number.svg?react";
 import PostgresIcon from "@/assets/icons/nodes/postgresql.svg?react";
@@ -307,6 +308,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#5E6AD2",
+		branded: true,
+	},
+	"action.mongodb": {
+		name: "MongoDB",
+		icon: MongodbIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#47A248",
 		branded: true,
 	},
 	"action.notion": {

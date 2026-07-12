@@ -9,6 +9,7 @@ import { googleCredential } from "./providers/google.js";
 import { hubspotCredential } from "./providers/hubspot.js";
 import { jiraOAuthCredential } from "./providers/jira-oauth.js";
 import { linearOAuthCredential } from "./providers/linear-oauth.js";
+import { mongodbCredential } from "./providers/mongodb.js";
 import { notionCredential } from "./providers/notion.js";
 import { postgresCredential } from "./providers/postgres.js";
 import { razorpayCredential } from "./providers/razorpay.js";
@@ -32,6 +33,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	hubspot: hubspotCredential,
 	jira: jiraOAuthCredential,
 	linear: linearOAuthCredential,
+	mongodb: mongodbCredential,
 	notion: notionCredential,
 	postgres: postgresCredential,
 	razorpay: razorpayCredential,
