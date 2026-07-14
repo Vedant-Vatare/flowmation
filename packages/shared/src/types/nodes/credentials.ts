@@ -16,6 +16,7 @@ export const CREDENTIALS_PROVIDER = [
 	"notion",
 	"postgres",
 	"razorpay",
+	"redis",
 	"sentry",
 	"slack",
 	"supabase",

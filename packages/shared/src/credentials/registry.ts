@@ -13,6 +13,7 @@ import { mongodbCredential } from "./providers/mongodb.js";
 import { notionCredential } from "./providers/notion.js";
 import { postgresCredential } from "./providers/postgres.js";
 import { razorpayCredential } from "./providers/razorpay.js";
+import { redisCredential } from "./providers/redis.js";
 import { sentryCredential } from "./providers/sentry.js";
 import { slackCredential } from "./providers/slack.js";
 import { supabaseCredential } from "./providers/supabase.js";
@@ -37,6 +38,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	notion: notionCredential,
 	postgres: postgresCredential,
 	razorpay: razorpayCredential,
+	redis: redisCredential,
 	sentry: sentryCredential,
 	slack: slackCredential,
 	supabase: supabaseCredential,

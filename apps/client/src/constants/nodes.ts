@@ -33,6 +33,7 @@ import NumberIcon from "@/assets/icons/nodes/number.svg?react";
 import PostgresIcon from "@/assets/icons/nodes/postgresql.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
+import RedisIcon from "@/assets/icons/nodes/redis.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
@@ -332,6 +333,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#336791",
+		branded: true,
+	},
+	"action.redis": {
+		name: "Redis",
+		icon: RedisIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#DC382D",
 		branded: true,
 	},
 	"action.razorpay": {

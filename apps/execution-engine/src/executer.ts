@@ -31,6 +31,7 @@ import type {
 	NumberTransformNode,
 	PostgresNode,
 	RazorpayNode,
+	RedisNode,
 	SentryNode,
 	SlackNode,
 	SupabaseNode,
@@ -65,6 +66,7 @@ import { mongodbNodeExecutor } from "./nodes/actions/integrations/mongodb.node.j
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { postgresNodeExecutor } from "./nodes/actions/integrations/postgres.node.js";
 import { razorpayNodeExecutor } from "./nodes/actions/integrations/razorpay.node.js";
+import { redisNodeExecutor } from "./nodes/actions/integrations/redis.node.js";
 import { sentryNodeExecutor } from "./nodes/actions/integrations/sentry.node.js";
 import { slackNodeExecutor } from "./nodes/actions/integrations/slack.node.js";
 import { supabaseNodeExecutor } from "./nodes/actions/integrations/supabase.node.js";
@@ -158,6 +160,8 @@ export const executeNode = ({
 			return notionNodeExecutor(node as NotionNode, executionId);
 		case "action.postgres":
 			return postgresNodeExecutor(node as PostgresNode, executionId);
+		case "action.redis":
+			return redisNodeExecutor(node as RedisNode, executionId);
 		case "action.razorpay":
 			return razorpayNodeExecutor(node as RazorpayNode, executionId);
 		case "action.sentry":

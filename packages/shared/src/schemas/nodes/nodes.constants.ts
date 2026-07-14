@@ -87,6 +87,10 @@ import {
 	postgresNodeValueSchemas,
 } from "./integrations/postgres.schema.js";
 import {
+	redisNodeSchema,
+	redisNodeValueSchemas,
+} from "./integrations/redis.schema.js";
+import {
 	razorpayNodeSchema,
 	razorpayNodeValueSchemas,
 } from "./integrations/razorpay.schema.js";
@@ -179,6 +183,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.mongodb", mongodbNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.postgres", postgresNodeSchema],
+	["action.redis", redisNodeSchema],
 	["action.razorpay", razorpayNodeSchema],
 	["action.sentry", sentryNodeSchema],
 	["action.slack", slackNodeSchema],
@@ -226,6 +231,7 @@ export const nodeParamValueRegistry = new Map<
 	["action.mongodb", mongodbNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
 	["action.postgres", postgresNodeValueSchemas],
+	["action.redis", redisNodeValueSchemas],
 	["action.razorpay", razorpayNodeValueSchemas],
 	["action.sentry", sentryNodeValueSchemas],
 	["action.slack", slackNodeValueSchemas],

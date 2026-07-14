@@ -20,6 +20,7 @@ import type { jiraNodeSchema } from "@/schemas/nodes/integrations/jira.schema.js
 import type { linearNodeSchema } from "@/schemas/nodes/integrations/linear.schema.js";
 import type { mongodbNodeSchema } from "@/schemas/nodes/integrations/mongodb.schema.js";
 import type { postgresNodeSchema } from "@/schemas/nodes/integrations/postgres.schema.js";
+import type { redisNodeSchema } from "@/schemas/nodes/integrations/redis.schema.js";
 import type { razorpayNodeSchema } from "@/schemas/nodes/integrations/razorpay.schema.js";
 import type { sentryNodeSchema } from "@/schemas/nodes/integrations/sentry.schema.js";
 import type { slackNodeSchema } from "@/schemas/nodes/integrations/slack.schema.js";
@@ -47,6 +48,7 @@ export type JiraNode = z.infer<typeof jiraNodeSchema>;
 export type LinearNode = z.infer<typeof linearNodeSchema>;
 export type MongodbNode = z.infer<typeof mongodbNodeSchema>;
 export type PostgresNode = z.infer<typeof postgresNodeSchema>;
+export type RedisNode = z.infer<typeof redisNodeSchema>;
 export type NotionNode = z.infer<typeof notionNodeSchema>;
 export type RazorpayNode = z.infer<typeof razorpayNodeSchema>;
 export type SentryNode = z.infer<typeof sentryNodeSchema>;
