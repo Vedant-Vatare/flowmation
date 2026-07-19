@@ -26,6 +26,7 @@ import JiraIcon from "@/assets/icons/nodes/jira.svg?react";
 import JsonIcon from "@/assets/icons/nodes/json.svg?react";
 import LinearIcon from "@/assets/icons/nodes/linear.svg?react";
 import LoopIcon from "@/assets/icons/nodes/loop.svg?react";
+import MailchimpIcon from "@/assets/icons/nodes/mailchimp.svg?react";
 import MergeIcon from "@/assets/icons/nodes/merge.svg?react";
 import MongodbIcon from "@/assets/icons/nodes/mongodb.svg?react";
 import NotionIcon from "@/assets/icons/nodes/notion.svg?react";
@@ -309,6 +310,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#5E6AD2",
+		branded: true,
+	},
+	"action.mailchimp": {
+		name: "Mailchimp",
+		icon: MailchimpIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#FFE01B",
 		branded: true,
 	},
 	"action.mongodb": {

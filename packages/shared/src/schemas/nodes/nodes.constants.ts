@@ -75,6 +75,10 @@ import {
 	linearNodeValueSchemas,
 } from "./integrations/linear.schema.js";
 import {
+	mailchimpNodeSchema,
+	mailchimpNodeValueSchemas,
+} from "./integrations/mailchimp.schema.js";
+import {
 	mongodbNodeSchema,
 	mongodbNodeValueSchemas,
 } from "./integrations/mongodb.schema.js";
@@ -87,13 +91,13 @@ import {
 	postgresNodeValueSchemas,
 } from "./integrations/postgres.schema.js";
 import {
-	redisNodeSchema,
-	redisNodeValueSchemas,
-} from "./integrations/redis.schema.js";
-import {
 	razorpayNodeSchema,
 	razorpayNodeValueSchemas,
 } from "./integrations/razorpay.schema.js";
+import {
+	redisNodeSchema,
+	redisNodeValueSchemas,
+} from "./integrations/redis.schema.js";
 import {
 	sentryNodeSchema,
 	sentryNodeValueSchemas,
@@ -180,6 +184,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.hubspot", hubspotNodeSchema],
 	["action.jira", jiraNodeSchema],
 	["action.linear", linearNodeSchema],
+	["action.mailchimp", mailchimpNodeSchema],
 	["action.mongodb", mongodbNodeSchema],
 	["action.notion", notionNodeSchema],
 	["action.postgres", postgresNodeSchema],
@@ -228,6 +233,7 @@ export const nodeParamValueRegistry = new Map<
 	["action.hubspot", hubspotNodeValueSchemas],
 	["action.jira", jiraNodeValueSchemas],
 	["action.linear", linearNodeValueSchemas],
+	["action.mailchimp", mailchimpNodeValueSchemas],
 	["action.mongodb", mongodbNodeValueSchemas],
 	["action.notion", notionNodeValueSchemas],
 	["action.postgres", postgresNodeValueSchemas],

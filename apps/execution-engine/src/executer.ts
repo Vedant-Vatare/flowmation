@@ -25,6 +25,7 @@ import type {
 	JsonTransformNode,
 	LinearNode,
 	LoopNode,
+	MailchimpNode,
 	MergeNode,
 	MongodbNode,
 	NotionNode,
@@ -62,6 +63,7 @@ import { googleSheetsNodeExecutor } from "./nodes/actions/integrations/google-sh
 import { hubspotNodeExecutor } from "./nodes/actions/integrations/hubspot.node.js";
 import { jiraNodeExecutor } from "./nodes/actions/integrations/jira.node.js";
 import { linearNodeExecutor } from "./nodes/actions/integrations/linear.node.js";
+import { mailchimpNodeExecutor } from "./nodes/actions/integrations/mailchimp.node.js";
 import { mongodbNodeExecutor } from "./nodes/actions/integrations/mongodb.node.js";
 import { notionNodeExecutor } from "./nodes/actions/integrations/notion.node.js";
 import { postgresNodeExecutor } from "./nodes/actions/integrations/postgres.node.js";
@@ -154,6 +156,8 @@ export const executeNode = ({
 			return jiraNodeExecutor(node as JiraNode, executionId);
 		case "action.linear":
 			return linearNodeExecutor(node as LinearNode, executionId);
+		case "action.mailchimp":
+			return mailchimpNodeExecutor(node as MailchimpNode, executionId);
 		case "action.mongodb":
 			return mongodbNodeExecutor(node as MongodbNode, executionId);
 		case "action.notion":

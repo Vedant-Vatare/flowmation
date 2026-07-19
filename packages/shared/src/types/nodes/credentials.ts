@@ -12,6 +12,7 @@ export const CREDENTIALS_PROVIDER = [
 	"hubspot",
 	"jira",
 	"linear",
+	"mailchimp",
 	"mongodb",
 	"notion",
 	"postgres",
