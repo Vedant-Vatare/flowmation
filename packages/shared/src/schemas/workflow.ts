@@ -76,3 +76,21 @@ export const NodeIdsWithPositionSchema = z.array(
 		positionY: z.number(),
 	}),
 );
+
+export const templateSchema = z.object({
+	title: z.string(),
+	description: z.string(),
+	thumbnail: z.string(),
+	isActive: z.boolean().default(false),
+	category: z.string(),
+	useCount: z.number(),
+	tags: z.array(z.string()),
+	createdBy: z.string(),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+});
+
+export const newTemplateSchema = templateSchema.omit({
+	createdAt: true,
+	updatedAt: true,
+});
