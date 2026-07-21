@@ -190,6 +190,20 @@
       "when": 1783787237998,
       "tag": "0026_wet_sentry",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1784640850597,
+      "tag": "0027_broken_epoch",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1784641096847,
+      "tag": "0028_sleepy_nicolaos",
+      "breakpoints": true
     }
   ]
 }

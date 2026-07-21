@@ -11,6 +11,7 @@ import {
 
 import { relations } from "drizzle-orm";
 import {
+	boolean,
 	index,
 	integer,
 	jsonb,
@@ -249,6 +250,37 @@ export const workflowSnapshotsTable = pgTable(
 		publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
 	},
 	(t) => [index("snapshot_workflowId_idx").on(t.workflowId)],
+);
+
+export const templatesTable = pgTable(
+	"templates",
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		title: varchar({ length: 255 }).notNull(),
+		thumbnail: varchar({ length: 500 }),
+		description: text(),
+		isActive: boolean().default(false).notNull(),
+		category: varchar({ length: 100 }),
+		useCount: integer("use_count").notNull().default(0),
+		tags: varchar({ length: 100 }).array().default([]),
+		createdBy: varchar("created_by", { length: 255 }).notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+	},
+	(t) => [index("templates_category_idx").on(t.category)],
+);
+
+export const templateDataTable = pgTable(
+	"template_data",
+	{
+		templateId: uuid("template_id")
+			.primaryKey()
+			.references(() => templatesTable.id, { onDelete: "cascade" })
+			.notNull(),
+		nodes: jsonb("nodes").$type<WorkflowNode[]>().notNull(),
+		connections: jsonb("connections").$type<WorkflowConnection[]>().notNull(),
+	},
+	(t) => [index("template_data_template_id_idx").on(t.templateId)],
 );
 
 export const usersRelations = relations(usersTable, ({ many }) => ({
