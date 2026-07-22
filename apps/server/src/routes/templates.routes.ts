@@ -2,6 +2,7 @@ import { newTemplateSchema } from "@nodebase/shared";
 import { Router } from "express";
 import {
 	addTemplate,
+	deleteTemplate,
 	getAllTemplates,
 	updateTemplate,
 } from "@/controllers/templates.controller.js";
@@ -21,9 +22,11 @@ router.post(
 );
 
 router.patch(
-	"/",
+	"/:id",
 	validateRequest(newTemplateSchema.partial(), "body"),
 	asyncHandler(updateTemplate),
 );
+
+router.delete("/:id", asyncHandler(deleteTemplate));
 
 export default router;

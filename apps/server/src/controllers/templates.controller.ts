@@ -42,3 +42,23 @@ export const updateTemplate = async (req: Request, res: Response) => {
 		.status(200)
 		.json({ message: "template was updated", template: updatedTemplate });
 };
+
+export const deleteTemplate = async (req: Request, res: Response) => {
+	const templateId = req.params.id as string;
+	if (!templateId) {
+		throw createHttpError.BadRequest("invalid template Id");
+	}
+
+	const [deletedTemplate] = await db
+		.delete(templatesTable)
+		.where(eq(templatesTable.id, templateId))
+		.returning();
+
+	if (!deletedTemplate) {
+		throw createHttpError.BadRequest("template was not found");
+	}
+
+	return res
+		.status(200)
+		.json({ message: "template was deleted", template: deletedTemplate });
+};
