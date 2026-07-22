@@ -259,7 +259,7 @@ export const templatesTable = pgTable(
 		title: varchar({ length: 255 }).notNull(),
 		thumbnail: varchar({ length: 500 }),
 		description: text(),
-		isActive: boolean().default(false).notNull(),
+		isActive: boolean("is_active").default(false).notNull(),
 		category: varchar({ length: 100 }),
 		useCount: integer("use_count").notNull().default(0),
 		tags: varchar({ length: 100 }).array().default([]),
