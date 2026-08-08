@@ -3,6 +3,7 @@ import type {
 	NodeIdsWithPositionSchema,
 	partialWorkflowConnectionSchema,
 	partialWorkflowNodeSchema,
+	templateDataSchema,
 	templateSchema,
 	userWorkflowSchema,
 	workflowConnectionSchema,
@@ -111,3 +112,4 @@ export type ExecutionLog = {
 };
 
 export type Template = z.infer<typeof templateSchema>;
+export type TemplateData = z.infer<typeof templateDataSchema>;

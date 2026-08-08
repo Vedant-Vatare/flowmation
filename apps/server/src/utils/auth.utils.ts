@@ -16,62 +16,58 @@ export const getCookieDomain = (): string | undefined => {
 	}
 };
 
-export const authenticateUser = asyncHandler(async (
-	req: Request,
-	res: Response,
-	next: NextFunction,
-) => {
-	const token = req.cookies?.auth_token;
-	if (!token)
-		throw createHttpError.Unauthorized("No authentication token provided");
+export const authenticateUser = asyncHandler(
+	async (req: Request, res: Response, next: NextFunction) => {
+		const token = req.cookies?.auth_token;
+		if (!token)
+			throw createHttpError.Unauthorized("No authentication token provided");
 
-	try {
-		const userCredentials = await verifyJWT(token);
-		res.locals.userId = userCredentials.userId;
-		next();
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			if (error.message === "Token expired") {
-				throw createHttpError.Unauthorized("Token expired");
+		try {
+			const userCredentials = await verifyJWT(token);
+			res.locals.userId = userCredentials.userId;
+			next();
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				if (error.message === "Token expired") {
+					throw createHttpError.Unauthorized("Token expired");
+				}
+				if (error.message === "Invalid JWT Token") {
+					throw createHttpError.Unauthorized("Invalid JWT Token");
+				}
 			}
-			if (error.message === "Invalid JWT Token") {
-				throw createHttpError.Unauthorized("Invalid JWT Token");
-			}
+			throw createHttpError.Unauthorized("Authentication failed");
 		}
-		throw createHttpError.Unauthorized("Authentication failed");
-	}
-});
+	},
+);
 
-export const authenticateAdminUser = asyncHandler(async (
-	req: Request,
-	res: Response,
-	next: NextFunction,
-) => {
-	const token = req.cookies?.auth_token;
-	if (!token)
-		throw createHttpError.Unauthorized("No authentication token provided");
-	try {
-		const { userId } = await verifyJWT(token);
+export const authenticateAdminUser = asyncHandler(
+	async (req: Request, res: Response, next: NextFunction) => {
+		const token = req.cookies?.auth_token;
+		if (!token)
+			throw createHttpError.Unauthorized("No authentication token provided");
+		try {
+			const { userId } = await verifyJWT(token);
 
-		const [isAdmin] = await db
-			.select()
-			.from(adminstable)
-			.where(eq(adminstable.userId, userId));
+			const [isAdmin] = await db
+				.select()
+				.from(adminstable)
+				.where(eq(adminstable.userId, userId));
 
-		if (!isAdmin) throw createHttpError.Unauthorized("Authentication failed");
+			if (!isAdmin) throw createHttpError.Unauthorized("Authentication failed");
 
-		res.locals.userId = userId;
+			res.locals.userId = userId;
 
-		next();
-	} catch (error: unknown) {
-		if (error instanceof Error) {
-			if (error.message === "Token expired") {
-				throw createHttpError.Unauthorized("Token expired");
+			next();
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				if (error.message === "Token expired") {
+					throw createHttpError.Unauthorized("Token expired");
+				}
+				if (error.message === "Invalid JWT Token") {
+					throw createHttpError.Unauthorized("Invalid JWT Token");
+				}
 			}
-			if (error.message === "Invalid JWT Token") {
-				throw createHttpError.Unauthorized("Invalid JWT Token");
-			}
+			throw createHttpError.Unauthorized("Authentication failed");
 		}
-		throw createHttpError.Unauthorized("Authentication failed");
-	}
-});
+	},
+);

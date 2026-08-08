@@ -93,4 +93,34 @@ export const templateSchema = z.object({
 export const newTemplateSchema = templateSchema.omit({
 	createdAt: true,
 	updatedAt: true,
+	useCount: true,
+});
+
+export const updateTemplateSchema = z.object({
+	title: z.string().optional(),
+	description: z.string().optional(),
+	thumbnail: z.string().optional(),
+	isActive: z.boolean().optional(),
+	category: z.string().optional(),
+	tags: z.array(z.string()).optional(),
+});
+
+export const templateNodeSchema = workflowNodeSchema.omit({
+	workflowId: true,
+	credentialId: true,
+	nodeId: true,
+});
+
+export const templateConnectionSchema = z.object({
+	id: z.uuid().default(() => crypto.randomUUID()),
+	sourceId: z.uuid(),
+	targetId: z.uuid(),
+	sourcePort: z.string().default("default"),
+	targetPort: z.string().default("default"),
+});
+
+export const templateDataSchema = z.object({
+	templateId: z.uuid(),
+	nodes: z.array(templateNodeSchema),
+	connections: z.array(templateConnectionSchema),
 });
