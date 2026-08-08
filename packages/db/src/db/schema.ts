@@ -51,7 +51,9 @@ export const credentialsTable = pgTable("credentials", {
 	expiresAt: timestamp("expires_at", { withTimezone: true }),
 	fields: jsonb("fields").$type<Record<string, string>>(),
 	createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-	updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+	updatedAt: timestamp("updated_at", { withTimezone: true })
+		.defaultNow()
+		.$onUpdate(() => new Date()),
 });
 
 export const usersTable = pgTable("users", {
@@ -117,7 +119,9 @@ export const userWorkflowsTable = pgTable(
 		executionCount: integer("execution_count").notNull().default(0),
 		lastExecutedAt: timestamp("last_executed_at", { withTimezone: true }),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.$onUpdate(() => new Date()),
 	},
 	(t) => [
 		index("user_id_idx").on(t.userId),
@@ -265,7 +269,9 @@ export const templatesTable = pgTable(
 		tags: varchar({ length: 100 }).array().default([]),
 		createdBy: varchar("created_by", { length: 255 }).notNull(),
 		createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-		updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.defaultNow()
+			.$onUpdate(() => new Date()),
 	},
 	(t) => [index("templates_category_idx").on(t.category)],
 );
