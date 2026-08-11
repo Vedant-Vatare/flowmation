@@ -1,25 +1,13 @@
 import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-	Background,
-	type Connection,
-	ConnectionMode,
-	type Edge,
-	type EdgeTypes,
-	MarkerType,
-	MiniMap,
-	type NodeTypes,
-	type OnEdgesDelete,
-	ReactFlow,
-	useNodes,
-	useReactFlow,
-} from "@xyflow/react";
+import type { Connection, Edge } from "@xyflow/react";
+import { useNodes, useReactFlow } from "@xyflow/react";
 import { useCallback, useEffect } from "react";
 import "@xyflow/react/dist/style.css";
 
 import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import Loader from "@/components/ui/Loader";
-import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
+import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import {
 	useAddWorkflowConn,
@@ -41,24 +29,11 @@ import {
 	useWorkflowStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
-import {
-	getNodeColorByTask,
-	toCanvasEdges,
-	toCanvasNodes,
-} from "@/utils/nodes/nodes.utils";
+import { toCanvasEdges, toCanvasNodes } from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { TestWebhook } from "../TestWebhook";
+import { FlowCanvas } from "./FlowCanvas";
 import { WorkflowControls } from "./WorkflowControls";
-import { WorkflowEdge } from "./WorkflowEdge";
-import { WorkflowNode } from "./WorkflowNodes";
-
-const nodeTypes: NodeTypes = {
-	workflowNode: WorkflowNode,
-};
-
-const edgeTypes: EdgeTypes = {
-	workflow: WorkflowEdge,
-};
 
 const WorkflowCanvas = () => {
 	const { workflowId } = Route.useParams();
@@ -183,8 +158,8 @@ const WorkflowCanvas = () => {
 		],
 	);
 
-	const onEdgesDelete: OnEdgesDelete<Edge> = useCallback(
-		(deletedEdges) => {
+	const onEdgesDelete = useCallback(
+		(deletedEdges: Edge[]) => {
 			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			for (const edge of deletedEdges) {
 				deleteConnection({ id: edge.id, workflowId });
@@ -214,20 +189,14 @@ const WorkflowCanvas = () => {
 	);
 
 	const onNodeDragStart = useCallback(
-		(
-			_e: React.MouseEvent<Element, MouseEvent>,
-			_draggedNode: WorkflowCanvasNode,
-		) => {
+		(_e: React.MouseEvent, _draggedNode: WorkflowCanvasNode) => {
 			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 		},
 		[pushSnapshot, getNodes, getEdges],
 	);
 
 	const onNodeDragStop = useCallback(
-		(
-			_e: React.MouseEvent<Element, MouseEvent>,
-			_draggedNode: WorkflowCanvasNode,
-		) => {
+		(_e: React.MouseEvent, _draggedNode: WorkflowCanvasNode) => {
 			const currentNodes = getNodes();
 
 			const resolvedPositions = resolveCollisions([...currentNodes], {
@@ -272,21 +241,9 @@ const WorkflowCanvas = () => {
 	}
 
 	return (
-		<ReactFlow
-			defaultNodes={canvasNodes}
-			defaultEdges={canvasEdges}
-			nodeTypes={nodeTypes}
-			edgeTypes={edgeTypes}
-			proOptions={{ hideAttribution: true }}
-			fitView={false}
-			fitViewOptions={{
-				duration: 250,
-				padding: 0.75,
-				minZoom: 1,
-				maxZoom: 1,
-			}}
-			maxZoom={2}
-			minZoom={0.5}
+		<FlowCanvas
+			nodes={canvasNodes}
+			edges={canvasEdges}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
 			onNodeDragStart={onNodeDragStart}
 			onNodesDelete={onNodesDelete}
@@ -294,33 +251,9 @@ const WorkflowCanvas = () => {
 			onEdgesDelete={onEdgesDelete}
 			onConnect={onConnect}
 			onReconnect={onReconnect}
-			connectionRadius={20}
-			connectionMode={ConnectionMode.Strict}
-			deleteKeyCode="Delete"
-			panOnDrag={[1]}
-			selectionOnDrag={true}
-			defaultEdgeOptions={{
-				markerEnd: { type: MarkerType.ArrowClosed },
-				style: {
-					strokeWidth: 2,
-					stroke: "var(--muted-foreground)",
-				},
-			}}
 		>
-			<MiniMap
-				style={{
-					background: "hsl(var(--card))",
-					border: "1px solid hsl(var(--border))",
-					borderRadius: "12px",
-					bottom: "1rem",
-					right: "0.75rem",
-				}}
-				maskColor="hsl(var(--background) / 0.6)"
-				nodeColor={(n) => getNodeColorByTask((n.data as WorkflowNodeData).task)}
-			/>
 			<WorkflowControls />
-			<Background />
-		</ReactFlow>
+		</FlowCanvas>
 	);
 };
 
