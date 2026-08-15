@@ -1,0 +1,16 @@
+.thumbnail-capture {
+	--background: #ffffff;
+	--foreground: #0f172a;
+	--muted-foreground: #64748b;
+	--border: #e2e8f0;
+	--accent: #eef2ff;
+	--accent-foreground: #312e81;
+	--muted: #f4f4f5;
+	--card: #ffffff;
+	color: #0f172a;
+	background: #ffffff;
+	overflow: hidden;
+	font-family:
+		ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+		"Segoe UI Symbol", "Noto Color Emoji";
+}
