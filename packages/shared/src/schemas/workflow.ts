@@ -77,10 +77,12 @@ export const NodeIdsWithPositionSchema = z.array(
 	}),
 );
 
+const THUMBNAIL_MAX_LENGTH = 2_000_000;
+
 export const templateSchema = z.object({
 	title: z.string(),
 	description: z.string(),
-	thumbnail: z.string(),
+	thumbnail: z.string().max(THUMBNAIL_MAX_LENGTH).nullish(),
 	isActive: z.boolean().default(false),
 	category: z.string(),
 	useCount: z.number(),
@@ -99,7 +101,7 @@ export const newTemplateSchema = templateSchema.omit({
 export const updateTemplateSchema = z.object({
 	title: z.string().optional(),
 	description: z.string().optional(),
-	thumbnail: z.string().optional(),
+	thumbnail: z.string().max(THUMBNAIL_MAX_LENGTH).optional(),
 	isActive: z.boolean().optional(),
 	category: z.string().optional(),
 	tags: z.array(z.string()).optional(),

@@ -261,7 +261,7 @@ export const templatesTable = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		title: varchar({ length: 255 }).notNull(),
-		thumbnail: varchar({ length: 500 }),
+		thumbnail: text(),
 		description: text(),
 		isActive: boolean("is_active").default(false).notNull(),
 		category: varchar({ length: 100 }),
