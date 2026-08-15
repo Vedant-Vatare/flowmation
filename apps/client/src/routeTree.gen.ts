@@ -9,15 +9,29 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ThumbnailTestRouteImport } from './routes/thumbnail-test'
+import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
+import { Route as TemplatesIdRouteImport } from './routes/templates/$id'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
 import { Route as MainLayoutDashboardRouteImport } from './routes/_mainLayout/dashboard'
 import { Route as MainLayoutWorkflowWorkflowIdRouteImport } from './routes/_mainLayout/workflow/$workflowId'
 
+const ThumbnailTestRoute = ThumbnailTestRouteImport.update({
+  id: '/thumbnail-test',
+  path: '/thumbnail-test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
@@ -31,6 +45,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesIndexRoute = TemplatesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TemplatesRoute,
+} as any)
+const TemplatesIdRoute = TemplatesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => TemplatesRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
   id: '/auth/signup',
@@ -62,19 +86,26 @@ const MainLayoutWorkflowWorkflowIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
+  '/templates': typeof TemplatesRouteWithChildren
+  '/thumbnail-test': typeof ThumbnailTestRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/templates/$id': typeof TemplatesIdRoute
+  '/templates/': typeof TemplatesIndexRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
+  '/thumbnail-test': typeof ThumbnailTestRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/templates/$id': typeof TemplatesIdRoute
+  '/templates': typeof TemplatesIndexRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRoutesById {
@@ -82,10 +113,14 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_mainLayout': typeof MainLayoutRouteWithChildren
   '/privacy': typeof PrivacyRoute
+  '/templates': typeof TemplatesRouteWithChildren
+  '/thumbnail-test': typeof ThumbnailTestRoute
   '/_mainLayout/dashboard': typeof MainLayoutDashboardRoute
   '/_mainLayout/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
+  '/templates/$id': typeof TemplatesIdRoute
+  '/templates/': typeof TemplatesIndexRoute
   '/_mainLayout/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRouteTypes {
@@ -93,29 +128,40 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/privacy'
+    | '/templates'
+    | '/thumbnail-test'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
     | '/auth/signup'
+    | '/templates/$id'
+    | '/templates/'
     | '/workflow/$workflowId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/privacy'
+    | '/thumbnail-test'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
     | '/auth/signup'
+    | '/templates/$id'
+    | '/templates'
     | '/workflow/$workflowId'
   id:
     | '__root__'
     | '/'
     | '/_mainLayout'
     | '/privacy'
+    | '/templates'
+    | '/thumbnail-test'
     | '/_mainLayout/dashboard'
     | '/_mainLayout/logs'
     | '/auth/login'
     | '/auth/signup'
+    | '/templates/$id'
+    | '/templates/'
     | '/_mainLayout/workflow/$workflowId'
   fileRoutesById: FileRoutesById
 }
@@ -123,12 +169,28 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MainLayoutRoute: typeof MainLayoutRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
+  TemplatesRoute: typeof TemplatesRouteWithChildren
+  ThumbnailTestRoute: typeof ThumbnailTestRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/thumbnail-test': {
+      id: '/thumbnail-test'
+      path: '/thumbnail-test'
+      fullPath: '/thumbnail-test'
+      preLoaderRoute: typeof ThumbnailTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/privacy': {
       id: '/privacy'
       path: '/privacy'
@@ -149,6 +211,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/templates/': {
+      id: '/templates/'
+      path: '/'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof TemplatesIndexRouteImport
+      parentRoute: typeof TemplatesRoute
+    }
+    '/templates/$id': {
+      id: '/templates/$id'
+      path: '/$id'
+      fullPath: '/templates/$id'
+      preLoaderRoute: typeof TemplatesIdRouteImport
+      parentRoute: typeof TemplatesRoute
     }
     '/auth/signup': {
       id: '/auth/signup'
@@ -204,10 +280,26 @@ const MainLayoutRouteWithChildren = MainLayoutRoute._addFileChildren(
   MainLayoutRouteChildren,
 )
 
+interface TemplatesRouteChildren {
+  TemplatesIdRoute: typeof TemplatesIdRoute
+  TemplatesIndexRoute: typeof TemplatesIndexRoute
+}
+
+const TemplatesRouteChildren: TemplatesRouteChildren = {
+  TemplatesIdRoute: TemplatesIdRoute,
+  TemplatesIndexRoute: TemplatesIndexRoute,
+}
+
+const TemplatesRouteWithChildren = TemplatesRoute._addFileChildren(
+  TemplatesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MainLayoutRoute: MainLayoutRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
+  TemplatesRoute: TemplatesRouteWithChildren,
+  ThumbnailTestRoute: ThumbnailTestRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
 }

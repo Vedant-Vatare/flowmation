@@ -190,7 +190,7 @@ function AppSidebar() {
 				<SidebarMenu>
 					<NavItem to="/logs" label="Logs" icon={TimelineListIcon} />
 					<NavItem
-						to="/Templates"
+						to="/templates"
 						label="Templates"
 						icon={DiscoverCircleIcon}
 					/>
