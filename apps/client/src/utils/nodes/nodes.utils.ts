@@ -147,3 +147,15 @@ export const toCanvasEdge = (conn: WorkflowConnection): Edge => ({
 
 export const toCanvasEdges = (connections: WorkflowConnection[]): Edge[] =>
 	connections.map(toCanvasEdge);
+
+export type TemplateApp = { name: string; icon: NodeUI["icon"] };
+
+export const getTemplateAppsUsed = (nodes: WorkflowNode[]): TemplateApp[] => {
+	const seen = new Map<string, TemplateApp>();
+	nodes.forEach((node) => {
+		const ui = getNodeUI(node.task);
+		if (ui.name === "Unknown") return;
+		if (!seen.has(ui.name)) seen.set(ui.name, { name: ui.name, icon: ui.icon });
+	});
+	return Array.from(seen.values());
+};
