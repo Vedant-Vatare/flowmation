@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ThumbnailTestRouteImport } from './routes/thumbnail-test'
 import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
@@ -22,11 +21,6 @@ import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
 import { Route as MainLayoutDashboardRouteImport } from './routes/_mainLayout/dashboard'
 import { Route as MainLayoutWorkflowWorkflowIdRouteImport } from './routes/_mainLayout/workflow/$workflowId'
 
-const ThumbnailTestRoute = ThumbnailTestRouteImport.update({
-  id: '/thumbnail-test',
-  path: '/thumbnail-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
   path: '/templates',
@@ -87,7 +81,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
   '/templates': typeof TemplatesRouteWithChildren
-  '/thumbnail-test': typeof ThumbnailTestRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -99,7 +92,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
-  '/thumbnail-test': typeof ThumbnailTestRoute
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -114,7 +106,6 @@ export interface FileRoutesById {
   '/_mainLayout': typeof MainLayoutRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/templates': typeof TemplatesRouteWithChildren
-  '/thumbnail-test': typeof ThumbnailTestRoute
   '/_mainLayout/dashboard': typeof MainLayoutDashboardRoute
   '/_mainLayout/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
@@ -129,7 +120,6 @@ export interface FileRouteTypes {
     | '/'
     | '/privacy'
     | '/templates'
-    | '/thumbnail-test'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
@@ -141,7 +131,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/privacy'
-    | '/thumbnail-test'
     | '/dashboard'
     | '/logs'
     | '/auth/login'
@@ -155,7 +144,6 @@ export interface FileRouteTypes {
     | '/_mainLayout'
     | '/privacy'
     | '/templates'
-    | '/thumbnail-test'
     | '/_mainLayout/dashboard'
     | '/_mainLayout/logs'
     | '/auth/login'
@@ -170,20 +158,12 @@ export interface RootRouteChildren {
   MainLayoutRoute: typeof MainLayoutRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   TemplatesRoute: typeof TemplatesRouteWithChildren
-  ThumbnailTestRoute: typeof ThumbnailTestRoute
   AuthLoginRoute: typeof AuthLoginRoute
   AuthSignupRoute: typeof AuthSignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/thumbnail-test': {
-      id: '/thumbnail-test'
-      path: '/thumbnail-test'
-      fullPath: '/thumbnail-test'
-      preLoaderRoute: typeof ThumbnailTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/templates': {
       id: '/templates'
       path: '/templates'
@@ -299,7 +279,6 @@ const rootRouteChildren: RootRouteChildren = {
   MainLayoutRoute: MainLayoutRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   TemplatesRoute: TemplatesRouteWithChildren,
-  ThumbnailTestRoute: ThumbnailTestRoute,
   AuthLoginRoute: AuthLoginRoute,
   AuthSignupRoute: AuthSignupRoute,
 }
