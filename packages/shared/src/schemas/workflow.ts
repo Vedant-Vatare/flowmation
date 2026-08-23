@@ -85,6 +85,10 @@ export const templateSchema = z.object({
 	thumbnail: z.string().max(THUMBNAIL_MAX_LENGTH).nullish(),
 	isActive: z.boolean().default(false),
 	category: z.string(),
+	nodeCount: z.number().default(0),
+	triggerType: z.enum(["webhook", "schedule", "manual", "input_trigger"]).nullish(),
+	integrationsUsed: z.array(z.string()).default([]),
+	difficulty: z.string().nullish(),
 	useCount: z.number(),
 	tags: z.array(z.string()),
 	createdBy: z.string(),
@@ -104,6 +108,10 @@ export const updateTemplateSchema = z.object({
 	thumbnail: z.string().max(THUMBNAIL_MAX_LENGTH).optional(),
 	isActive: z.boolean().optional(),
 	category: z.string().optional(),
+	nodeCount: z.number().optional(),
+	triggerType: z.enum(["webhook", "schedule", "manual", "input_trigger"]).optional(),
+	integrationsUsed: z.array(z.string()).optional(),
+	difficulty: z.string().optional(),
 	tags: z.array(z.string()).optional(),
 });
 

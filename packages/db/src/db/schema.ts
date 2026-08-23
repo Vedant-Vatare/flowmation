@@ -261,10 +261,15 @@ export const templatesTable = pgTable(
 	{
 		id: uuid().defaultRandom().primaryKey(),
 		title: varchar({ length: 255 }).notNull(),
-		thumbnail: text(),
 		description: text(),
 		isActive: boolean("is_active").default(false).notNull(),
 		category: varchar({ length: 100 }),
+		nodeCount: integer("node_count").notNull().default(0),
+		triggerType: varchar("trigger_type", { length: 20 }),
+		integrationsUsed: varchar("integrations_used", { length: 100 })
+			.array()
+			.default([]),
+		difficulty: varchar({ length: 20 }),
 		useCount: integer("use_count").notNull().default(0),
 		tags: varchar({ length: 100 }).array().default([]),
 		createdBy: varchar("created_by", { length: 255 }).notNull(),
@@ -273,7 +278,11 @@ export const templatesTable = pgTable(
 			.defaultNow()
 			.$onUpdate(() => new Date()),
 	},
-	(t) => [index("templates_category_idx").on(t.category)],
+	(t) => [
+		index("templates_category_idx").on(t.category),
+		index("templates_trigger_type_idx").on(t.triggerType),
+		index("templates_difficulty_idx").on(t.difficulty),
+	],
 );
 
 export const templateDataTable = pgTable(
