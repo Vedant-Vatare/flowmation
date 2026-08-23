@@ -15,7 +15,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as MainLayoutRouteImport } from './routes/_mainLayout'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
-import { Route as TemplatesIdRouteImport } from './routes/templates/$id'
+import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
@@ -51,9 +51,9 @@ const TemplatesIndexRoute = TemplatesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TemplatesRoute,
 } as any)
-const TemplatesIdRoute = TemplatesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
+const TemplatesTemplateIdRoute = TemplatesTemplateIdRouteImport.update({
+  id: '/$templateId',
+  path: '/$templateId',
   getParentRoute: () => TemplatesRoute,
 } as any)
 const AuthSignupRoute = AuthSignupRouteImport.update({
@@ -92,7 +92,7 @@ export interface FileRoutesByFullPath {
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/templates/$id': typeof TemplatesIdRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
@@ -104,7 +104,7 @@ export interface FileRoutesByTo {
   '/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/templates/$id': typeof TemplatesIdRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates': typeof TemplatesIndexRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
@@ -119,7 +119,7 @@ export interface FileRoutesById {
   '/_mainLayout/logs': typeof MainLayoutLogsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
-  '/templates/$id': typeof TemplatesIdRoute
+  '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
   '/_mainLayout/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
@@ -134,7 +134,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/auth/login'
     | '/auth/signup'
-    | '/templates/$id'
+    | '/templates/$templateId'
     | '/templates/'
     | '/workflow/$workflowId'
   fileRoutesByTo: FileRoutesByTo
@@ -146,7 +146,7 @@ export interface FileRouteTypes {
     | '/logs'
     | '/auth/login'
     | '/auth/signup'
-    | '/templates/$id'
+    | '/templates/$templateId'
     | '/templates'
     | '/workflow/$workflowId'
   id:
@@ -160,7 +160,7 @@ export interface FileRouteTypes {
     | '/_mainLayout/logs'
     | '/auth/login'
     | '/auth/signup'
-    | '/templates/$id'
+    | '/templates/$templateId'
     | '/templates/'
     | '/_mainLayout/workflow/$workflowId'
   fileRoutesById: FileRoutesById
@@ -219,11 +219,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TemplatesIndexRouteImport
       parentRoute: typeof TemplatesRoute
     }
-    '/templates/$id': {
-      id: '/templates/$id'
-      path: '/$id'
-      fullPath: '/templates/$id'
-      preLoaderRoute: typeof TemplatesIdRouteImport
+    '/templates/$templateId': {
+      id: '/templates/$templateId'
+      path: '/$templateId'
+      fullPath: '/templates/$templateId'
+      preLoaderRoute: typeof TemplatesTemplateIdRouteImport
       parentRoute: typeof TemplatesRoute
     }
     '/auth/signup': {
@@ -281,12 +281,12 @@ const MainLayoutRouteWithChildren = MainLayoutRoute._addFileChildren(
 )
 
 interface TemplatesRouteChildren {
-  TemplatesIdRoute: typeof TemplatesIdRoute
+  TemplatesTemplateIdRoute: typeof TemplatesTemplateIdRoute
   TemplatesIndexRoute: typeof TemplatesIndexRoute
 }
 
 const TemplatesRouteChildren: TemplatesRouteChildren = {
-  TemplatesIdRoute: TemplatesIdRoute,
+  TemplatesTemplateIdRoute: TemplatesTemplateIdRoute,
   TemplatesIndexRoute: TemplatesIndexRoute,
 }
 
