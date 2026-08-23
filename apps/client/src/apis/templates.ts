@@ -1,14 +1,16 @@
-import {
-	type Template,
-	type TemplateData,
+import type {
+	Template,
+	TemplateData,
 	updateTemplateSchema,
 } from "@nodebase/shared";
-import { z } from "zod";
+import type { z } from "zod";
 import api from "./axios";
 
-export type PublicTemplate = Template & {
+export type PublicTemplate = Omit<Template, "createdAt" | "updatedAt"> & {
 	id: string;
 	nodeCount: number | null;
+	createdAt: string;
+	updatedAt: string;
 };
 
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
@@ -16,7 +18,6 @@ export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 export const fetchPublicTemplates = async (): Promise<PublicTemplate[]> => {
 	const response = await api.get<{ templates: PublicTemplate[] }>(
 		"/templates/all",
-		{ params: { isActive: true } },
 	);
 	return response.data.templates;
 };

@@ -1,13 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
 import {
 	fetchPublicTemplates,
 	fetchTemplateData,
-	updateTemplate,
 	type UpdateTemplateInput,
+	updateTemplate,
 } from "../apis/templates";
 
+export const TEMPLATES_QUERY_KEYS = {
+	public: ["templates", "public"] as const,
+	detail: (id: string) => ["templates", "detail", id] as const,
+	data: (id: string) => ["templates", "data", id] as const,
+};
+
 export const publicTemplatesOptions = () => ({
-	queryKey: ["templates", "public"],
+	queryKey: TEMPLATES_QUERY_KEYS.public,
 	queryFn: fetchPublicTemplates,
 	staleTime: 60_000,
 });
@@ -15,20 +22,21 @@ export const publicTemplatesOptions = () => ({
 export const useGetPublicTemplates = () => useQuery(publicTemplatesOptions());
 
 export const useGetTemplate = (templateId: string) => {
-	const { data: templates } = useGetPublicTemplates();
-
-	return useQuery({
-		queryKey: ["templates", "detail", templateId],
-		queryFn: () => {
-			const template = templates?.find((t) => t.id === templateId);
-			return template ?? null;
-		},
-		enabled: Boolean(templateId) && Boolean(templates),
-	});
+	const query = useGetPublicTemplates();
+	const data = useMemo(
+		() => query.data?.find((t) => t.id === templateId) ?? null,
+		[query.data, templateId],
+	);
+	return {
+		...query,
+		data,
+		isLoading: query.isLoading,
+		isError: query.isError,
+	};
 };
 
 export const templateDataOptions = (templateId: string) => ({
-	queryKey: ["templates", "data", templateId],
+	queryKey: TEMPLATES_QUERY_KEYS.data(templateId),
 	queryFn: () => fetchTemplateData(templateId),
 	enabled: Boolean(templateId),
 });
@@ -47,9 +55,13 @@ export const useUpdateTemplate = () => {
 			templateId: string;
 			updates: UpdateTemplateInput;
 		}) => updateTemplate(templateId, updates),
-		onSuccess: () => {
+		onSuccess: (_data, variables) => {
+			queryClient.invalidateQueries({ queryKey: TEMPLATES_QUERY_KEYS.public });
 			queryClient.invalidateQueries({
-				queryKey: ["templates", "public"],
+				queryKey: TEMPLATES_QUERY_KEYS.detail(variables.templateId),
+			});
+			queryClient.invalidateQueries({
+				queryKey: TEMPLATES_QUERY_KEYS.data(variables.templateId),
 			});
 		},
 	});
