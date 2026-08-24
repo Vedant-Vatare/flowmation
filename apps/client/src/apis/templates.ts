@@ -9,6 +9,9 @@ import api from "./axios";
 export type PublicTemplate = Omit<Template, "createdAt" | "updatedAt"> & {
 	id: string;
 	nodeCount: number | null;
+	triggerType: "webhook" | "schedule" | "manual" | "input_trigger" | null;
+	integrationsUsed: string[];
+	difficulty: string | null;
 	createdAt: string;
 	updatedAt: string;
 };
