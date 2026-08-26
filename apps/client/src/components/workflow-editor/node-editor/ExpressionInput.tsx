@@ -20,6 +20,11 @@ import {
 	PopoverContent,
 } from "@/components/ui/popover";
 import type { WorkflowNodeData } from "@/constants/nodes";
+import {
+	EXPRESSION_TOKEN_CLASS,
+	getActiveExpression,
+	tokenizeExpression,
+} from "@/utils/expressions";
 
 interface ExpressionInputProps {
 	value: string;
@@ -30,37 +35,6 @@ interface ExpressionInputProps {
 	className?: string;
 	id?: string;
 	setIsEditingExpr?: (active: boolean) => void;
-}
-
-function tokenize(text: string): { text: string; isExpr: boolean }[] {
-	const parts: { text: string; isExpr: boolean }[] = [];
-	const regex = /(\{\{[^}]*\}\})/g;
-	let last = 0;
-	let match: RegExpExecArray | null;
-
-	// biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop
-	while ((match = regex.exec(text)) !== null) {
-		if (match.index > last) {
-			parts.push({ text: text.slice(last, match.index), isExpr: false });
-		}
-		parts.push({ text: match[0], isExpr: true });
-		last = regex.lastIndex;
-	}
-	if (last < text.length) {
-		parts.push({ text: text.slice(last), isExpr: false });
-	}
-	return parts;
-}
-
-function getActiveExpression(value: string, cursorPos: number): string | null {
-	const textBeforeCursor = value.slice(0, cursorPos);
-	const openIdx = textBeforeCursor.lastIndexOf("{{");
-	if (openIdx === -1) return null;
-
-	const between = textBeforeCursor.slice(openIdx + 2);
-	if (between.includes("}}")) return null;
-
-	return between;
 }
 
 export const ExpressionInput = ({
@@ -181,9 +155,9 @@ export const ExpressionInput = ({
 	};
 
 	const renderHighlight = () =>
-		tokenize(value).map((token, i) =>
+		tokenizeExpression(value).map((token, i) =>
 			token.isExpr ? (
-				<div key={i} className="rounded-sm bg-[#5e69d2]/40 max-w-max px-px">
+				<div key={i} className={`${EXPRESSION_TOKEN_CLASS} max-w-max`}>
 					{token.text}
 				</div>
 			) : (

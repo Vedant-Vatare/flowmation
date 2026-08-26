@@ -1,6 +1,8 @@
+import { hasExpression } from "@/utils/expressions";
+
 export const hasExpressionsInParams = (value: unknown): boolean => {
 	if (typeof value === "string") {
-		return /\{\{[^}]+\}\}/.test(value);
+		return hasExpression(value);
 	}
 
 	if (Array.isArray(value)) {
