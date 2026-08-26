@@ -286,13 +286,25 @@ body {
 	z-index: 10;
 }
 
-.workflow-node.selected {
-	outline: 2px solid var(--primary);
-	outline-offset: 4px;
-}
-
 .template-preview .workflow-node {
 	cursor: pointer;
+}
+
+.template-preview .react-flow__handle {
+	cursor: default;
+	pointer-events: none;
+}
+
+.template-preview .react-flow__edge {
+	pointer-events: none;
+}
+
+.template-preview .react-flow__node.selected,
+.template-preview .react-flow__node:focus,
+.template-preview .react-flow__node:focus-visible {
+	box-shadow: none;
+	outline: none;
+	border-color: transparent;
 }
 
 @property --trail-angle {

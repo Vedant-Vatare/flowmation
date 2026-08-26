@@ -103,7 +103,7 @@ const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 		) : null;
 
 	return (
-		<main className="mx-auto w-full max-w-7xl px-6 pt-8 pb-20">
+		<main className="mx-auto w-full max-w-7xl px-6 pt-21 pb-20">
 			<Link
 				to="/templates"
 				className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -198,7 +198,7 @@ const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 			</div>
 
 			<div className="relative mt-8">
-				<div className="template-preview relative h-[60vh] max-h-[640px] min-h-[420px] overflow-hidden rounded-lg border bg-card">
+				<div className="template-preview relative h-[60vh] max-h-160 min-h-105 overflow-hidden rounded-lg border bg-card">
 					<FlowCanvas
 						nodes={canvasNodes}
 						edges={canvasEdges}
@@ -320,9 +320,6 @@ export const TemplateDetailsPage = () => {
 					<p className="text-sm font-medium text-foreground">
 						Couldn't load this template
 					</p>
-					<p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-						Something went wrong while fetching the template. You can retry.
-					</p>
 					<Button
 						variant="outline"
 						size="sm"
@@ -354,7 +351,7 @@ export const TemplateDetailsPage = () => {
 						<Skeleton className="h-9 w-36" />
 					</div>
 					<div className="relative mt-8">
-						<Skeleton className="h-[60vh] max-h-[640px] min-h-[420px] w-full rounded-lg" />
+						<Skeleton className="h-[60vh] max-h-160 min-h-105 w-full rounded-lg" />
 					</div>
 					<div className="mt-12 space-y-10">
 						<div>

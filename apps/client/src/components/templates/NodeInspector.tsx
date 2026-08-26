@@ -1,6 +1,11 @@
+/* biome-ignore-all lint/suspicious/noArrayIndexKey: token order stable */
 import { X } from "lucide-react";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { cn } from "@/lib/utils";
+import {
+	EXPRESSION_TOKEN_CLASS,
+	tokenizeExpression,
+} from "@/utils/expressions";
 
 export type InspectorNeighbor = {
 	id: string;
@@ -9,42 +14,58 @@ export type InspectorNeighbor = {
 
 type NodeInspectorProps = {
 	node: WorkflowCanvasNode;
-	incoming: InspectorNeighbor[];
-	outgoing: InspectorNeighbor[];
+	incoming?: InspectorNeighbor[];
+	outgoing?: InspectorNeighbor[];
 	onClose: () => void;
 	className?: string;
 };
 
-const isExpression = (value: string) => /\{\{[\s\S]*\}\}/.test(value);
+function isFieldVisible(
+	field: WorkflowCanvasNode["data"]["parameters"][number],
+	allParams: WorkflowCanvasNode["data"]["parameters"],
+): boolean {
+	if (!field.dependsOn?.length) return true;
+	return field.dependsOn.every((dep) => {
+		const depParam = allParams.find((p) => p.name === dep.parameter);
+		const val = depParam?.value;
+		return dep.values.includes(val as never);
+	});
+}
 
-function formatParamValue(value: unknown): string | null {
-	if (value == null || value === "") return null;
-	if (typeof value === "boolean") return value ? "Yes" : "No";
-	if (Array.isArray(value)) {
-		if (!value.length) return null;
-		return value
-			.map((v) => (typeof v === "string" ? v : JSON.stringify(v)))
-			.join(", ");
-	}
-	if (typeof value === "object") {
-		const json = JSON.stringify(value);
-		return json === "{}" ? null : json;
-	}
-	return String(value);
+function resolveDropdownLabel(
+	field: WorkflowCanvasNode["data"]["parameters"][number],
+	value: unknown,
+): string {
+	if (!field.options?.length || value == null || value === "")
+		return String(value ?? "");
+	const opt = field.options.find((o) => String(o.value) === String(value));
+	return opt ? opt.label : String(value);
 }
 
 export const NodeInspector = ({
 	node,
-	incoming,
-	outgoing,
 	onClose,
 	className,
 }: NodeInspectorProps) => {
-	const { ui, name, task, type, parameters } = node.data;
+	const { ui, name, parameters } = node.data;
 	const Icon = ui.icon;
-	const visibleParams = parameters
-		.map((p) => ({ label: p.label, value: formatParamValue(p.value) }))
-		.filter((p): p is { label: string; value: string } => p.value !== null);
+
+	const visibleParams = parameters.filter((p) => {
+		if (!isFieldVisible(p, parameters)) return false;
+		const v = p.value;
+		if (v == null || v === "" || (Array.isArray(v) && v.length === 0)) {
+			if (typeof v === "object" && v !== null && !Array.isArray(v)) {
+				if (Object.keys(v as Record<string, unknown>).length === 0)
+					return false;
+			} else {
+				return false;
+			}
+		}
+		if (typeof v === "object" && !Array.isArray(v) && v !== null) {
+			return Object.keys(v as Record<string, unknown>).length > 0;
+		}
+		return true;
+	});
 
 	return (
 		<aside
@@ -54,7 +75,7 @@ export const NodeInspector = ({
 				className,
 			)}
 		>
-			<div className="flex items-start gap-2.5 border-b px-3.5 py-3">
+			<div className="flex items-start gap-2.5 border-b px-3 py-3">
 				<span
 					className="mt-0.5 inline-flex size-8 shrink-0 items-center justify-center rounded-md"
 					style={{ background: ui.background ?? "#6366f1" }}
@@ -67,14 +88,9 @@ export const NodeInspector = ({
 				</span>
 				<div className="min-w-0 flex-1">
 					<p className="truncate text-sm font-medium text-foreground">{name}</p>
-					<div className="mt-1 flex flex-wrap items-center gap-1.5">
-						<span className="rounded-full border bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground capitalize">
-							{type}
-						</span>
-						<code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
-							{task}
-						</code>
-					</div>
+					<p className="truncate font-mono text-[10px] text-muted-foreground">
+						{node.data.task}
+					</p>
 				</div>
 				<button
 					type="button"
@@ -86,65 +102,192 @@ export const NodeInspector = ({
 				</button>
 			</div>
 
-			<div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">
-				<section>
-					<h3 className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
-						Parameters
-					</h3>
-					{visibleParams.length ? (
-						<dl className="mt-2 space-y-2">
-							{visibleParams.map((p) => (
-								<div key={p.label} className="text-xs leading-relaxed">
-									<dt className="text-muted-foreground">{p.label}</dt>
-									<dd
-										className={cn(
-											"mt-0.5 break-words text-foreground",
-											isExpression(p.value) &&
-												"rounded bg-primary/5 px-1.5 py-0.5 font-mono text-[11px] text-primary",
-										)}
-									>
-										{p.value}
-									</dd>
-								</div>
-							))}
-						</dl>
-					) : (
-						<p className="mt-2 text-xs text-muted-foreground">
-							No parameters configured on this node.
-						</p>
-					)}
-				</section>
+			<div className="min-h-0 flex-1 overflow-y-auto">
+				{visibleParams.length ? (
+					<div className="flex flex-col">
+						{visibleParams.map((field) => {
+							const rawValue = field.value;
+							const isKeyValue = field.type === "key-value";
+							const isArray = field.type === "array";
 
-				{(incoming.length > 0 || outgoing.length > 0) && (
-					<section className="mt-5">
-						<h3 className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
-							Connections
-						</h3>
-						<ul className="mt-2 space-y-1.5">
-							{incoming.map((n) => (
-								<li
-									key={`in-${n.id}`}
-									className="flex items-center gap-2 text-xs text-muted-foreground"
+							if (
+								isKeyValue &&
+								rawValue &&
+								typeof rawValue === "object" &&
+								!Array.isArray(rawValue)
+							) {
+								const entries = Object.entries(
+									rawValue as Record<string, string>,
+								).filter(([k]) => k !== "");
+								if (!entries.length) return null;
+								return (
+									<div
+										key={field.name}
+										className="flex flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0"
+									>
+										<div className="flex items-center gap-1">
+											<span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none select-none">
+												{field.label}
+											</span>
+											{field.required ? (
+												<span className="text-destructive text-[10px] leading-none">
+													*
+												</span>
+											) : null}
+										</div>
+										<div className="flex flex-col gap-1.5">
+											<div className="flex items-center pr-1">
+												<span className="flex-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-2">
+													key
+												</span>
+												<span className="flex-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground/40 px-2">
+													value
+												</span>
+											</div>
+											{entries.map(([k, v]) => (
+												<div
+													key={k}
+													className="flex min-w-0 items-stretch overflow-hidden rounded-md border border-input bg-muted/50"
+												>
+													<span className="flex-1 min-w-0 truncate px-2.5 py-1.5 text-xs text-foreground">
+														{k}
+													</span>
+													<span
+														className="w-px shrink-0 self-stretch bg-border/60"
+														aria-hidden
+													/>
+													<span className="flex-1 min-w-0 wrap-break-word px-2.5 py-1.5 text-xs text-foreground">
+														{tokenizeExpression(String(v)).map((tok, i) =>
+															tok.isExpr ? (
+																<span
+																	key={i}
+																	className={EXPRESSION_TOKEN_CLASS}
+																>
+																	{tok.text}
+																</span>
+															) : (
+																<span key={i}>{tok.text}</span>
+															),
+														)}
+													</span>
+												</div>
+											))}
+										</div>
+										{field.description ? (
+											<p className="text-[11px] leading-snug text-muted-foreground/60">
+												{field.description}
+											</p>
+										) : null}
+									</div>
+								);
+							}
+
+							if (isArray && Array.isArray(rawValue)) {
+								const items = (rawValue as unknown[]).filter(
+									(v) => v != null && v !== "",
+								) as string[];
+								if (!items.length) return null;
+								return (
+									<div
+										key={field.name}
+										className="flex flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0"
+									>
+										<div className="flex items-center gap-1">
+											<span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none select-none">
+												{field.label}
+											</span>
+											{field.required ? (
+												<span className="text-destructive text-[10px] leading-none">
+													*
+												</span>
+											) : null}
+										</div>
+										<div className="flex flex-col gap-1.5">
+											{items.map((item, idx) => (
+												<div
+													key={idx}
+													className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground wrap-break-word"
+												>
+													{tokenizeExpression(String(item)).map((tok, i) =>
+														tok.isExpr ? (
+															<span key={i} className={EXPRESSION_TOKEN_CLASS}>
+																{tok.text}
+															</span>
+														) : (
+															<span key={i}>{tok.text}</span>
+														),
+													)}
+												</div>
+											))}
+										</div>
+										{field.description ? (
+											<p className="text-[11px] leading-snug text-muted-foreground/60">
+												{field.description}
+											</p>
+										) : null}
+									</div>
+								);
+							}
+
+							let displayValue: string;
+							if (field.type === "dropdown") {
+								displayValue = resolveDropdownLabel(field, rawValue);
+							} else if (
+								field.type === "boolean" ||
+								field.type === "checkbox"
+							) {
+								if (Array.isArray(rawValue)) {
+									displayValue = (rawValue as string[]).join(", ");
+								} else if (typeof rawValue === "boolean") {
+									displayValue = rawValue ? "true" : "false";
+								} else {
+									displayValue = String(rawValue ?? "");
+								}
+							} else {
+								displayValue = String(rawValue ?? "");
+							}
+
+							return (
+								<div
+									key={field.name}
+									className="flex flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0"
 								>
-									<span aria-hidden="true" className="font-mono text-[10px]">
-										←
-									</span>
-									<span className="truncate text-foreground">{n.name}</span>
-								</li>
-							))}
-							{outgoing.map((n) => (
-								<li
-									key={`out-${n.id}`}
-									className="flex items-center gap-2 text-xs text-muted-foreground"
-								>
-									<span aria-hidden="true" className="font-mono text-[10px]">
-										→
-									</span>
-									<span className="truncate text-foreground">{n.name}</span>
-								</li>
-							))}
-						</ul>
-					</section>
+									<div className="flex items-center gap-1">
+										<span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none select-none">
+											{field.label}
+										</span>
+										{field.required ? (
+											<span className="text-destructive text-[10px] leading-none">
+												*<span className="sr-only">required</span>
+											</span>
+										) : null}
+									</div>
+									<div className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground wrap-break-word whitespace-pre-wrap">
+										{tokenizeExpression(displayValue).map((tok, i) =>
+											tok.isExpr ? (
+												<span key={i} className={EXPRESSION_TOKEN_CLASS}>
+													{tok.text}
+												</span>
+											) : (
+												<span key={i}>{tok.text}</span>
+											),
+										)}
+									</div>
+									<div className="min-h-5">
+										{field.description ? (
+											<p className="text-[11px] leading-snug text-muted-foreground/60">
+												{field.description}
+											</p>
+										) : null}
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				) : (
+					<p className="px-3 py-6 text-center text-xs text-muted-foreground">
+						No parameters configured on this node.
+					</p>
 				)}
 			</div>
 		</aside>
