@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useGetPublicTemplates } from "@/queries/templates";
 import {
-	inferAppsForTemplate,
+	getTemplateIntegrations,
 	matchesTriggerFilter,
 	type TriggerKind,
 } from "@/utils/templates";
@@ -236,16 +236,17 @@ export const TemplatesPage = () => {
 		if (!dedupedTemplates.length) return [];
 		const q = query.trim().toLowerCase();
 
-		const withParsedDates = dedupedTemplates.map((t) => ({
-			template: t,
-			createdAtMs: new Date(t.createdAt).getTime(),
-			searchableText:
-				`${t.title} ${t.description ?? ""} ${t.tags.join(" ")} ${t.category ?? ""} ${inferAppsForTemplate(
-					t,
-				)
-					.map((a) => a.label)
-					.join(" ")}`.toLowerCase(),
-		}));
+		const withParsedDates = dedupedTemplates.map((t) => {
+			const appLabels = getTemplateIntegrations(t)
+				.map((a) => a.label)
+				.join(" ");
+			return {
+				template: t,
+				createdAtMs: new Date(t.createdAt).getTime(),
+				searchableText:
+					`${t.title} ${t.description ?? ""} ${t.tags.join(" ")} ${t.category ?? ""} ${appLabels}`.toLowerCase(),
+			};
+		});
 
 		let out = withParsedDates
 			.filter(({ template, searchableText }) => {

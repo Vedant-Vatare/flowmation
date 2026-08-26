@@ -44,10 +44,13 @@ export type FlowCanvasProps = {
 	nodes: WorkflowCanvasNode[];
 	edges: Edge[];
 	editable?: boolean;
+	previewSelectable?: boolean;
 	fitView?: boolean;
+	fitViewOptions?: typeof fitViewOptions;
 	showMiniMap?: boolean;
 	showBackground?: boolean;
 	onNodeClick?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
+	onPaneClick?: (event: React.MouseEvent) => void;
 	onNodeDragStart?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
 	onNodeDragStop?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
 	onNodesDelete?: (nodes: WorkflowCanvasNode[]) => void;
@@ -63,10 +66,13 @@ export const FlowCanvas = ({
 	nodes,
 	edges,
 	editable = true,
+	previewSelectable = false,
 	fitView = false,
+	fitViewOptions: fitViewOptionsProp,
 	showMiniMap = true,
 	showBackground = true,
 	onNodeClick,
+	onPaneClick,
 	onNodeDragStart,
 	onNodeDragStop,
 	onNodesDelete,
@@ -77,18 +83,35 @@ export const FlowCanvas = ({
 	className,
 	style,
 }: FlowCanvasProps) => {
-	const interactionOptions = editable
-		? {
-				panOnDrag: [1] as number[],
-				selectionOnDrag: true,
-			}
-		: {
-				panOnDrag: true,
-				selectionOnDrag: false,
-				nodesDraggable: false,
-				nodesConnectable: false,
-				elementsSelectable: false,
-			};
+	const isReadOnly = !editable;
+
+	const readOnlyBase = {
+		panOnDrag: true,
+		selectionOnDrag: false,
+		nodesDraggable: false,
+		nodesConnectable: false,
+		edgesFocusable: false,
+		edgesReconnectable: false,
+		connectOnClick: false,
+	} as const;
+
+	let interactionOptions: Record<string, unknown>;
+	if (editable) {
+		interactionOptions = {
+			panOnDrag: [1] as number[],
+			selectionOnDrag: true,
+		};
+	} else if (previewSelectable) {
+		interactionOptions = {
+			...readOnlyBase,
+			elementsSelectable: true,
+		};
+	} else {
+		interactionOptions = {
+			...readOnlyBase,
+			elementsSelectable: false,
+		};
+	}
 
 	return (
 		<ReactFlow
@@ -98,19 +121,20 @@ export const FlowCanvas = ({
 			edgeTypes={edgeTypes}
 			proOptions={{ hideAttribution: true }}
 			fitView={fitView}
-			fitViewOptions={fitViewOptions}
+			fitViewOptions={fitViewOptionsProp ?? fitViewOptions}
 			maxZoom={2}
 			minZoom={0.5}
 			onNodeClick={onNodeClick}
-			onNodeDragStart={onNodeDragStart}
-			onNodesDelete={onNodesDelete}
-			onNodeDragStop={onNodeDragStop}
-			onEdgesDelete={onEdgesDelete}
-			onConnect={onConnect}
-			onReconnect={onReconnect}
+			onPaneClick={onPaneClick}
+			onNodeDragStart={isReadOnly ? undefined : onNodeDragStart}
+			onNodesDelete={isReadOnly ? undefined : onNodesDelete}
+			onNodeDragStop={isReadOnly ? undefined : onNodeDragStop}
+			onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
+			onConnect={isReadOnly ? undefined : onConnect}
+			onReconnect={isReadOnly ? undefined : onReconnect}
 			connectionRadius={20}
 			connectionMode={ConnectionMode.Strict}
-			deleteKeyCode="Delete"
+			deleteKeyCode={isReadOnly ? null : "Delete"}
 			defaultEdgeOptions={defaultEdgeOptions}
 			{...interactionOptions}
 			className={className}

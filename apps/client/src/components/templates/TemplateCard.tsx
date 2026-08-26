@@ -1,9 +1,9 @@
 import type { PublicTemplate } from "@/apis/templates";
 import { cn } from "@/lib/utils";
 import {
+	getTemplateIntegrations,
+	getTriggerKind,
 	getTriggerLabel,
-	inferAppsForTemplate,
-	inferTriggerForTemplate,
 } from "@/utils/templates";
 
 type TemplateCardProps = {
@@ -12,19 +12,18 @@ type TemplateCardProps = {
 };
 
 export const TemplateCard = ({ template, className }: TemplateCardProps) => {
-	const apps = inferAppsForTemplate(template);
-	const trigger = inferTriggerForTemplate(template);
+	const apps = getTemplateIntegrations(template);
+	const trigger = getTriggerKind(template);
 	const visibleApps = apps.slice(0, 3);
 	const extraCount = apps.length - visibleApps.length;
 
 	return (
 		<article
 			className={cn(
-				"group relative flex h-full min-h-[148px] flex-col rounded-lg border bg-card p-4 transition-colors duration-150 hover:border-primary/30 focus-within:border-primary/30",
+				"group relative flex h-full min-h-37 flex-col rounded-lg border bg-card p-4 transition-colors duration-150 hover:border-primary/30 focus-within:border-primary/30",
 				className,
 			)}
 		>
-			{/* Top row: stack icons + trigger */}
 			<div className="flex items-start justify-between gap-2">
 				<div className="flex items-center">
 					{visibleApps.length ? (
@@ -64,20 +63,15 @@ export const TemplateCard = ({ template, className }: TemplateCardProps) => {
 					</span>
 				) : null}
 			</div>
-
-			{/* Title */}
 			<h3 className="mt-3 line-clamp-2 text-sm font-medium leading-snug text-foreground text-balance">
 				{template.title}
 			</h3>
-
-			{/* Description */}
 			{template.description ? (
 				<p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
 					{template.description}
 				</p>
 			) : null}
 
-			{/* Footer meta — category bolder + whiter for hierarchy */}
 			<div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3 text-[11px] leading-none">
 				{template.category ? (
 					<span className="truncate text-xs font-semibold text-foreground">
@@ -105,7 +99,6 @@ export const TemplateCard = ({ template, className }: TemplateCardProps) => {
 				) : null}
 			</div>
 
-			{/* Hover affordance — not hover-only for function, but visual cue */}
 			<span className="pointer-events-none absolute bottom-3 right-3 hidden items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity duration-150 group-hover:flex group-hover:opacity-100 group-focus-within:flex group-focus-within:opacity-100 [@media(hover:none)]:hidden">
 				Use <span aria-hidden="true">→</span>
 			</span>

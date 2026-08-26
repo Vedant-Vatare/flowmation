@@ -12,68 +12,34 @@ export type InferredApp = {
 	ui: NodeUI;
 };
 
-export function inferAppsForTemplate(template: PublicTemplate): InferredApp[] {
-	const searchableText =
-		`${template.title} ${template.description ?? ""} ${template.tags.join(" ")} ${template.category ?? ""}`.toLowerCase();
+export function getTemplateIntegrations(
+	template: PublicTemplate,
+): InferredApp[] {
 	const seen = new Map<string, InferredApp>();
-
-	for (const [task, ui] of Object.entries(NODE_UI_REGISTRY)) {
-		if (!ui.branded) continue;
-		const name = ui.name.toLowerCase();
-		if (name.length < 2) continue;
-		if (searchableText.includes(name)) {
-			if (!seen.has(ui.name))
-				seen.set(ui.name, { key: task, label: ui.name, task, ui });
-		}
+	for (const task of template.integrationsUsed ?? []) {
+		const ui = NODE_UI_REGISTRY[task];
+		if (!ui || seen.has(task)) continue;
+		seen.set(task, { key: task, label: ui.name, task, ui });
 	}
-
 	return Array.from(seen.values());
 }
 
 export type TriggerKind = "webhook" | "schedule" | "manual";
 
-const SCHEDULE_KWS = [
-	"schedule",
-	"poll",
-	"every ",
-	"daily",
-	"weekly",
-	"cron",
-	"reminder",
-	"digest",
-	"monday",
-	"hourly",
-];
-const MANUAL_KWS = ["manual", "click"];
-const WEBHOOK_KWS = [
-	"webhook",
-	"when a",
-	"when new",
-	"created",
-	"submitted",
-	"received",
-	"published",
-	"booked",
-	"opened",
-	"new ",
-];
+const TRIGGER_LABELS: Record<TriggerKind, string> = {
+	webhook: "Webhook",
+	schedule: "Schedule",
+	manual: "Manual",
+};
 
-export function inferTriggerForTemplate(
-	template: PublicTemplate,
-): TriggerKind | null {
-	const searchableText =
-		`${template.title} ${template.description ?? ""}`.toLowerCase();
-	for (const k of SCHEDULE_KWS)
-		if (searchableText.includes(k)) return "schedule";
-	for (const k of MANUAL_KWS) if (searchableText.includes(k)) return "manual";
-	for (const k of WEBHOOK_KWS) if (searchableText.includes(k)) return "webhook";
+export function getTriggerKind(template: PublicTemplate): TriggerKind | null {
+	const t = template.triggerType;
+	if (t === "webhook" || t === "schedule" || t === "manual") return t;
 	return null;
 }
 
 export function getTriggerLabel(kind: TriggerKind): string {
-	if (kind === "webhook") return "Webhook";
-	if (kind === "schedule") return "Schedule";
-	return "Manual";
+	return TRIGGER_LABELS[kind];
 }
 
 export function matchesTriggerFilter(
@@ -81,5 +47,5 @@ export function matchesTriggerFilter(
 	trigger: TriggerKind | null,
 ): boolean {
 	if (!trigger) return true;
-	return inferTriggerForTemplate(template) === trigger;
+	return getTriggerKind(template) === trigger;
 }

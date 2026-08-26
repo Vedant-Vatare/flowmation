@@ -28,7 +28,7 @@ const TRIGGER_VARS = {
 } as const;
 
 export const WorkflowNode = memo(
-	({ data }: NodeProps<Node<WorkflowNodeData>>) => {
+	({ data, selected }: NodeProps<Node<WorkflowNodeData>>) => {
 		const { ui, name, inputPorts, outputPorts } = data;
 		const Icon = ui.icon;
 		const nodeColor = ui.background ?? "#6366f1";
@@ -101,6 +101,7 @@ export const WorkflowNode = memo(
 				data-type={data.type}
 				className={cn(
 					"workflow-node group relative cursor-grab transition-all duration-150",
+					selected && "selected",
 					getStateClass(),
 				)}
 			>
