@@ -72,7 +72,7 @@ export const TemplateCard = ({ template, className }: TemplateCardProps) => {
 				</p>
 			) : null}
 
-			<div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3 text-[11px] leading-none">
+			<div className="mt-auto pt-5 flex flex-wrap items-center gap-1.5  text-[11px] leading-none">
 				{template.category ? (
 					<span className="truncate text-xs font-semibold text-foreground">
 						{template.category}
@@ -85,17 +85,6 @@ export const TemplateCard = ({ template, className }: TemplateCardProps) => {
 					<span className="tabular-nums text-muted-foreground">
 						{template.nodeCount} {template.nodeCount === 1 ? "step" : "steps"}
 					</span>
-				) : null}
-				{template.tags?.length ? (
-					<>
-						<span className="text-muted-foreground/60">·</span>
-						<span className="truncate text-muted-foreground">
-							{template.tags
-								.slice(0, 2)
-								.map((t) => `#${t}`)
-								.join(" ")}
-						</span>
-					</>
 				) : null}
 			</div>
 

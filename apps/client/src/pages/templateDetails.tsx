@@ -6,16 +6,23 @@ import type {
 	WorkflowNode,
 } from "@nodebase/shared";
 import { Link } from "@tanstack/react-router";
-import { format } from "date-fns";
 import { ArrowLeft, MousePointerClick, SearchX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { PublicTemplate } from "@/apis/templates";
+import BrandIcon from "@/assets/icons/flowmation_logo_light.svg";
+import VerifiedBadge from "@/assets/icons/verified-badge.png";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
 import { NodeInspector } from "@/components/templates/NodeInspector";
 import { TemplateCard } from "@/components/templates/TemplateCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { FlowCanvas } from "@/components/workflow-editor/canvas/FlowCanvas";
 import {
 	useGetPublicTemplates,
@@ -112,83 +119,96 @@ const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 				All templates
 			</Link>
 
-			<div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-				<div className="min-w-0">
-					<div className="flex flex-wrap items-center gap-3">
-						{visibleApps.length ? (
-							<div className="flex items-center -space-x-1.5">
-								{visibleApps.map((app) => {
-									const Icon = app.ui.icon;
-									return (
-										<span
-											key={app.key}
-											className="inline-flex size-7 items-center justify-center rounded-full border bg-background shadow-sm"
-											aria-hidden="true"
-											title={app.label}
-										>
-											<Icon className="size-3.5" />
-										</span>
-									);
-								})}
-								{extraApps > 0 ? (
-									<span className="inline-flex size-7 items-center justify-center rounded-full border bg-muted text-[10px] font-medium text-muted-foreground">
-										+{extraApps}
-									</span>
-								) : null}
-							</div>
-						) : null}
-						{trigger ? (
-							<span className="inline-flex shrink-0 items-center rounded-full border bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground">
-								{getTriggerLabel(trigger)}
-							</span>
-						) : null}
-					</div>
-
-					<h1 className="mt-3 text-3xl font-bold leading-[1.1] tracking-tight text-balance text-foreground sm:text-4xl">
-						{template.title}
-					</h1>
-
-					<div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-						{template.category ? (
-							<span className="font-semibold text-foreground">
-								{template.category}
-							</span>
-						) : null}
-						{template.category && template.nodeCount != null ? (
-							<span aria-hidden="true" className="text-muted-foreground/60">
-								·
-							</span>
-						) : null}
-						{template.nodeCount != null ? (
-							<span className="tabular-nums">
-								{template.nodeCount}{" "}
-								{template.nodeCount === 1 ? "step" : "steps"}
-							</span>
-						) : null}
-						<span aria-hidden="true" className="text-muted-foreground/60">
-							·
-						</span>
-						<span className="tabular-nums">
-							{template.useCount} {template.useCount === 1 ? "use" : "uses"}
-						</span>
-						<span aria-hidden="true" className="text-muted-foreground/60">
-							·
-						</span>
-						<span>{format(new Date(template.createdAt), "MMM d, yyyy")}</span>
-						{template.createdBy ? (
-							<>
-								<span aria-hidden="true" className="text-muted-foreground/60">
-									·
+			<div className="flex flex-wrap items-center gap-3">
+				{visibleApps.length ? (
+					<div className="flex items-center -space-x-1.5">
+						{visibleApps.map((app) => {
+							const Icon = app.ui.icon;
+							return (
+								<span
+									key={app.key}
+									className="inline-flex size-7 items-center justify-center rounded-full border bg-background shadow-sm"
+									aria-hidden="true"
+									title={app.label}
+								>
+									<Icon className="size-3.5" />
 								</span>
-								<span>by {template.createdBy}</span>
-							</>
+							);
+						})}
+						{extraApps > 0 ? (
+							<span className="inline-flex size-7 items-center justify-center rounded-full border bg-muted text-[10px] font-medium text-muted-foreground">
+								+{extraApps}
+							</span>
 						) : null}
 					</div>
+				) : null}
+				{trigger ? (
+					<span className="inline-flex shrink-0 items-center rounded-full border bg-muted px-2 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground">
+						{getTriggerLabel(trigger)}
+					</span>
+				) : null}
+			</div>
+
+			<h1 className="mt-3 text-3xl font-bold leading-[1.1] tracking-tight text-balance text-foreground sm:text-4xl">
+				{template.title}
+			</h1>
+
+			<div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+				<div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+					{template.category ? (
+						<span className="font-semibold text-foreground">
+							{template.category}
+						</span>
+					) : null}
+					{template.category && template.nodeCount != null ? (
+						<span aria-hidden="true" className="text-muted-foreground/60">
+							·
+						</span>
+					) : null}
+					{template.nodeCount != null ? (
+						<span className="tabular-nums">
+							{template.nodeCount} {template.nodeCount === 1 ? "step" : "steps"}
+						</span>
+					) : null}
+					<span aria-hidden="true" className="text-muted-foreground/60">
+						·
+					</span>
+					<TooltipProvider>
+						<Tooltip delayDuration={150}>
+							<TooltipTrigger asChild>
+								<span className="inline-flex items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-xs font-medium text-foreground shadow-sm transition-all duration-200 hover:border-foreground/20 hover:shadow-md hover:scale-[1.02] cursor-default">
+									<img
+										src={BrandIcon}
+										alt=""
+										className="size-3.5 rounded-sm"
+										aria-hidden="true"
+									/>
+									Flowmation
+									<img
+										src={VerifiedBadge}
+										alt=""
+										className="size-4 object-contain shrink-0"
+										aria-hidden="true"
+									/>
+								</span>
+							</TooltipTrigger>
+							<TooltipContent side="top" sideOffset={8} className="px-2.5 py-1">
+								<span className="text-xs font-medium">
+									Official template by Flowmation
+								</span>
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
 				</div>
 
 				<div className="shrink-0">
 					{authenticated ? (
-						<Button>Use this template</Button>
+						<Button
+							variant="outline"
+							className="bg-white text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 shadow-sm dark:bg-white dark:text-zinc-900 dark:border-zinc-200 dark:hover:bg-zinc-50"
+						>
+							Use this template
+						</Button>
 					) : (
 						<Button asChild variant="outline">
 							<Link to="/auth/login">Sign in to use</Link>
