@@ -18,11 +18,25 @@ export type PublicTemplate = Omit<Template, "createdAt" | "updatedAt"> & {
 
 export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
 
-export const fetchPublicTemplates = async (): Promise<PublicTemplate[]> => {
-	const response = await api.get<{ templates: PublicTemplate[] }>(
-		"/templates/all",
+export const fetchPublicTemplates = async ({
+	pageParam = 1,
+}: {
+	pageParam?: number;
+} = {}): Promise<{ templates: PublicTemplate[]; hasNextPage: boolean }> => {
+	const response = await api.get<{
+		templates: PublicTemplate[];
+		hasNextPage: boolean;
+	}>(`/templates/all?page=${pageParam}`);
+	return response.data;
+};
+
+export const fetchTemplate = async (
+	templateId: string,
+): Promise<PublicTemplate> => {
+	const response = await api.get<{ template: PublicTemplate }>(
+		`/templates/${templateId}`,
 	);
-	return response.data.templates;
+	return response.data.template;
 };
 
 export const fetchTemplateData = async (

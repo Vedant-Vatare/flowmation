@@ -1,7 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo } from "react";
+import {
+	useInfiniteQuery,
+	useMutation,
+	useQuery,
+	useQueryClient,
+} from "@tanstack/react-query";
 import {
 	fetchPublicTemplates,
+	fetchTemplate,
 	fetchTemplateData,
 	type UpdateTemplateInput,
 	updateTemplate,
@@ -15,25 +20,25 @@ export const TEMPLATES_QUERY_KEYS = {
 
 export const publicTemplatesOptions = () => ({
 	queryKey: TEMPLATES_QUERY_KEYS.public,
-	queryFn: fetchPublicTemplates,
+	queryFn: ({ pageParam }: { pageParam: number }) =>
+		fetchPublicTemplates({ pageParam }),
+	initialPageParam: 1,
+	getNextPageParam: (
+		lastPage: { hasNextPage: boolean },
+		allPages: unknown[],
+	) => (lastPage.hasNextPage ? allPages.length + 1 : undefined),
 	staleTime: 60_000,
 });
 
-export const useGetPublicTemplates = () => useQuery(publicTemplatesOptions());
+export const useGetPublicTemplates = () =>
+	useInfiniteQuery(publicTemplatesOptions());
 
-export const useGetTemplate = (templateId: string) => {
-	const query = useGetPublicTemplates();
-	const data = useMemo(
-		() => query.data?.find((t) => t.id === templateId) ?? null,
-		[query.data, templateId],
-	);
-	return {
-		...query,
-		data,
-		isLoading: query.isLoading,
-		isError: query.isError,
-	};
-};
+export const useGetTemplate = (templateId: string) =>
+	useQuery({
+		queryKey: TEMPLATES_QUERY_KEYS.detail(templateId),
+		queryFn: () => fetchTemplate(templateId),
+		enabled: Boolean(templateId),
+	});
 
 export const templateDataOptions = (templateId: string) => ({
 	queryKey: TEMPLATES_QUERY_KEYS.data(templateId),

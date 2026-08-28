@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Search, SearchX, SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2, Search, SearchX, SlidersHorizontal, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Footer } from "@/components/landing/Footer";
 import { Navbar } from "@/components/landing/Navbar";
 import { FilterRail } from "@/components/templates/FilterRail";
@@ -146,11 +146,27 @@ const SORT_OPTIONS: SortOption[] = ["popular", "newest", "simplest"];
 
 export const TemplatesPage = () => {
 	const {
-		data: templates,
+		data,
 		isLoading,
 		isError,
 		refetch,
+		hasNextPage,
+		fetchNextPage,
+		isFetchingNextPage,
 	} = useGetPublicTemplates();
+
+	const observerRef = useRef<IntersectionObserver | null>(null);
+	const loadMoreRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			if (isLoading || isFetchingNextPage) return;
+			if (observerRef.current) observerRef.current.disconnect();
+			observerRef.current = new IntersectionObserver((entries) => {
+				if (entries[0]?.isIntersecting && hasNextPage) fetchNextPage();
+			});
+			if (node) observerRef.current.observe(node);
+		},
+		[isLoading, isFetchingNextPage, hasNextPage, fetchNextPage],
+	);
 
 	const [query, setQuery] = useState("");
 	const [category, setCategory] = useState<string | null>(null);
@@ -189,13 +205,13 @@ export const TemplatesPage = () => {
 	}, [query, category, trigger, sort]);
 
 	const dedupedTemplates = useMemo(() => {
-		if (!templates) return [];
-		const seen = new Map<string, (typeof templates)[number]>();
-		for (const t of templates) {
+		const flat = data?.pages.flatMap((p) => p.templates) ?? [];
+		const seen = new Map<string, (typeof flat)[number]>();
+		for (const t of flat) {
 			if (!seen.has(t.id)) seen.set(t.id, t);
 		}
 		return Array.from(seen.values());
-	}, [templates]);
+	}, [data]);
 
 	const categories = useMemo(() => {
 		const map = new Map<string, number>();
@@ -498,6 +514,19 @@ export const TemplatesPage = () => {
 										))}
 									</div>
 								) : null}
+								{hasNextPage && (
+									<div
+										ref={loadMoreRef}
+										className="h-10 w-full flex items-center justify-center py-2"
+									>
+										{isFetchingNextPage && (
+											<Loader2
+												className="h-4 w-4 animate-spin text-muted-foreground"
+												aria-hidden="true"
+											/>
+										)}
+									</div>
+								)}
 							</div>
 
 							{!isLoading && !isError && filtered.length > 0 ? (

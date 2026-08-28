@@ -312,7 +312,11 @@ export const TemplateDetailsPage = () => {
 		isError: dataError,
 		refetch: refetchData,
 	} = useGetTemplateData(templateId);
-	const { data: allTemplates } = useGetPublicTemplates();
+	const { data: infiniteData } = useGetPublicTemplates();
+	const allTemplates = useMemo(
+		() => infiniteData?.pages.flatMap((p) => p.templates) ?? [],
+		[infiniteData],
+	);
 
 	const isLoading = templateLoading || dataLoading;
 	const isError = templateError || dataError;
