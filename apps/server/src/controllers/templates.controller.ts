@@ -3,9 +3,42 @@ import type { Template } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 
-export const getAllTemplates = async (_req: Request, res: Response) => {
-	const templates = await db.select().from(templatesTable).limit(100);
-	return res.json({ templates });
+export const getAllTemplates = async (req: Request, res: Response) => {
+	const page = Number(req.query.page) || 1;
+	const limit = 30;
+	const skip = (page - 1) * limit;
+
+	if (!Number.isInteger(page) || page < 1) {
+		throw createHttpError.BadRequest("page must be a positive integer");
+	}
+
+	const templates = await db
+		.select()
+		.from(templatesTable)
+		.limit(limit + 1)
+		.offset(skip);
+
+	const hasNextPage = templates.length > limit;
+
+	return res.json({ templates: templates.slice(0, limit), hasNextPage });
+};
+
+export const getTemplate = async (req: Request, res: Response) => {
+	const templateId = req.params.id as string;
+	if (!templateId) {
+		throw createHttpError.BadRequest("invalid template Id");
+	}
+
+	const [template] = await db
+		.select()
+		.from(templatesTable)
+		.where(eq(templatesTable.id, templateId));
+
+	if (!template) {
+		throw createHttpError.NotFound("template not found");
+	}
+
+	return res.json({ template });
 };
 
 export const addTemplate = async (req: Request, res: Response) => {

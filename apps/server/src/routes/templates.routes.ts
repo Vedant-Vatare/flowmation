@@ -9,6 +9,7 @@ import {
 	addTemplateData,
 	deleteTemplate,
 	getAllTemplates,
+	getTemplate,
 	getTemplateData,
 	updateTemplate,
 	updateTemplateData,
@@ -18,7 +19,8 @@ import { authenticateAdminUser } from "@/utils/auth.utils.js";
 
 const router = Router() as Router;
 
-router.get("/all", getAllTemplates);
+router.get("/all", asyncHandler(getAllTemplates));
+router.get("/:id", asyncHandler(getTemplate));
 router.get("/:id/data", asyncHandler(getTemplateData));
 
 router.use(authenticateAdminUser);
