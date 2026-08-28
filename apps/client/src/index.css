@@ -480,6 +480,41 @@ input[type="text"][inputmode="numeric"] {
 	}
 }
 
+.thin-scrollbar {
+	scrollbar-width: thin;
+	scrollbar-color: oklch(0.7 0 0) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb {
+	background: oklch(0.7 0 0);
+	border-radius: 9999px;
+}
+
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: oklch(0.6 0 0);
+}
+
+.dark .thin-scrollbar {
+	scrollbar-color: oklch(0.55 0 0) transparent;
+}
+
+.dark .thin-scrollbar::-webkit-scrollbar-thumb {
+	background: oklch(0.55 0 0);
+}
+
+.dark .thin-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: oklch(0.65 0 0);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	@keyframes marquee {
 		from {

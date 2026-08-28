@@ -29,7 +29,6 @@ export function FilterRail({
 }: FilterRailProps) {
 	return (
 		<div className="flex flex-col gap-7">
-			{/* Header */}
 			<div className="flex items-center justify-between">
 				<h2 className="text-[11px] font-semibold tracking-widest text-muted-foreground uppercase">
 					Filters
@@ -45,12 +44,11 @@ export function FilterRail({
 				) : null}
 			</div>
 
-			{/* Trigger */}
 			<div className="flex flex-col gap-3">
 				<h3 className="text-xs font-medium text-foreground">How it starts</h3>
 				{/* biome-ignore lint/a11y/useSemanticElements: pill group styling requires div */}
 				<div
-					className="inline-flex w-full rounded-full border bg-muted p-1 gap-0.5"
+					className="inline-flex w-full rounded-full border bg-muted p-1.5 gap-0.5"
 					role="group"
 					aria-label="Trigger type"
 				>
@@ -63,9 +61,9 @@ export function FilterRail({
 								aria-pressed={active}
 								onClick={() => onSelectTrigger(opt.value)}
 								className={cn(
-									"flex-1 rounded-full px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+									"flex-auto inline-flex items-center justify-center whitespace-nowrap px-0 mx-0 rounded-full  text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
 									active
-										? "bg-card text-foreground shadow-sm border border-border"
+										? "bg-card text-foreground shadow-sm"
 										: "text-muted-foreground hover:text-foreground",
 								)}
 							>
@@ -76,7 +74,6 @@ export function FilterRail({
 				</div>
 			</div>
 
-			{/* Category */}
 			<div className="flex flex-col gap-3">
 				<h3 className="text-xs font-medium text-foreground">Category</h3>
 				<div className="flex flex-col gap-1">

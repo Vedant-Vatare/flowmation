@@ -89,7 +89,7 @@ export const TemplateCard = ({ template, className }: TemplateCardProps) => {
 			</div>
 
 			<span className="pointer-events-none absolute bottom-3 right-3 hidden items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity duration-150 group-hover:flex group-hover:opacity-100 group-focus-within:flex group-focus-within:opacity-100 [@media(hover:none)]:hidden">
-				Use <span aria-hidden="true">→</span>
+				View <span aria-hidden="true">→</span>
 			</span>
 		</article>
 	);

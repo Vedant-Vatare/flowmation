@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useGetPublicTemplates } from "@/queries/templates";
 import {
@@ -73,43 +74,15 @@ const TemplateSearch = ({
 }) => {
 	const inputRef = useRef<HTMLInputElement>(null);
 	const [focused, setFocused] = useState(false);
-	const [placeholder, setPlaceholder] = useState(
-		"Search by outcome, app, or trigger...",
-	);
+	const isMobile = useIsMobile();
+	const placeholder = isMobile
+		? "Search templates..."
+		: "Search by outcome, app, or trigger...";
 
 	useEffect(() => {
-		let timeoutId: number | undefined;
-		const update = () => {
-			window.clearTimeout(timeoutId);
-			timeoutId = window.setTimeout(() => {
-				setPlaceholder(
-					window.innerWidth < 640
-						? "Search templates..."
-						: "Search by outcome, app, or trigger...",
-				);
-			}, 100) as unknown as number;
-		};
-		update();
-		window.addEventListener("resize", update);
-		return () => {
-			window.removeEventListener("resize", update);
-			window.clearTimeout(timeoutId);
-		};
-	}, []);
-
-	useEffect(() => {
-		const isMac =
-			/Mac|iPhone|iPad|iPod/i.test(navigator.platform) ||
-			/mac/i.test(
-				(navigator as unknown as { userAgentData?: { platform?: string } })
-					.userAgentData?.platform ?? "",
-			);
 		const onKeyDown = (e: KeyboardEvent) => {
 			if (e.key.toLowerCase() !== "k" || e.altKey || e.shiftKey) return;
-			const modPressed = isMac
-				? e.metaKey && !e.ctrlKey
-				: e.ctrlKey && !e.metaKey;
-			if (modPressed) {
+			if (e.ctrlKey || e.metaKey) {
 				e.preventDefault();
 				inputRef.current?.focus();
 				inputRef.current?.select();
@@ -325,10 +298,10 @@ export const TemplatesPage = () => {
 				<div className="mx-auto w-full max-w-7xl px-6 pb-20 pt-6">
 					<div className="flex items-start gap-8">
 						<aside
-							className="hidden w-66 shrink-0 lg:sticky lg:top-22 lg:block lg:self-start lg:pr-3"
+							className="hidden w-66 shrink-0 lg:sticky lg:top-22 lg:block lg:self-start lg:max-h-[calc(100dvh-88px-16px)] lg:overflow-y-auto lg:overscroll-contain lg:pr-3 lg:pb-6 thin-scrollbar"
 							style={{ top: NAVBAR_OFFSET } as React.CSSProperties}
 						>
-							<div className="pr-1">
+							<div className="pr-2 py-1">
 								{isLoading ? (
 									<RailSkeleton />
 								) : (
