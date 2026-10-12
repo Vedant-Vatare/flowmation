@@ -13,15 +13,17 @@ import {
 	getTemplateData,
 	updateTemplate,
 	updateTemplateData,
+	useTemplate,
 } from "@/controllers/templates.controller.js";
 import { asyncHandler, validateRequest } from "@/utils/api.utils.js";
-import { authenticateAdminUser } from "@/utils/auth.utils.js";
+import { authenticateAdminUser, authenticateUser } from "@/utils/auth.utils.js";
 
 const router = Router() as Router;
 
 router.get("/all", asyncHandler(getAllTemplates));
 router.get("/:id", asyncHandler(getTemplate));
 router.get("/:id/data", asyncHandler(getTemplateData));
+router.post("/:id/use", authenticateUser, asyncHandler(useTemplate));
 
 router.use(authenticateAdminUser);
 

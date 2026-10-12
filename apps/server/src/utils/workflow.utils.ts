@@ -7,6 +7,20 @@ import {
 } from "@nodebase/db";
 import { addWorkflowInQueue, type WorkflowTriggerType } from "@nodebase/queue";
 import createHttpError from "http-errors";
+import { nanoid } from "nanoid";
+
+const WORKFLOW_NAME_MAX_LENGTH = 255;
+
+export const createUniqueWorkflowName = (name: string): string => {
+	const suffix = nanoid(5);
+	const baseName = name.trim() || "Untitled Workflow";
+	const truncatedName = Array.from(baseName)
+		.slice(0, WORKFLOW_NAME_MAX_LENGTH - suffix.length)
+		.join("")
+		.trimEnd();
+
+	return `${truncatedName}${suffix}`;
+};
 
 type ExecutionData = {
 	executionId?: string;
