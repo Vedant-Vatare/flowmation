@@ -6,7 +6,7 @@ import type {
 	WorkflowNode,
 } from "@nodebase/shared";
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, MousePointerClick, SearchX } from "lucide-react";
+import { ArrowLeft, Loader2, MousePointerClick, SearchX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { PublicTemplate } from "@/apis/templates";
 import BrandIcon from "@/assets/icons/flowmation_logo_light.svg";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/tooltip";
 import { FlowCanvas } from "@/components/workflow-editor/canvas/FlowCanvas";
 import {
+	useCreateWorkflowFromTemplate,
 	useGetPublicTemplates,
 	useGetTemplate,
 	useGetTemplateData,
@@ -55,6 +56,8 @@ type TemplateDetailsProps = {
 
 const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 	const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+	const { mutate: createFromTemplate, isPending } =
+		useCreateWorkflowFromTemplate();
 
 	const canvasNodes = useMemo(
 		() => toCanvasNodes(templateData.nodes as WorkflowNode[]),
@@ -206,8 +209,11 @@ const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 						<Button
 							variant="outline"
 							className="bg-white text-zinc-900 border-zinc-200 hover:bg-zinc-50 hover:text-zinc-900 shadow-sm dark:bg-white dark:text-zinc-900 dark:border-zinc-200 dark:hover:bg-zinc-50"
+							disabled={isPending}
+							onClick={() => createFromTemplate({ templateId: template.id })}
 						>
-							Use this template
+							{isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+							{isPending ? "Creating..." : "Use this template"}
 						</Button>
 					) : (
 						<Button asChild variant="outline">

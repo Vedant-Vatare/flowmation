@@ -1,6 +1,7 @@
 import type {
 	Template,
 	TemplateData,
+	UserWorkflow,
 	updateTemplateSchema,
 } from "@nodebase/shared";
 import type { z } from "zod";
@@ -57,4 +58,13 @@ export const updateTemplate = async (
 		updates,
 	);
 	return response.data.template;
+};
+
+export const createWorkflowFromTemplate = async (
+	templateId: string,
+): Promise<UserWorkflow> => {
+	const response = await api.post<{ workflow: UserWorkflow }>(
+		`/templates/${templateId}/use`,
+	);
+	return response.data.workflow;
 };

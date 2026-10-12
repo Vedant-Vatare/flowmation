@@ -1,10 +1,15 @@
+import type { UserWorkflow } from "@nodebase/shared";
 import {
 	useInfiniteQuery,
 	useMutation,
 	useQuery,
 	useQueryClient,
 } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/utils/error";
 import {
+	createWorkflowFromTemplate,
 	fetchPublicTemplates,
 	fetchTemplate,
 	fetchTemplateData,
@@ -68,6 +73,29 @@ export const useUpdateTemplate = () => {
 			queryClient.invalidateQueries({
 				queryKey: TEMPLATES_QUERY_KEYS.data(variables.templateId),
 			});
+		},
+	});
+};
+
+export const useCreateWorkflowFromTemplate = () => {
+	const queryClient = useQueryClient();
+	const navigate = useNavigate();
+
+	return useMutation({
+		mutationFn: ({ templateId }: { templateId: string }) =>
+			createWorkflowFromTemplate(templateId),
+		onSuccess: (workflow) => {
+			queryClient.setQueryData<UserWorkflow[]>(["user-workflows"], (old) =>
+				old ? [...old, workflow] : undefined,
+			);
+			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			navigate({
+				to: "/workflow/$workflowId",
+				params: { workflowId: workflow.id },
+			});
+		},
+		onError: (error) => {
+			toast.error(getErrorMessage(error));
 		},
 	});
 };
