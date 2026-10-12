@@ -6,6 +6,7 @@ export const CREDENTIALS_PROVIDER = [
 	"asana",
 	"calcom",
 	"clickup",
+	"discord",
 	"firebase",
 	"google",
 	"github",

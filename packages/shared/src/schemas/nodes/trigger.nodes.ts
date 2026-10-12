@@ -117,3 +117,47 @@ export const webhookNodeSchema = baseTriggerNodeSchema.extend({
 	type: z.literal("trigger"),
 	parameters: z.tuple([]),
 });
+
+export const discordTriggerNodeValueSchemas = {
+	commandName: z
+		.string()
+		.trim()
+		.max(32)
+		.refine((value) => !value.includes("{{") && !value.includes("}}"), {
+			error: "Command filters cannot contain expressions",
+		})
+		.default(""),
+	allowedUserIds: z
+		.array(z.string().regex(/^\d+$/, "Must be a Discord user ID"))
+		.default([]),
+} as const;
+
+export const discordTriggerNodeSchema = baseTriggerNodeSchema.extend({
+	task: z.literal("trigger.discord"),
+	type: z.literal("trigger"),
+	credentialProvider: z.literal("discord").default("discord"),
+	inputPorts: z.tuple([]).default([]),
+	outputPorts: z
+		.tuple([
+			z.object({ name: z.literal("default"), label: z.literal("Default") }),
+		])
+		.default([{ name: "default", label: "Default" }]),
+	parameters: z.array(
+		z.discriminatedUnion("name", [
+			nodeParameterSchema.extend({
+				name: z.literal("commandName"),
+				label: z.literal("Command name"),
+				type: z.literal("input"),
+				value: discordTriggerNodeValueSchemas.commandName,
+				required: z.literal(false).default(false),
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("allowedUserIds"),
+				label: z.literal("Allowed user IDs"),
+				type: z.literal("array"),
+				value: discordTriggerNodeValueSchemas.allowedUserIds,
+				required: z.literal(false).default(false),
+			}),
+		]),
+	),
+});
