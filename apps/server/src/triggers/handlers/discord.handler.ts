@@ -233,7 +233,7 @@ export const discordTriggerHandler: TriggerHandler = {
 				username: command.data.user.username,
 				channelId,
 			},
-			response: messageResponse("Workflow started."),
+			response: messageResponse("Command received."),
 		};
 	},
 };

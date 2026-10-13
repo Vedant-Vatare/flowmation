@@ -56,6 +56,7 @@ export type NodeUI = {
 	iconBackground?: string;
 	fill?: string;
 	branded?: boolean;
+	triggerTestMode?: "manual" | "webhook";
 };
 
 export type PortDefinition = {
@@ -122,21 +123,24 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		color: "#7B68EE",
 		branded: true,
 	},
-	"action.click": {
+	"trigger.click": {
 		name: "Click",
 		icon: ClickIcon,
+		triggerTestMode: "manual",
 		background: "#0496FF",
 		color: "#ffffff",
 	},
 	"trigger.cron": {
 		name: "Schedule",
 		icon: ScheduleIcon,
+		triggerTestMode: "manual",
 		background: "#F72585",
 		color: "#ffffff",
 	},
 	"trigger.webhook": {
 		name: "Webhook",
 		icon: WebhookIcon,
+		triggerTestMode: "webhook",
 		background: "#0F9D6E",
 		color: "#fff",
 	},
@@ -151,6 +155,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	"trigger.input": {
 		name: "Input Trigger",
 		icon: InputIcon,
+		triggerTestMode: "manual",
 		background: "#2EC4B6",
 		color: "#ffffff",
 	},
