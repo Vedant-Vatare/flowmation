@@ -105,7 +105,7 @@ export const WorkflowNode = memo(
 					getStateClass(),
 				)}
 			>
-				{isTrigger && isSelectingTrigger ? (
+				{isTrigger && isSelectingTrigger && ui.triggerTestMode ? (
 					<button
 						type="button"
 						disabled={isPending}

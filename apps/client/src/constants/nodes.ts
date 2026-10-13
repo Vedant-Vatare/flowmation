@@ -140,6 +140,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#0F9D6E",
 		color: "#fff",
 	},
+	"trigger.discord": {
+		name: "Discord Trigger",
+		icon: DiscordIcon,
+		background: "oklch(0.98 0.005 275)",
+		iconBackground: "transparent",
+		color: "oklch(0.58 0.21 275)",
+		branded: true,
+	},
 	"trigger.input": {
 		name: "Input Trigger",
 		icon: InputIcon,

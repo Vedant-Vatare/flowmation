@@ -9,7 +9,7 @@ export const discordCredential: ApiKeyCredentialDef = {
 		{
 			key: "botToken",
 			label: "Bot Token",
-			placeholder: "Paste your Discord bot token",
+			placeholder: "MT...",
 			secret: true,
 		},
 	],
