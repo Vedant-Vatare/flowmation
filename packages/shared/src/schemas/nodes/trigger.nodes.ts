@@ -130,6 +130,15 @@ export const discordTriggerNodeValueSchemas = {
 	allowedUserIds: z
 		.array(z.string().regex(/^\d+$/, "Must be a Discord user ID"))
 		.default([]),
+	acknowledgementMessage: z
+		.string()
+		.trim()
+		.max(2000)
+		.refine((value) => !value.includes("{{") && !value.includes("}}"), {
+			error: "Acknowledgements cannot contain expressions",
+		})
+		.default(""),
+	removeAcknowledgement: z.boolean().default(true),
 } as const;
 
 export const discordTriggerNodeSchema = baseTriggerNodeSchema.extend({
@@ -156,6 +165,20 @@ export const discordTriggerNodeSchema = baseTriggerNodeSchema.extend({
 				label: z.literal("Allowed user IDs"),
 				type: z.literal("array"),
 				value: discordTriggerNodeValueSchemas.allowedUserIds,
+				required: z.literal(false).default(false),
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("acknowledgementMessage"),
+				label: z.literal("Acknowledgement message"),
+				type: z.literal("input"),
+				value: discordTriggerNodeValueSchemas.acknowledgementMessage,
+				required: z.literal(false).default(false),
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("removeAcknowledgement"),
+				label: z.literal("Remove acknowledgement"),
+				type: z.literal("boolean"),
+				value: discordTriggerNodeValueSchemas.removeAcknowledgement,
 				required: z.literal(false).default(false),
 			}),
 		]),

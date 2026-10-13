@@ -27,6 +27,14 @@ const callbackParamsSchema = z.object({
 });
 
 const sendResponse = (res: Response, response: TriggerResponse) => {
+	if (response.afterResponse) {
+		const afterResponse = response.afterResponse;
+		res.once("finish", () => {
+			void afterResponse().catch(() => {
+				console.error("HTTP trigger response cleanup failed");
+			});
+		});
+	}
 	if (response.headers) res.set(response.headers);
 	res.status(response.status);
 	return response.body === undefined ? res.end() : res.json(response.body);

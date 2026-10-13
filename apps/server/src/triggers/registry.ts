@@ -18,6 +18,7 @@ export type TriggerResponse = {
 	status: number;
 	headers?: Record<string, string>;
 	body?: unknown;
+	afterResponse?: () => Promise<void>;
 };
 
 export type TriggerHandler = {

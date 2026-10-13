@@ -1,4 +1,5 @@
 import { createHash, createPublicKey, verify } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import { redis } from "@nodebase/redis";
 import { discordTriggerNodeSchema } from "@nodebase/shared";
 import createHttpError from "http-errors";
@@ -17,15 +18,16 @@ const interactionSchema = z.object({
 const commandSchema = z.object({
 	id: snowflake,
 	application_id: snowflake,
+	token: z.string().min(1),
 	type: z.literal(2),
-	context: z.literal(1), // BOT_DM, not server channels or other private channels.
+	context: z.literal(1),
 	guild_id: z.never().optional(),
 	channel_id: snowflake.optional(),
 	channel: z.object({ id: snowflake }).optional(),
 	user: z.object({ id: snowflake, username: z.string() }),
 	data: z.object({
 		id: snowflake,
-		type: z.literal(1), // CHAT_INPUT (slash command).
+		type: z.literal(1),
 		name: z.string().min(1).max(32),
 		options: z.array(z.json()).default([]),
 		resolved: z.record(z.string(), z.json()).optional(),
@@ -37,17 +39,48 @@ const messageResponse = (content: string): TriggerResponse => ({
 	body: { type: 4, data: { content, allowed_mentions: { parse: [] } } },
 });
 
+const removeAcknowledgement = async (
+	applicationId: string,
+	interactionToken: string,
+	interactionId: string,
+) => {
+	const url = `https://discord.com/api/v10/webhooks/${applicationId}/${encodeURIComponent(interactionToken)}/messages/@original`;
+	let retryDelay = 150;
+	for (let attempt = 0; attempt < 5; attempt++) {
+		// Local response completion can precede Discord creating the original reply.
+		await delay(retryDelay);
+		try {
+			const response = await fetch(url, {
+				method: "DELETE",
+				signal: AbortSignal.timeout(2000),
+			});
+			if (response.ok) return;
+			if (response.status === 429) {
+				const body = z
+					.object({ retry_after: z.number().min(0).max(5) })
+					.safeParse(await response.json().catch(() => null));
+				if (!body.success) break;
+				const seconds = body.data.retry_after;
+				retryDelay = Math.max(150, Math.ceil(seconds * 1000));
+				continue;
+			}
+			if (response.status !== 404 && response.status < 500) break;
+		} catch {}
+		retryDelay = Math.min(150 * 2 ** (attempt + 1), 2000);
+	}
+	console.warn("Discord acknowledgement cleanup could not be confirmed", {
+		interactionId,
+	});
+};
+
 const getApplication = async (botToken: string) => {
-	// Cache public metadata under a token hash; never store the bot token here.
 	const key = `discord:application:${createHash("sha256").update(botToken).digest("hex")}`;
 	const cached = await redis.get(key);
 	if (cached) {
 		try {
 			const result = applicationSchema.safeParse(JSON.parse(cached));
 			if (result.success) return result.data;
-		} catch {
-			// An invalid cache value is replaced by a fresh API response.
-		}
+		} catch {}
 	}
 
 	let response: Response;
@@ -219,6 +252,17 @@ export const discordTriggerHandler: TriggerHandler = {
 			throw createHttpError.BadRequest(
 				"Discord interaction channel is missing",
 			);
+		const acknowledgementMessage =
+			node.parameters.find((param) => param.name === "acknowledgementMessage")
+				?.value ?? "";
+		const shouldRemove =
+			!acknowledgementMessage ||
+			(node.parameters.find((param) => param.name === "removeAcknowledgement")
+				?.value ??
+				true);
+		const response = messageResponse(
+			acknowledgementMessage || "Command received.",
+		);
 		return {
 			kind: "trigger",
 			eventId: command.data.id,
@@ -233,7 +277,17 @@ export const discordTriggerHandler: TriggerHandler = {
 				username: command.data.user.username,
 				channelId,
 			},
-			response: messageResponse("Command received."),
+			response: {
+				...response,
+				afterResponse: shouldRemove
+					? () =>
+							removeAcknowledgement(
+								command.data.application_id,
+								command.data.token,
+								command.data.id,
+							)
+					: undefined,
+			},
 		};
 	},
 };
