@@ -1,5 +1,6 @@
 import type { WorkflowNode } from "@nodebase/shared";
 import type { Request } from "express";
+import { discordTriggerHandler } from "./handlers/discord.handler.js";
 
 type TriggerRequest = Pick<Request, "method" | "headers" | "query"> & {
 	rawBody: Uint8Array;
@@ -19,7 +20,7 @@ export type TriggerResponse = {
 	body?: unknown;
 };
 
-type TriggerHandler = {
+export type TriggerHandler = {
 	verifyRequest: (
 		request: TriggerRequest,
 		context: TriggerContext,
@@ -33,7 +34,12 @@ type TriggerHandler = {
 		context: TriggerContext,
 	) => Promise<
 		| { kind: "ignore"; response: TriggerResponse }
-		| { kind: "trigger"; data: unknown; response: TriggerResponse }
+		| {
+				kind: "trigger";
+				eventId?: string;
+				data: unknown;
+				response: TriggerResponse;
+		  }
 	>;
 };
 
@@ -43,4 +49,12 @@ export const httpTriggerHandlers = new Map<
 		credentialProvider?: string;
 		triggerHandler: TriggerHandler;
 	}
->();
+>([
+	[
+		"trigger.discord",
+		{
+			credentialProvider: "discord",
+			triggerHandler: discordTriggerHandler,
+		},
+	],
+]);

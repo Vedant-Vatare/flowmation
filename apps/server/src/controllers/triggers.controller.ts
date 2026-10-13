@@ -11,6 +11,11 @@ import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
 import {
+	acceptTriggerEvent,
+	claimTriggerEvent,
+	releaseTriggerEvent,
+} from "@/triggers/deduplication.js";
+import {
 	httpTriggerHandlers,
 	type TriggerResponse,
 } from "@/triggers/registry.js";
@@ -136,16 +141,26 @@ export const triggerCallback = async (req: Request, res: Response) => {
 	const event = await triggerHandler.handleEvent(request, context);
 
 	if (event.kind === "trigger") {
-		await enqueueWorkflow(
-			{
-				workflowId,
-				userId: workflow.userId,
-				triggerNodeId,
-				triggerType: "webhook",
-				triggerData: event.data,
-			},
-			snapshot,
-		);
+		const claim = event.eventId
+			? await claimTriggerEvent(workflowId, triggerNodeId, event.eventId)
+			: undefined;
+		if (claim === null) return sendResponse(res, event.response);
+		try {
+			await enqueueWorkflow(
+				{
+					workflowId,
+					userId: workflow.userId,
+					triggerNodeId,
+					triggerType: "webhook",
+					triggerData: event.data,
+				},
+				snapshot,
+			);
+		} catch (error) {
+			if (claim) await releaseTriggerEvent(claim);
+			throw error;
+		}
+		if (claim) await acceptTriggerEvent(claim);
 	}
 	return sendResponse(res, event.response);
 };

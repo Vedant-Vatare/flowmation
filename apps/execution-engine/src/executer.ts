@@ -230,6 +230,7 @@ export const executeTriggerNode = async (
 		case "trigger.input":
 			return inputNodeExecutor(triggerNode as InputNode);
 		case "trigger.webhook":
+		case "trigger.discord":
 			return { success: true, output: job.data.triggerData };
 		default:
 			return {
