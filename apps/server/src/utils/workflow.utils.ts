@@ -32,7 +32,13 @@ type ExecutionData = {
 	liveUpdates?: boolean;
 };
 
-export const enqueueWorkflow = async (executionData: ExecutionData) => {
+export const enqueueWorkflow = async (
+	executionData: ExecutionData,
+	publishedSnapshot?: Pick<
+		typeof workflowSnapshotsTable.$inferSelect,
+		"nodes" | "connections"
+	>,
+) => {
 	const workflowData = await db.query.userWorkflowsTable.findFirst({
 		where: eq(userWorkflowsTable.id, executionData.workflowId),
 	});
@@ -42,10 +48,14 @@ export const enqueueWorkflow = async (executionData: ExecutionData) => {
 	if (workflowData.userId !== executionData.userId)
 		throw createHttpError.Unauthorized();
 
-	const [snapshot] = await db
-		.select()
-		.from(workflowSnapshotsTable)
-		.where(eq(workflowSnapshotsTable.workflowId, executionData.workflowId));
+	const snapshot =
+		publishedSnapshot ??
+		(
+			await db
+				.select()
+				.from(workflowSnapshotsTable)
+				.where(eq(workflowSnapshotsTable.workflowId, executionData.workflowId))
+		)[0];
 
 	if (!snapshot) {
 		throw createHttpError.BadRequest(

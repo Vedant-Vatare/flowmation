@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
 import APIRouterV1 from "@/routes/index.routes.js";
+import triggerRouter from "@/routes/trigger.routes.js";
 import { errorHandler, RequestTimeOutHandler } from "./utils/api.utils.js";
 
 const app = express();
@@ -14,10 +15,12 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(RequestTimeOutHandler);
+
+app.use("/api/v1/triggers", triggerRouter);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
-app.use(RequestTimeOutHandler);
 
 app.use("/api/v1", APIRouterV1);
 
