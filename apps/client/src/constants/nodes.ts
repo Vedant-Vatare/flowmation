@@ -57,6 +57,7 @@ export type NodeUI = {
 	fill?: string;
 	branded?: boolean;
 	triggerTestMode?: "manual" | "webhook";
+	credentialDependsOn?: { parameter: string; values: unknown[] }[];
 };
 
 export type PortDefinition = {
@@ -294,6 +295,7 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		branded: true,
 	},
 	"action.discord": {
+		credentialDependsOn: [{ parameter: "operation", values: ["send_dm"] }],
 		name: "Discord",
 		icon: DiscordIcon,
 		background: "#f8f9fa",

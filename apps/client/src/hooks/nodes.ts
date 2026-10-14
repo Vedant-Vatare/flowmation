@@ -1,5 +1,6 @@
 import type { BaseNode } from "@nodebase/shared";
 import { useCallback, useMemo } from "react";
+import { NODE_UI_REGISTRY } from "@/constants/nodes";
 import { useAllNodesQuery } from "@/queries/nodes";
 
 export function useSortedNodes():
@@ -26,7 +27,16 @@ export function useSortedNodes():
 export const useNodeCredentialProvider = () => {
 	const { data: allNodes } = useAllNodesQuery();
 	return useCallback(
-		(nodeTask: string) => {
+		(nodeTask: string, values?: Record<string, unknown>) => {
+			const dependencies = NODE_UI_REGISTRY[nodeTask]?.credentialDependsOn;
+			if (
+				values &&
+				dependencies?.some(
+					(dependency) =>
+						!dependency.values.includes(values[dependency.parameter]),
+				)
+			)
+				return undefined;
 			return allNodes?.find((n) => n.task === nodeTask)?.credentialProvider;
 		},
 		[allNodes],

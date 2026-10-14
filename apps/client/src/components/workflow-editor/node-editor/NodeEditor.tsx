@@ -95,7 +95,13 @@ export const NodeField = memo(
 
 const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const { workflowId } = Route.useParams();
-	const { icon: Icon, color, background, iconBackground, branded } = node.data.ui;
+	const {
+		icon: Icon,
+		color,
+		background,
+		iconBackground,
+		branded,
+	} = node.data.ui;
 	const [isEditingName, setIsEditingName] = useState(false);
 	const [errorInNodeName, setErrorInNodeName] = useState<null | string>(null);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
@@ -206,7 +212,6 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const { mutate: updateNode } = useUpdateWorkflowNode();
 	const { workflowId } = Route.useParams();
 	const getCredentialProvider = useNodeCredentialProvider();
-	const credentialProvider = getCredentialProvider(node.data.task);
 
 	const defaultValues = useMemo(() => {
 		const vals: Record<string, unknown> = {};
@@ -278,7 +283,10 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const doSave = useCallback(
 		(values: Record<string, unknown>) => {
-			if (credentialProvider && !values.credentialId) {
+			if (
+				getCredentialProvider(node.data.task, values) &&
+				!values.credentialId
+			) {
 				setEditorStatus("missing");
 				return;
 			}
@@ -335,7 +343,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			);
 		},
 		[
-			credentialProvider,
+			getCredentialProvider,
 			node.data.parameters,
 			node.id,
 			node.data.task,

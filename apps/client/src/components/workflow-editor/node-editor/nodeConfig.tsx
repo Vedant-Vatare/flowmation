@@ -1,4 +1,4 @@
-import type { Control, UseFormRegister } from "react-hook-form";
+import { type Control, type UseFormRegister, useWatch } from "react-hook-form";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { NodeActions, nodesWithActions } from "./NodeActions";
@@ -49,7 +49,8 @@ const SectionDivider = () => <div className="h-px bg-border/20 mx-3" />;
 
 export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 	const getCredentialProvider = useNodeCredentialProvider();
-	const credentialprovider = getCredentialProvider(nodeData.task);
+	const values = useWatch({ control });
+	const credentialprovider = getCredentialProvider(nodeData.task, values);
 	const hasConfigs = checkNodeConfigs(nodeData, credentialprovider);
 	const showInfo = nodesWithActions.includes(
 		nodeData.task as (typeof nodesWithActions)[number],
@@ -74,7 +75,9 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 		<>
 			<NodeActions nodeData={nodeData} />
 			{showInfo && showCredentials && <SectionDivider />}
-			<NodeCredentials nodeData={nodeData} control={control} />
+			{showCredentials && (
+				<NodeCredentials nodeData={nodeData} control={control} />
+			)}
 			{showCredentials && nodeData.parameters.length > 0 && <SectionDivider />}
 			<NodeParameters
 				nodeData={nodeData}
