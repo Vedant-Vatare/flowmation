@@ -10,6 +10,7 @@ export const CREDENTIALS_PROVIDER = [
 	"firebase",
 	"google",
 	"github",
+	"github_webhook",
 	"hubspot",
 	"jira",
 	"linear",

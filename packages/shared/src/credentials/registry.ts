@@ -6,6 +6,7 @@ import { clickupCredential } from "./providers/clickup.js";
 import { discordCredential } from "./providers/discord.js";
 import { firebaseCredential } from "./providers/firebase.js";
 import { githubCredential } from "./providers/github.js";
+import { githubWebhookCredential } from "./providers/github-webhook.js";
 import { googleCredential } from "./providers/google.js";
 import { hubspotCredential } from "./providers/hubspot.js";
 import { jiraOAuthCredential } from "./providers/jira-oauth.js";
@@ -34,6 +35,7 @@ export const credentialRegistry: Record<string, CredentialDef> = {
 	discord: discordCredential,
 	google: googleCredential,
 	github: githubCredential,
+	github_webhook: githubWebhookCredential,
 	hubspot: hubspotCredential,
 	jira: jiraOAuthCredential,
 	linear: linearOAuthCredential,

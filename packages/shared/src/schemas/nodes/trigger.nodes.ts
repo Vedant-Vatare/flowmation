@@ -184,3 +184,5 @@ export const discordTriggerNodeSchema = baseTriggerNodeSchema.extend({
 		]),
 	),
 });
+
+export * from "./github-trigger.schema.js";
