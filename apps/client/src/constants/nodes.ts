@@ -153,6 +153,14 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		color: "oklch(0.58 0.21 275)",
 		branded: true,
 	},
+	"trigger.github": {
+		name: "GitHub Trigger",
+		icon: GitHubIcon,
+		background: "#f8f9fa",
+		iconBackground: "#fff",
+		color: "#24292e",
+		branded: true,
+	},
 	"trigger.input": {
 		name: "Input Trigger",
 		icon: InputIcon,

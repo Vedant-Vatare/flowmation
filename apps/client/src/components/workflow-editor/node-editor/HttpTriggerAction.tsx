@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { usePublishStatus } from "@/queries/userWorkflows";
 
-export const DiscordTriggerAction = ({
+export const HttpTriggerAction = ({
 	nodeData,
 }: {
 	nodeData: WorkflowNodeData;
 }) => {
+	const isGitHub = nodeData.task === "trigger.github";
 	const [copied, setCopied] = useState(false);
 	const {
 		data: publishStatus,
@@ -27,7 +28,7 @@ export const DiscordTriggerAction = ({
 	const url = apiBase
 		? `${apiBase}/triggers/${nodeData.workflowId}/${nodeData.id}`
 		: "";
-	const inputId = `discord-callback-${nodeData.id}`;
+	const inputId = `trigger-callback-${nodeData.id}`;
 
 	useEffect(() => {
 		if (!copied) return;
@@ -50,7 +51,7 @@ export const DiscordTriggerAction = ({
 				htmlFor={inputId}
 				className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70"
 			>
-				Interactions Endpoint URL
+				{isGitHub ? "Payload URL" : "Interactions Endpoint URL"}
 			</Label>
 			<div className="flex items-center gap-2">
 				<Input
@@ -67,12 +68,12 @@ export const DiscordTriggerAction = ({
 					variant="ghost"
 					disabled={!url}
 					onClick={handleCopy}
-					aria-label={copied ? "URL copied" : "Copy interactions endpoint URL"}
+					aria-label={copied ? "URL copied" : "Copy trigger endpoint URL"}
 				>
 					<HugeiconsIcon icon={copied ? CopyCheck : CopyIcon} size={15} />
 				</Button>
 			</div>
-			<p className="text-xs text-muted-foreground" role="status">
+			<output className="text-xs text-muted-foreground" aria-live="polite">
 				{isLoading
 					? "Checking status…"
 					: isError
@@ -80,11 +81,17 @@ export const DiscordTriggerAction = ({
 						: publishStatus?.isPublished
 							? "Published"
 							: "Publish to enable this trigger."}
-			</p>
+			</output>
 			<p className="text-xs text-muted-foreground">
-				Paste this URL into your Discord application's Interactions Endpoint
-				URL.
+				{isGitHub
+					? "In your GitHub repository, open Settings → Webhooks → Add webhook. Use this Payload URL, application/json, and the same secret saved in this node's GitHub Webhook credential. Select the events you want and keep SSL verification enabled. The URL must be publicly reachable over HTTPS."
+					: "Paste this URL into your Discord application's Interactions Endpoint URL."}
 			</p>
+			{isGitHub && (
+				<p className="text-xs text-muted-foreground">
+					Use Recent Deliveries in GitHub to inspect or redeliver events.
+				</p>
+			)}
 		</div>
 	);
 };

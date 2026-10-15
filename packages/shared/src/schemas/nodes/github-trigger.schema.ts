@@ -81,23 +81,13 @@ export const githubTriggerNodeSchema = baseNodeSchema.extend({
 				type: z.literal("array"),
 				value: githubTriggerNodeValueSchemas.actions,
 				required: z.literal(false).default(false),
-				description: z
-					.string()
-					.default(
-						"Exact actions such as opened, closed, or published. Empty accepts all actions; events without an action are ignored when this filter is set.",
-					),
 			}),
 			nodeParameterSchema.extend({
 				name: z.literal("branch"),
-				label: z.literal("Push branch (optional)"),
+				label: z.literal("Push branch"),
 				type: z.literal("input"),
 				value: githubTriggerNodeValueSchemas.branch,
 				required: z.literal(false).default(false),
-				description: z
-					.string()
-					.default(
-						"Exact branch name, for example main. Filters push events only; tag pushes do not match. Empty accepts all refs.",
-					),
 			}),
 		]),
 	),

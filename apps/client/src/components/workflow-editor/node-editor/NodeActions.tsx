@@ -14,12 +14,13 @@ import {
 } from "@/components/ui/tooltip";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useExecuteWorkflow, usePublishStatus } from "@/queries/userWorkflows";
-import { DiscordTriggerAction } from "./DiscordTriggerAction";
+import { HttpTriggerAction } from "./HttpTriggerAction";
 
 export const nodesWithActions = [
 	"trigger.webhook",
 	"trigger.click",
 	"trigger.discord",
+	"trigger.github",
 ] as const;
 const ExecuteWorkflowOnPublishAction = ({
 	nodeData,
@@ -106,7 +107,8 @@ const WebhookNodeAction = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 export const NodeActions = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 	switch (nodeData.task) {
 		case "trigger.discord":
-			return <DiscordTriggerAction nodeData={nodeData} />;
+		case "trigger.github":
+			return <HttpTriggerAction nodeData={nodeData} />;
 		case "trigger.webhook":
 			return WebhookNodeAction({ nodeData });
 		case "trigger.click":

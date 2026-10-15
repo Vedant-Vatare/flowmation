@@ -34,7 +34,7 @@ export const githubTriggerDefinition = githubTriggerNodeSchema.parse({
 		},
 		{
 			name: "branch",
-			label: "Push branch (optional)",
+			label: "Push branch",
 			type: "input",
 			value: "",
 			required: false,
