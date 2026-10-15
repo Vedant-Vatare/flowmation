@@ -231,6 +231,7 @@ export const executeTriggerNode = async (
 			return inputNodeExecutor(triggerNode as InputNode);
 		case "trigger.webhook":
 		case "trigger.discord":
+		case "trigger.github":
 			return { success: true, output: job.data.triggerData };
 		default:
 			return {

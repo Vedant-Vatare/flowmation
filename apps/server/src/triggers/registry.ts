@@ -1,6 +1,7 @@
 import type { WorkflowNode } from "@nodebase/shared";
 import type { Request } from "express";
 import { discordTriggerHandler } from "./handlers/discord.handler.js";
+import { githubTriggerHandler } from "./handlers/github.handler.js";
 
 type TriggerRequest = Pick<Request, "method" | "headers" | "query"> & {
 	rawBody: Uint8Array;
@@ -51,6 +52,13 @@ export const httpTriggerHandlers = new Map<
 		triggerHandler: TriggerHandler;
 	}
 >([
+	[
+		"trigger.github",
+		{
+			credentialProvider: "github_webhook",
+			triggerHandler: githubTriggerHandler,
+		},
+	],
 	[
 		"trigger.discord",
 		{
