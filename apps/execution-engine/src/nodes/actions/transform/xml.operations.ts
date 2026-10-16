@@ -27,14 +27,14 @@ function textInput(value: unknown, label: string): string {
 	return value;
 }
 
-function checkName(name: string): void {
+function checkName(name: string, isAttribute = false): void {
 	if (
 		!name ||
 		/[<>&"'/=\s?]/u.test(name) ||
 		XMLValidator.validate(`<${name}/>`) !== true
 	)
 		throw new Error(`Invalid XML element or attribute name: ${name}`);
-	if (reservedNames.has(name))
+	if (!isAttribute && reservedNames.has(name))
 		throw new Error(`XML contains a reserved name: ${name}`);
 }
 
@@ -73,7 +73,11 @@ function generationInput(input: unknown): object {
 		)
 			throw new Error("XML generation expects plain JSON objects");
 		for (const [key, entry] of Object.entries(value)) {
-			if (key !== "#text") checkName(key.startsWith("@_") ? key.slice(2) : key);
+			if (key !== "#text")
+				checkName(
+					key.startsWith("@_") ? key.slice(2) : key,
+					key.startsWith("@_"),
+				);
 			if (
 				(key.startsWith("@_") || key === "#text") &&
 				(entry === null || typeof entry === "object")
@@ -121,7 +125,10 @@ function checkDocumentRoot(xml: string): void {
 export function runXml(operation: unknown, input: unknown, rootName: unknown) {
 	if (operation === "parse") {
 		const xml = textInput(input, "XML input");
-		const markup = xml.replace(/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>/g, "");
+		const markup = xml.replace(
+			/<!--[\s\S]*?-->|<!\[CDATA\[[\s\S]*?\]\]>|<\?[\s\S]*?\?>/g,
+			"",
+		);
 		if (/<!DOCTYPE|<!ENTITY/i.test(markup))
 			throw new Error(
 				"XML declarations for DTDs and custom entities are not supported",
