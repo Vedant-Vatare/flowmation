@@ -9,6 +9,7 @@ import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ClickUpIcon from "@/assets/icons/nodes/clickup.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
+import CsvIcon from "@/assets/icons/nodes/csv.svg?react";
 import DateTimeIcon from "@/assets/icons/nodes/date-time.svg?react";
 import DiscordIcon from "@/assets/icons/nodes/discord.svg?react";
 import FilterIcon from "@/assets/icons/nodes/filter.svg?react";
@@ -86,6 +87,13 @@ export type WorkflowNodeData = Pick<
 export type WorkflowCanvasNode = Node<WorkflowNodeData>;
 
 export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
+	"action.csv": {
+		name: "CSV",
+		icon: CsvIcon,
+		background: "#f8f9fa",
+		iconBackground: "#fff",
+		color: "#394867",
+	},
 	"action.ai": {
 		name: "AI",
 		icon: AiIcon,
