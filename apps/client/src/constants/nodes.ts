@@ -48,6 +48,7 @@ import TrelloIcon from "@/assets/icons/nodes/trello.svg?react";
 import TwilioIcon from "@/assets/icons/nodes/twilio.svg?react";
 import WaitIcon from "@/assets/icons/nodes/wait.svg?react";
 import WebhookIcon from "@/assets/icons/nodes/webhook.svg?react";
+import XmlIcon from "@/assets/icons/nodes/xml.svg?react";
 
 export type NodeUI = {
 	name: string;
@@ -87,6 +88,13 @@ export type WorkflowNodeData = Pick<
 export type WorkflowCanvasNode = Node<WorkflowNodeData>;
 
 export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
+	"action.xml": {
+		name: "XML",
+		icon: XmlIcon,
+		background: "#f8f9fa",
+		iconBackground: "#fff",
+		color: "#394867",
+	},
 	"action.csv": {
 		name: "CSV",
 		icon: CsvIcon,
