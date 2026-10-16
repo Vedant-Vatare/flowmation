@@ -6,3 +6,4 @@ export * from "./json-transform.schema.js";
 export * from "./number-transform.schema.js";
 export * from "./set-variable.schema.js";
 export * from "./text-transform.schema.js";
+export * from "./xml.schema.js";

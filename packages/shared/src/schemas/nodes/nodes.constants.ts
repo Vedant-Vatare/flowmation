@@ -143,6 +143,7 @@ import {
 	textTransformNodeSchema,
 	textTransformNodeValueSchemas,
 } from "./transform/index.js";
+import { xmlNodeSchema, xmlNodeValueSchemas } from "./transform/xml.schema.js";
 import {
 	clickNodeSchema,
 	cronJobNodeSchema,
@@ -157,6 +158,7 @@ import {
 } from "./trigger.nodes.js";
 
 export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
+	["action.xml", xmlNodeSchema],
 	["action.csv", csvNodeSchema],
 	["trigger.click", clickNodeSchema],
 	["trigger.input", inputNodeSchema],
@@ -211,6 +213,7 @@ export const nodeParamValueRegistry = new Map<
 	string,
 	Record<string, z.ZodType>
 >([
+	["action.xml", xmlNodeValueSchemas],
 	["action.csv", csvNodeValueSchemas],
 	["trigger.cron", cronJobNodeValueSchemas],
 	["trigger.input", inputNodeValueSchemas],

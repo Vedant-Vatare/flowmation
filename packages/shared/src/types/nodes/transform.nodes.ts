@@ -17,3 +17,6 @@ export type FilterNode = z.infer<typeof filterNodeSchema>;
 
 import type { csvNodeSchema } from "@/schemas/nodes/transform/csv.schema.js";
 export type CsvNode = z.infer<typeof csvNodeSchema>;
+
+import type { xmlNodeSchema } from "@/schemas/nodes/transform/xml.schema.js";
+export type XmlNode = z.infer<typeof xmlNodeSchema>;

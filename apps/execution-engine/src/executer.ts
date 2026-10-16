@@ -44,6 +44,7 @@ import type {
 	TwilioNode,
 	WaitNode,
 	WorkflowNode,
+	XmlNode,
 } from "@nodebase/shared";
 import type { Job } from "bullmq";
 import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
@@ -86,6 +87,7 @@ import { filterNodeExecutor } from "./nodes/actions/transform/filter.node.js";
 import { jsonTransformNodeExecutor } from "./nodes/actions/transform/json-transform.node.js";
 import { numberTransformNodeExecutor } from "./nodes/actions/transform/number-transform.node.js";
 import { textTransformNodeExecutor } from "./nodes/actions/transform/text-transform.node.js";
+import { xmlNodeExecutor } from "./nodes/actions/transform/xml.node.js";
 import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
 import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
@@ -109,6 +111,8 @@ export const executeNode = ({
 		};
 	}
 	switch (node.task) {
+		case "action.xml":
+			return xmlNodeExecutor(node as XmlNode, executionId);
 		case "action.csv":
 			return csvNodeExecutor(node as CsvNode, executionId);
 		case "action.airtable":
