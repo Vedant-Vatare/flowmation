@@ -14,3 +14,6 @@ export type NumberTransformNode = z.infer<typeof numberTransformNodeSchema>;
 export type ArrayTransformNode = z.infer<typeof arrayTransformNodeSchema>;
 export type DateTimeNode = z.infer<typeof dateTimeNodeSchema>;
 export type FilterNode = z.infer<typeof filterNodeSchema>;
+
+import type { csvNodeSchema } from "@/schemas/nodes/transform/csv.schema.js";
+export type CsvNode = z.infer<typeof csvNodeSchema>;

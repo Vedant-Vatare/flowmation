@@ -126,6 +126,7 @@ import {
 	twilioNodeSchema,
 	twilioNodeValueSchemas,
 } from "./integrations/twilio.schema.js";
+import { csvNodeSchema, csvNodeValueSchemas } from "./transform/csv.schema.js";
 import {
 	arrayTransformNodeSchema,
 	arrayTransformNodeValueSchemas,
@@ -156,6 +157,7 @@ import {
 } from "./trigger.nodes.js";
 
 export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
+	["action.csv", csvNodeSchema],
 	["trigger.click", clickNodeSchema],
 	["trigger.input", inputNodeSchema],
 	["action.http", httpNodeSchema],
@@ -209,6 +211,7 @@ export const nodeParamValueRegistry = new Map<
 	string,
 	Record<string, z.ZodType>
 >([
+	["action.csv", csvNodeValueSchemas],
 	["trigger.cron", cronJobNodeValueSchemas],
 	["trigger.input", inputNodeValueSchemas],
 	["trigger.discord", discordTriggerNodeValueSchemas],

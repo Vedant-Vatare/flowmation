@@ -1,4 +1,5 @@
 export * from "./transform/array-transform.schema.js";
+export * from "./transform/csv.schema.js";
 export * from "./transform/date-time.schema.js";
 export * from "./transform/filter.schema.js";
 export * from "./transform/json-transform.schema.js";

@@ -8,6 +8,7 @@ import type {
 	ClickUpNode,
 	ConditionNode,
 	CronNode,
+	CsvNode,
 	DateTimeNode,
 	DiscordNode,
 	FilterNode,
@@ -79,6 +80,7 @@ import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js"
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
 import { arrayTransformNodeExecutor } from "./nodes/actions/transform/array-transform.node.js";
+import { csvNodeExecutor } from "./nodes/actions/transform/csv.node.js";
 import { dateTimeNodeExecutor } from "./nodes/actions/transform/date-time.node.js";
 import { filterNodeExecutor } from "./nodes/actions/transform/filter.node.js";
 import { jsonTransformNodeExecutor } from "./nodes/actions/transform/json-transform.node.js";
@@ -107,6 +109,8 @@ export const executeNode = ({
 		};
 	}
 	switch (node.task) {
+		case "action.csv":
+			return csvNodeExecutor(node as CsvNode, executionId);
 		case "action.airtable":
 			return airtableNodeExecutor(node as AirtableNode, executionId);
 		case "action.ai":
