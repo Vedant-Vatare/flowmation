@@ -1,5 +1,5 @@
 import type { BaseNode } from "@nodebase/shared";
-import { useReactFlow } from "@xyflow/react";
+import { useNodes, useReactFlow } from "@xyflow/react";
 import { SearchIcon, XIcon } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -243,18 +243,12 @@ const Nodes = memo(() => {
 });
 
 const NodeEditorTab = () => {
-	const selectedNode = useWorkflowStore((s) => s.selectedNode);
+	const selectedNodeId = useWorkflowStore((s) => s.selectedNodeId);
+	const nodes = useNodes<WorkflowCanvasNode>();
+	const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
 	if (!selectedNode) {
-		return (
-			<p className="text-sm text-muted-foreground">Select a node to edit</p>
-		);
-	}
-
-	if (!selectedNode) {
-		return (
-			<p className="text-sm text-muted-foreground">Select a node to edit</p>
-		);
+		return <p className="text-sm text-muted-foreground">Select a node to edit</p>;
 	}
 
 	return <NodeEditor key={selectedNode.id} node={selectedNode} />;

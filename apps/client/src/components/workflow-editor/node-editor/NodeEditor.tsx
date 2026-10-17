@@ -12,12 +12,15 @@ import {
 import { useReactFlow } from "@xyflow/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { cn } from "@/lib/utils";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
+import { useWorkflowStore } from "@/store/workflow/useWorkflowStore";
 import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../../ui/button";
@@ -131,7 +134,6 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 			return;
 		}
 
-		node.data.name = name;
 		nodeNameRef.current.contentEditable = "false";
 		updateNode({
 			node: { id: node.id, task: node.data.task, name },
@@ -209,28 +211,39 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 };
 
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
-	const { mutate: updateNode } = useUpdateWorkflowNode();
+	const { mutateAsync: updateNode } = useUpdateWorkflowNode();
+	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
+	const mountedRef = useRef(false);
 	const { workflowId } = Route.useParams();
 	const getCredentialProvider = useNodeCredentialProvider();
+	const getNodeDraft = useCallback(
+		() => useWorkflowStore.getState().nodeDrafts[node.id],
+		[node.id],
+	);
 
 	const defaultValues = useMemo(() => {
-		const vals: Record<string, unknown> = {};
+		const values: Record<string, unknown> = {};
 		for (const param of node.data.parameters) {
-			vals[param.name] =
+			values[param.name] =
 				param.value !== "" && param.value !== null && param.value !== undefined
 					? param.value
 					: (param.default ?? "");
 		}
-		vals.credentialId = node.data.credentialId ?? "";
+		values.credentialId = node.data.credentialId ?? "";
 		if (node.data.settings) {
 			for (const [key, value] of Object.entries(node.data.settings)) {
 				if (key !== "hasExpressions" && value !== undefined && value !== null) {
-					vals[key] = value;
+					values[key] = value;
 				}
 			}
 		}
-		return vals;
-	}, [node.data.parameters, node.data.credentialId, node.data.settings]);
+		return getNodeDraft() ?? values;
+	}, [
+		getNodeDraft,
+		node.data.parameters,
+		node.data.credentialId,
+		node.data.settings,
+	]);
 
 	const formSchema = useMemo(
 		() =>
@@ -270,7 +283,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const [editorStatus, setEditorStatus] = useState<
 		"idle" | "unsaved" | "saving" | "saved" | "missing"
-	>("idle");
+	>(getNodeDraft() ? "unsaved" : "idle");
 
 	const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -281,17 +294,26 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	}, []);
 
 	const doSave = useCallback(
-		(values: Record<string, unknown>) => {
+		async (values: Record<string, unknown>) => {
+			const invalid = () => {
+				if (mountedRef.current) setEditorStatus("missing");
+				else {
+					toast.warning(
+						node.data.name +
+							": configuration is invalid.\nReopen the node to correct it.",
+					);
+				}
+			};
 			if (
 				getCredentialProvider(node.data.task, values) &&
 				!values.credentialId
 			) {
-				setEditorStatus("missing");
+				invalid();
 				return;
 			}
 			const result = formSchema?.safeParse(values);
 			if (!result?.success) {
-				setEditorStatus("missing");
+				invalid();
 				return;
 			}
 
@@ -304,7 +326,7 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				return hasExpressionsInParams(p.value);
 			});
 
-			setEditorStatus("saving");
+			if (mountedRef.current) setEditorStatus("saving");
 
 			let updatedSettings: NodeSettings = {
 				...node.data.settings,
@@ -319,8 +341,8 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				}
 			}
 
-			updateNode(
-				{
+			try {
+				await updateNode({
 					node: {
 						id: node.id,
 						task: node.data.task,
@@ -329,20 +351,29 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 						settings: updatedSettings,
 					},
 					workflowId,
-				},
-				{
-					onSuccess: () => {
-						setEditorStatus("saved");
-						savedTimerRef.current = setTimeout(() => {
-							setEditorStatus("idle");
-						}, 2000);
-					},
-					onError: () => setEditorStatus("idle"),
-				},
-			);
+				});
+				useWorkflowStore.getState().clearNodeDraft(node.id, values);
+				if (!mountedRef.current) return;
+				if (getNodeDraft()) {
+					setEditorStatus("unsaved");
+					return;
+				}
+				setEditorStatus("saved");
+				if (savedTimerRef.current !== null) clearTimeout(savedTimerRef.current);
+				savedTimerRef.current = setTimeout(() => {
+					setEditorStatus("idle");
+				}, 2000);
+			} catch {
+				if (mountedRef.current) setEditorStatus("unsaved");
+				toast.error(
+					node.data.name +
+						": could not save.\nReopen or edit the node to retry.",
+				);
+			}
 		},
 		[
 			getCredentialProvider,
+			getNodeDraft,
 			node.data.parameters,
 			node.id,
 			node.data.task,
@@ -350,27 +381,55 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			workflowId,
 			formSchema,
 			node.data.settings,
+			node.data.name,
 		],
 	);
 
-	const debouncedSave = useDebounce(doSave, () => node.id);
+	const saveRef = useRef(doSave);
+	useEffect(() => {
+		saveRef.current = doSave;
+	}, [doSave]);
 
 	useEffect(() => {
+		mountedRef.current = true;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		let pending = getNodeDraft();
+		const flush = () => {
+			clearTimeout(timer);
+			if (!pending) return;
+			const values = pending;
+			pending = undefined;
+			void saveRef.current(values);
+		};
+		const schedule = () => {
+			clearTimeout(timer);
+			timer = setTimeout(flush, 2000);
+		};
+		if (pending) schedule();
 		const subscription = watch((values, { type }) => {
 			if (type !== "change") return;
 			if (savedTimerRef.current !== null) {
 				clearTimeout(savedTimerRef.current);
 				savedTimerRef.current = null;
 			}
-			setEditorStatus((prev) =>
-				prev === "idle" || prev === "saved" || prev === "missing"
-					? "unsaved"
-					: prev,
-			);
-			debouncedSave(values as Record<string, unknown>);
+			pending = structuredClone(values) as Record<string, unknown>;
+			useWorkflowStore.getState().setNodeDraft(node.id, pending);
+			setEditorStatus("unsaved");
+			schedule();
 		});
-		return () => subscription.unsubscribe();
-	}, [watch, debouncedSave]);
+		const unsubscribeSidebar = useWorkflowSidbarTabsStore.subscribe(
+			(state, previous) => {
+				if (previous.sidebarOpen && !state.sidebarOpen) flush();
+			},
+		);
+		return () => {
+			mountedRef.current = false;
+			subscription.unsubscribe();
+			unsubscribeSidebar();
+			if (getNodes().some((candidate) => candidate.id === node.id)) flush();
+			else clearTimeout(timer);
+		};
+	}, [watch, node.id, getNodes, getNodeDraft]);
 
 	return (
 		<div className="flex flex-col h-full w-full bg-background shadow-sm">

@@ -97,7 +97,7 @@ const WorkflowCanvas = () => {
 
 	const handleNodeClick = (node: WorkflowCanvasNode) => {
 		useWorkflowSidbarTabsStore.getState().setSidebarOpen(true);
-		useWorkflowStore.getState().setSelectedNode(node);
+		useWorkflowStore.getState().setSelectedNodeId(node.id);
 		useWorkflowSidbarTabsStore.getState().setTabOpen("editor");
 	};
 
@@ -173,9 +173,10 @@ const WorkflowCanvas = () => {
 			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			for (const canvasNode of deletedNodes) {
 				deleteNode({ id: canvasNode.data.id, workflowId });
-				const selectedNode = useWorkflowStore.getState().selectedNode;
-				if (selectedNode?.id === canvasNode.id) {
-					useWorkflowStore.getState().setSelectedNode(null);
+				const selection = useWorkflowStore.getState();
+				selection.clearNodeDraft(canvasNode.id);
+				if (selection.selectedNodeId === canvasNode.id) {
+					selection.setSelectedNodeId(null);
 				}
 			}
 		},

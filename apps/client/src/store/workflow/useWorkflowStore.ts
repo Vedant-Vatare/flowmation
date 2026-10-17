@@ -4,11 +4,13 @@ import type {
 	WorkflowNode,
 } from "@nodebase/shared";
 import { create } from "zustand";
-import type { WorkflowCanvasNode } from "@/constants/nodes";
 
 type WorkflowStore = {
-	selectedNode: WorkflowCanvasNode | null;
-	setSelectedNode: (node: WorkflowCanvasNode | null) => void;
+	selectedNodeId: string | null;
+	setSelectedNodeId: (nodeId: string | null) => void;
+	nodeDrafts: Record<string, Record<string, unknown>>;
+	setNodeDraft: (nodeId: string, values: Record<string, unknown>) => void;
+	clearNodeDraft: (nodeId: string, savedValues?: Record<string, unknown>) => void;
 };
 
 type TestWebhookData = { isActive: boolean; webhookId: string | null };
@@ -60,8 +62,17 @@ type WorkflowExecutionStore = {
 };
 
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
-	selectedNode: null,
-	setSelectedNode: (node) => set({ selectedNode: node }),
+	selectedNodeId: null,
+	setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
+	nodeDrafts: {},
+	setNodeDraft: (nodeId, values) =>
+		set((state) => ({ nodeDrafts: { ...state.nodeDrafts, [nodeId]: values } })),
+	clearNodeDraft: (nodeId, savedValues) =>
+		set((state) => {
+			if (savedValues && state.nodeDrafts[nodeId] !== savedValues) return state;
+			const { [nodeId]: _draft, ...nodeDrafts } = state.nodeDrafts;
+			return { nodeDrafts };
+		}),
 }));
 
 export const useWebhookStore = create<WebhookStore>((set) => ({
