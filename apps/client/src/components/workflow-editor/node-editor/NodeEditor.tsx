@@ -272,7 +272,6 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		"idle" | "unsaved" | "saving" | "saved" | "missing"
 	>("idle");
 
-	const userHasEdited = useRef(false);
 	const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	useEffect(() => {
@@ -357,10 +356,11 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 	const debouncedSave = useDebounce(doSave, () => node.id);
 
 	useEffect(() => {
-		const subscription = watch((values) => {
-			if (!userHasEdited.current) {
-				userHasEdited.current = true;
-				return;
+		const subscription = watch((values, { type }) => {
+			if (type !== "change") return;
+			if (savedTimerRef.current !== null) {
+				clearTimeout(savedTimerRef.current);
+				savedTimerRef.current = null;
 			}
 			setEditorStatus((prev) =>
 				prev === "idle" || prev === "saved" || prev === "missing"
