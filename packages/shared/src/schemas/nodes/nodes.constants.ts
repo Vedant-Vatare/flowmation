@@ -13,6 +13,10 @@ import {
 	loopNodeSchema,
 	loopNodeValueSchemas,
 } from "./control.nodes.js";
+import {
+	gmailTriggerNodeSchema,
+	gmailTriggerNodeValueSchemas,
+} from "./gmail-trigger.schema.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import {
 	airtableNodeSchema,
@@ -178,6 +182,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.webhook", webhookNodeSchema],
 	["trigger.discord", discordTriggerNodeSchema],
 	["trigger.github", githubTriggerNodeSchema],
+	["trigger.gmail", gmailTriggerNodeSchema],
 	["action.airtable", airtableNodeSchema],
 	["action.ai", aiNodeSchema],
 	["action.asana", asanaNodeSchema],
@@ -219,6 +224,7 @@ export const nodeParamValueRegistry = new Map<
 	["trigger.input", inputNodeValueSchemas],
 	["trigger.discord", discordTriggerNodeValueSchemas],
 	["trigger.github", githubTriggerNodeValueSchemas],
+	["trigger.gmail", gmailTriggerNodeValueSchemas],
 	["action.http", httpNodeValueSchemas],
 	["action.wait", waitingNodeValueSchemas],
 	["action.set_variable", setVariableNodeValueSchemas],
