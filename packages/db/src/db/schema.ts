@@ -375,3 +375,34 @@ export const workflowSnapshotsRelations = relations(
 		}),
 	}),
 );
+
+export const integrationTriggerStateTable = pgTable(
+	"integration_trigger_state",
+	{
+		id: uuid().defaultRandom().primaryKey(),
+		provider: varchar({ length: 100 }).notNull(),
+		resourceKey: text("resource_key").notNull(),
+		workflowId: uuid("workflow_id")
+			.notNull()
+			.references(() => userWorkflowsTable.id, { onDelete: "cascade" }),
+		triggerNodeId: uuid("trigger_node_id").notNull(),
+		credentialId: uuid("credential_id").references(() => credentialsTable.id, {
+			onDelete: "set null",
+		}),
+		value: jsonb().$type<Record<string, unknown>>().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true })
+			.notNull()
+			.defaultNow(),
+	},
+	(table) => [
+		index("integration_trigger_resource_idx").on(
+			table.provider,
+			table.resourceKey,
+		),
+		unique("integration_trigger_node_unique").on(
+			table.provider,
+			table.workflowId,
+			table.triggerNodeId,
+		),
+	],
+);
