@@ -58,7 +58,7 @@ export type NodeUI = {
 	iconBackground?: string;
 	fill?: string;
 	branded?: boolean;
-	triggerTestMode?: "manual" | "webhook";
+	triggerTestMode?: "manual" | "webhook" | "external";
 	credentialDependsOn?: { parameter: string; values: unknown[] }[];
 };
 
@@ -292,6 +292,15 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#155724",
+		branded: true,
+	},
+	"trigger.gmail": {
+		triggerTestMode: "external",
+		name: "Gmail Trigger",
+		icon: GmailIcon,
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#EA4335",
 		branded: true,
 	},
 	"action.gmail": {
