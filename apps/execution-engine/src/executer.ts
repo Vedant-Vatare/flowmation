@@ -240,6 +240,7 @@ export const executeTriggerNode = async (
 		case "trigger.webhook":
 		case "trigger.discord":
 		case "trigger.github":
+		case "trigger.gmail":
 			return { success: true, output: job.data.triggerData };
 		default:
 			return {

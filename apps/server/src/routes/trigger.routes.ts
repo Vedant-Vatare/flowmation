@@ -1,8 +1,15 @@
 import { Router, raw } from "express";
 import { triggerCallback } from "@/controllers/triggers.controller.js";
+import { gmailPushCallback } from "@/triggers/gmail-webhook.js";
 import { asyncHandler } from "@/utils/api.utils.js";
 
 const router = Router() as Router;
+
+router.post(
+	"/gmail/push",
+	raw({ type: "application/json", limit: "16kb", inflate: false }),
+	asyncHandler(gmailPushCallback),
+);
 
 router.all(
 	"/:workflowId/:triggerNodeId",

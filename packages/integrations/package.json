@@ -1,0 +1,34 @@
+{
+	"name": "@nodebase/integrations",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"main": "./dist/index.js",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		},
+		"./webhook-utils": {
+			"types": "./dist/webhook-utils.d.ts",
+			"import": "./dist/webhook-utils.js"
+		}
+	},
+	"scripts": {
+		"build": "tsc -b && tsc-alias",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@nodebase/db": "workspace:*",
+		"@nodebase/queue": "workspace:*",
+		"@nodebase/redis": "workspace:*",
+		"@nodebase/shared": "workspace:*",
+		"http-errors": "^2.0.1",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@nodebase/ts-config": "workspace:*",
+		"@types/http-errors": "^2.0.5",
+		"@types/node": "^25.0.10"
+	}
+}

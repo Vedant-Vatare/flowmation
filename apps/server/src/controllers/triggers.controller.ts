@@ -5,16 +5,16 @@ import {
 	userWorkflowsTable,
 	workflowSnapshotsTable,
 } from "@nodebase/db";
+import {
+	acceptTriggerEvent,
+	claimTriggerEvent,
+	releaseTriggerEvent,
+} from "@nodebase/integrations/webhook-utils";
 import { credentialRegistry } from "@nodebase/shared";
 import { decrypt } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
-import {
-	acceptTriggerEvent,
-	claimTriggerEvent,
-	releaseTriggerEvent,
-} from "@/triggers/deduplication.js";
 import {
 	httpTriggerHandlers,
 	type TriggerResponse,

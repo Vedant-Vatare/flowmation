@@ -1,0 +1,18 @@
+{
+	"extends": "@nodebase/ts-config/node.json",
+	"compilerOptions": {
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"outDir": "./dist",
+		"rootDir": "./src"
+	},
+	"include": ["src"],
+	"exclude": ["node_modules", "dist"],
+	"references": [
+		{ "path": "../db/tsconfig.json" },
+		{ "path": "../queue/tsconfig.json" },
+		{ "path": "../redis/tsconfig.json" },
+		{ "path": "../shared/tsconfig.json" }
+	]
+}

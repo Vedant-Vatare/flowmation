@@ -14,8 +14,12 @@ export const claimTriggerEvent = async (
 	const key = `http-trigger:event:${digest}`;
 	const token = randomUUID();
 	const claimed = await redis.set(key, token, "EX", 300, "NX");
-	if (claimed) return { key, token };
-	if ((await redis.get(key)) === "accepted") return null;
+	if (claimed) {
+		return { key, token };
+	}
+	if ((await redis.get(key)) === "accepted") {
+		return null;
+	}
 	throw createHttpError.ServiceUnavailable(
 		"Trigger event is being accepted; retry the request",
 	);
@@ -34,8 +38,9 @@ export const acceptTriggerEvent = async (claim: {
 		claim.key,
 		claim.token,
 	);
-	if (!accepted)
+	if (!accepted) {
 		throw createHttpError.ServiceUnavailable("Trigger event claim expired");
+	}
 };
 
 export const releaseTriggerEvent = async (claim: {
