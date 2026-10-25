@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/tooltip";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useExecuteWorkflow, usePublishStatus } from "@/queries/userWorkflows";
-import { GmailTriggerAction } from "./GmailTriggerAction";
 import { HttpTriggerAction } from "./HttpTriggerAction";
 
 export const nodesWithActions = [
@@ -108,8 +107,6 @@ const WebhookNodeAction = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 
 export const NodeActions = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 	switch (nodeData.task) {
-		case "trigger.gmail":
-			return <GmailTriggerAction />;
 		case "trigger.discord":
 		case "trigger.github":
 			return <HttpTriggerAction nodeData={nodeData} />;
