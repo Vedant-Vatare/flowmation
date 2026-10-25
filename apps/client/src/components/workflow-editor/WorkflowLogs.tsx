@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
+import { RefreshLogsButton } from "@/components/RefreshLogsButton";
 import { Badge } from "@/components/ui/badge";
 import {
 	Select,
@@ -38,14 +39,21 @@ const getStatusColor = (status: string) => {
 export const WorkflowLogs = () => {
 	const { workflowId } = Route.useParams();
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-	const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
-		useWorkflowLogs(workflowId);
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isFetchingNextPage,
+		hasNextPage,
+		fetchNextPage,
+		refetch,
+	} = useWorkflowLogs(workflowId);
 
 	const observerRef = useRef<IntersectionObserver | null>(null);
 	const loadMoreRef = useCallback(
 		(node: HTMLDivElement | null) => {
-			if (isLoading || isFetchingNextPage) return;
 			if (observerRef.current) observerRef.current.disconnect();
+			if (!node || isFetching) return;
 
 			observerRef.current = new IntersectionObserver((entries) => {
 				if (entries[0]?.isIntersecting && hasNextPage) {
@@ -55,7 +63,7 @@ export const WorkflowLogs = () => {
 
 			if (node) observerRef.current.observe(node);
 		},
-		[isLoading, isFetchingNextPage, hasNextPage, fetchNextPage],
+		[isFetching, hasNextPage, fetchNextPage],
 	);
 
 	if (isLoading) {
@@ -82,7 +90,13 @@ export const WorkflowLogs = () => {
 
 	return (
 		<div className="flex flex-col h-full overflow-hidden gap-3 ">
-			<div className="flex justify-end items-center px-1">
+			<div className="flex justify-end items-center gap-2 px-1">
+				<RefreshLogsButton
+					isFetching={isFetching}
+					onRefresh={() =>
+						refetch({ cancelRefetch: false, throwOnError: true })
+					}
+				/>
 				<Select
 					value={statusFilter}
 					onValueChange={(v: StatusFilter) => setStatusFilter(v)}

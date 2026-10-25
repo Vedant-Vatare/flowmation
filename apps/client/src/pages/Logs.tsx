@@ -3,6 +3,7 @@ import { endOfDay, format, isWithinInterval, startOfDay } from "date-fns";
 import { ArrowUpRight, CalendarIcon, Filter, Loader2, X } from "lucide-react";
 import { memo, useCallback, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { RefreshLogsButton } from "@/components/RefreshLogsButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -85,20 +86,27 @@ export const ExecutionLogsPage = () => {
 	);
 	const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
-	const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage } =
-		useExecutionLogs();
+	const {
+		data,
+		isLoading,
+		isFetching,
+		isFetchingNextPage,
+		hasNextPage,
+		fetchNextPage,
+		refetch,
+	} = useExecutionLogs();
 
 	const observerRef = useRef<IntersectionObserver | null>(null);
 	const loadMoreRef = useCallback(
 		(node: HTMLDivElement | null) => {
-			if (isLoading || isFetchingNextPage) return;
 			if (observerRef.current) observerRef.current.disconnect();
+			if (!node || isFetching) return;
 			observerRef.current = new IntersectionObserver((entries) => {
 				if (entries[0]?.isIntersecting && hasNextPage) fetchNextPage();
 			});
 			if (node) observerRef.current.observe(node);
 		},
-		[isLoading, isFetchingNextPage, hasNextPage, fetchNextPage],
+		[isFetching, hasNextPage, fetchNextPage],
 	);
 
 	if (isLoading) {
@@ -137,7 +145,7 @@ export const ExecutionLogsPage = () => {
 
 	return (
 		<div className="flex flex-col h-full gap-4 p-6">
-			<div className="flex items-center justify-between">
+			<div className="flex flex-wrap items-center justify-between gap-3">
 				<div>
 					<h1 className="text-lg font-semibold">Execution Logs</h1>
 					<p className="text-xs text-muted-foreground mt-0.5">
@@ -145,7 +153,13 @@ export const ExecutionLogsPage = () => {
 					</p>
 				</div>
 
-				<div className="flex items-center gap-2">
+				<div className="flex flex-wrap items-center gap-2">
+					<RefreshLogsButton
+						isFetching={isFetching}
+						onRefresh={() =>
+							refetch({ cancelRefetch: false, throwOnError: true })
+						}
+					/>
 					{hasActiveFilters && (
 						<Button
 							variant="ghost"
