@@ -1,0 +1,20 @@
+{
+	"name": "@nodebase/integration-worker",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsx --watch src/index.ts",
+		"build": "tsc && tsc-alias",
+		"start": "node dist/index.js",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@nodebase/integrations": "workspace:*",
+		"@nodebase/queue": "workspace:*"
+	},
+	"devDependencies": {
+		"@nodebase/ts-config": "workspace:*",
+		"@types/node": "^25.0.10"
+	}
+}

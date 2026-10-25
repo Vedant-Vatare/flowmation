@@ -53,6 +53,7 @@ jobs:
           apps/client
           apps/server/src
           apps/execution-engine/src
+          apps/integration-worker/src
           packages/*/src
           packages/*/tsconfig.json
           apps/*/tsconfig.json

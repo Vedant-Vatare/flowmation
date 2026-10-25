@@ -231,6 +231,22 @@ importers:
         specifier: ^1.3.11
         version: 1.3.12
 
+  apps/integration-worker:
+    dependencies:
+      '@nodebase/integrations':
+        specifier: workspace:*
+        version: link:../../packages/integrations
+      '@nodebase/queue':
+        specifier: workspace:*
+        version: link:../../packages/queue
+    devDependencies:
+      '@nodebase/ts-config':
+        specifier: workspace:*
+        version: link:../../packages/ts-config
+      '@types/node':
+        specifier: ^25.0.10
+        version: 25.9.2
+
   apps/server:
     dependencies:
       '@nodebase/db':
