@@ -40,9 +40,12 @@ const nodeQueue = new Queue<NodeJobPayload>(NODE_QUEUE_NAME, {
 	defaultJobOptions,
 });
 
-export async function addWorkflowInQueue(data: WorkflowJobPayload) {
+export async function addWorkflowInQueue(
+	data: WorkflowJobPayload,
+	jobId?: string,
+) {
 	return workflowQueue.add("execute-workflow", data, {
-		jobId: crypto.randomUUID(),
+		jobId: jobId ?? crypto.randomUUID(),
 	});
 }
 
