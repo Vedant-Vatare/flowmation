@@ -114,22 +114,43 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
 	if (dbError) {
 		const errorCode = dbError.code as keyof typeof dbErrorMap;
 		const mappedError = dbErrorMap[errorCode];
-		console.log({ errorCode, dbError });
+		console.error("Database request failed", err);
 
 		if (mappedError) {
 			return res.status(mappedError.status).json({
-				message: mappedError.message,
+				message:
+					mappedError.status >= 500
+						? "Something went wrong. Please try again."
+						: mappedError.message,
 			});
 		}
 	}
 
-	const statusCode =
-		"statusCode" in err && typeof err.statusCode === "number"
+	if (dbError) {
+		return res
+			.status(500)
+			.json({ message: "Something went wrong. Please try again." });
+	}
+
+	const candidateStatus =
+		err && typeof err === "object" && "statusCode" in err
 			? err.statusCode
+			: undefined;
+	const statusCode =
+		typeof candidateStatus === "number" &&
+		Number.isInteger(candidateStatus) &&
+		candidateStatus >= 400 &&
+		candidateStatus <= 599
+			? candidateStatus
 			: 500;
-
-	const message = err instanceof Error ? err.message : "something went wrong";
-
+	const canExpose =
+		statusCode < 500 &&
+		err instanceof Error &&
+		!("expose" in err && err.expose === false);
+	if (statusCode >= 500) console.error("Request failed", err);
+	const message = canExpose
+		? err.message
+		: "Something went wrong. Please try again.";
 	return res.status(statusCode).json({ message });
 };
 

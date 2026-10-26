@@ -225,6 +225,7 @@ export const useTemplate = async (req: Request, res: Response) => {
 					userId,
 					name,
 					description: template.description ?? undefined,
+					status: "inactive",
 				})
 				.returning();
 

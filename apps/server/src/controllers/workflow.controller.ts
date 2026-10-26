@@ -2,8 +2,10 @@ import {
 	and,
 	db,
 	eq,
+	sql,
 	userWorkflowsTable,
 	workflowConnectionsTable,
+	workflowExecutionTable,
 	workflowNodesTable,
 	workflowSnapshotsTable,
 } from "@nodebase/db";
@@ -24,7 +26,7 @@ export const createWorkflow = async (req: Request, res: Response) => {
 		const workflow = req.body as CreateWorkflow;
 		const [userWorkflow] = await db
 			.insert(userWorkflowsTable)
-			.values({ ...workflow, userId })
+			.values({ ...workflow, userId, status: "inactive" })
 			.returning();
 
 		return res
@@ -103,6 +105,54 @@ export const getAllUserWorkflow = async (_req: Request, res: Response) => {
 	return res
 		.status(200)
 		.json({ message: "all workflows fetched", userWorkflows });
+};
+
+export const getDashboardWorkflows = async (_req: Request, res: Response) => {
+	const userId = res.locals.userId as string;
+
+	const workflows = await db
+		.select({
+			id: userWorkflowsTable.id,
+			name: userWorkflowsTable.name,
+			status: userWorkflowsTable.status,
+		})
+		.from(userWorkflowsTable)
+		.where(eq(userWorkflowsTable.userId, userId));
+
+	const executions = await db
+		.select({
+			workflowId: workflowExecutionTable.workflowId,
+			executionCount: sql<number>`count(*)`.mapWith(Number),
+			lastExecutedAt: sql<
+				Date | string | null
+			>`max(${workflowExecutionTable.executedAt})`,
+		})
+		.from(workflowExecutionTable)
+		.where(eq(workflowExecutionTable.userId, userId))
+		.groupBy(workflowExecutionTable.workflowId);
+
+	const executionsByWorkflow = new Map(
+		executions.map((execution) => [execution.workflowId, execution]),
+	);
+
+	const dashboardWorkflows = workflows.map((workflow) => {
+		const execution = executionsByWorkflow.get(workflow.id);
+		const executionCount = execution?.executionCount ?? 0;
+		let lastExecutedAt: string | null = null;
+
+		if (execution?.lastExecutedAt) {
+			lastExecutedAt = new Date(execution.lastExecutedAt).toISOString();
+		}
+
+		return {
+			...workflow,
+			name: workflow.name ?? "Untitled Workflow",
+			executionCount,
+			lastExecutedAt,
+		};
+	});
+
+	return res.status(200).json({ workflows: dashboardWorkflows });
 };
 
 export const publishWorkflow = async (req: Request, res: Response) => {

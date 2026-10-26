@@ -8,6 +8,7 @@ import { executeWorkflow } from "@/controllers/worflow.executions.js";
 import {
 	createWorkflow,
 	getAllUserWorkflow,
+	getDashboardWorkflows,
 	getPublishStatus,
 	getUserWorkflow,
 	publishWorkflow,
@@ -33,10 +34,14 @@ router.post(
 );
 router.patch(
 	"/:id",
-	validateRequest(updateWorkflowSchema, "body"),
+	validateRequest(
+		updateWorkflowSchema.pick({ name: true, description: true }),
+		"body",
+	),
 	asyncHandler(updateUserWorkflow),
 );
 router.get("/all", asyncHandler(getAllUserWorkflow));
+router.get("/dashboard", asyncHandler(getDashboardWorkflows));
 router.get("/:id", asyncHandler(getUserWorkflow));
 router.post("/:id/publish", asyncHandler(publishWorkflow));
 router.post("/:id/unpublish", asyncHandler(unpublishWorkflow));
