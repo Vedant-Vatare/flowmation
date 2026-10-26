@@ -1,6 +1,5 @@
 import {
 	ActivityIcon,
-	Alert02Icon,
 	WorkflowCircle01Icon,
 	ZapIcon,
 } from "@hugeicons/core-free-icons";
@@ -17,7 +16,6 @@ import {
 	CardContent,
 	CardDescription,
 	CardHeader,
-	CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,33 +29,24 @@ import {
 } from "@/components/ui/table";
 import {
 	useCreateUserWorkflowQuery,
-	useUserWorkflowQuery,
+	useDashboardWorkflowsQuery,
 } from "@/queries/userWorkflows";
 import { getErrorMessage } from "@/utils/error";
 
-const statusVariant: Record<
-	string,
-	"default" | "secondary" | "destructive" | "outline"
-> = {
-	active: "default",
-	inactive: "secondary",
-	failed: "destructive",
-	stopped: "secondary",
-	running: "outline",
-	executed: "secondary",
-	cancelled: "secondary",
-};
-
-function formatDate(dateStr: string | undefined) {
+function formatDate(dateStr: string | null | undefined) {
 	if (!dateStr) return "Never";
-	return new Date(dateStr).toLocaleDateString("en-US", {
+	return new Date(dateStr).toLocaleString(undefined, {
 		month: "short",
 		day: "numeric",
 		year: "numeric",
+		hour: "2-digit",
+		minute: "2-digit",
 	});
 }
 
-const getPlaceholderWorkflowName = (workflows: UserWorkflow[]) => {
+const getPlaceholderWorkflowName = (
+	workflows: Pick<UserWorkflow, "name">[],
+) => {
 	let count = 1;
 	const name = "Untitled Workflow #";
 
@@ -67,10 +56,10 @@ const getPlaceholderWorkflowName = (workflows: UserWorkflow[]) => {
 };
 
 const DashboardSkeleton = () => (
-	<div className="flex flex-col gap-6" aria-busy="true">
+	<div aria-busy="true" className="space-y-4">
 		<output className="sr-only">Loading workflows.</output>
-		<div className="grid grid-cols-2 lg:grid-cols-4 gap-4" aria-hidden="true">
-			{[1, 2, 3, 4].map((card) => (
+		<div className="grid grid-cols-2 gap-4 lg:grid-cols-3" aria-hidden="true">
+			{[1, 2, 3].map((card) => (
 				<Card key={card}>
 					<CardHeader className="pb-2">
 						<Skeleton className="h-5 w-24 max-w-full bg-muted motion-reduce:animate-none" />
@@ -81,19 +70,14 @@ const DashboardSkeleton = () => (
 				</Card>
 			))}
 		</div>
-		<Card aria-hidden="true">
-			<CardHeader>
-				<Skeleton className="h-5 w-36 bg-muted motion-reduce:animate-none" />
-			</CardHeader>
-			<CardContent className="space-y-4">
-				{[1, 2, 3, 4, 5].map((row) => (
-					<Skeleton
-						key={row}
-						className="h-8 w-full bg-muted motion-reduce:animate-none"
-					/>
-				))}
-			</CardContent>
-		</Card>
+		<div aria-hidden="true" className="space-y-4 rounded-md border p-4">
+			{[1, 2, 3, 4, 5].map((row) => (
+				<Skeleton
+					key={row}
+					className="h-8 w-full bg-muted motion-reduce:animate-none"
+				/>
+			))}
+		</div>
 	</div>
 );
 
@@ -105,13 +89,35 @@ export const Dashboard = () => {
 		error,
 		isFetching,
 		refetch,
-	} = useUserWorkflowQuery();
+	} = useDashboardWorkflowsQuery();
 	const { mutateAsync: createWorkflow } = useCreateUserWorkflowQuery();
 	const navigate = useNavigate();
 	const [isCreating, setIsCreating] = useState(false);
 	const [createError, setCreateError] = useState<string | null>(null);
 	const creatingRef = useRef(false);
 	const workflows = userWorkflows ?? [];
+	const activeWorkflows = workflows.filter(
+		(workflow) => workflow.status === "active",
+	).length;
+	const totalRuns = workflows.reduce(
+		(total, workflow) => total + workflow.executionCount,
+		0,
+	);
+	const summary = [
+		{
+			label: "Total Workflows",
+			value: workflows.length,
+			icon: WorkflowCircle01Icon,
+			bounce: 0.12,
+		},
+		{ label: "Active", value: activeWorkflows, icon: ZapIcon, bounce: 0.12 },
+		{
+			label: "Total Runs",
+			value: totalRuns,
+			icon: ActivityIcon,
+			bounce: 0.125,
+		},
+	];
 
 	const handleCreateWorkflow = async () => {
 		if (!userWorkflows || creatingRef.current) return;
@@ -141,13 +147,8 @@ export const Dashboard = () => {
 		}
 	};
 
-	const activeWorkflows = workflows.filter((w) => w.status === "active").length;
-
-	const totalRuns = workflows.reduce((acc, w) => acc + w.executionCount, 0);
-	const failedWorkflows = workflows.filter((w) => w.status === "failed").length;
-
 	return (
-		<div className="flex flex-col gap-6 p-6">
+		<div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
 				<Button
@@ -181,7 +182,7 @@ export const Dashboard = () => {
 								: "Could not load workflows"}
 						</p>
 						<p className="text-sm text-muted-foreground break-words">
-							{getErrorMessage(error, "Check your connection and try again.")}
+							{getErrorMessage(error, "Please try again in a moment.")}
 							{userWorkflows &&
 								" Your last loaded workflows are still shown below."}
 						</p>
@@ -207,137 +208,90 @@ export const Dashboard = () => {
 				<DashboardSkeleton />
 			) : userWorkflows ? (
 				<>
-					<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between pb-2">
-								<CardDescription className="flex justify-between w-full">
-									Total Workflows
-									<HugeiconsIcon icon={WorkflowCircle01Icon} strokeWidth={2} />
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<AnimatedNumber
-									className="text-3xl font-bold"
-									springOptions={{
-										bounce: 0.12,
-										duration: 1000,
-									}}
-									value={workflows.length}
-								/>
-							</CardContent>
-						</Card>
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between pb-2">
-								<CardDescription className="flex justify-between w-full">
-									Active
-									<HugeiconsIcon icon={ZapIcon} strokeWidth={2} />
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<AnimatedNumber
-									className="text-3xl font-bold"
-									springOptions={{
-										bounce: 0.12,
-										duration: 1000,
-									}}
-									value={activeWorkflows}
-								/>
-							</CardContent>
-						</Card>
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between pb-2">
-								<CardDescription className="flex justify-between w-full">
-									Total Runs
-									<HugeiconsIcon icon={ActivityIcon} strokeWidth={2} />
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<AnimatedNumber
-									className="text-3xl font-bold"
-									springOptions={{
-										bounce: 0.125,
-										duration: 1000,
-									}}
-									value={totalRuns}
-								/>
-							</CardContent>
-						</Card>
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between pb-2">
-								<CardDescription className="flex justify-between w-full">
-									Failed Runs
-									<HugeiconsIcon icon={Alert02Icon} strokeWidth={2} />
-								</CardDescription>
-							</CardHeader>
-							<CardContent>
-								<AnimatedNumber
-									className="text-3xl font-bold"
-									springOptions={{
-										bounce: 0.12,
-										duration: 1000,
-									}}
-									value={failedWorkflows}
-								/>
-							</CardContent>
-						</Card>
+					<div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+						{summary.map(({ label, value, icon, bounce }) => (
+							<Card key={label}>
+								<CardHeader className="flex flex-row items-center justify-between pb-2">
+									<CardDescription className="flex w-full justify-between">
+										{label}
+										<HugeiconsIcon icon={icon} strokeWidth={2} />
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<AnimatedNumber
+										className="text-3xl font-bold"
+										value={value}
+										springOptions={{ bounce, duration: 1000 }}
+									/>
+								</CardContent>
+							</Card>
+						))}
 					</div>
-
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-base flex gap-2 relative right-2">
-								<span>
-									<HugeiconsIcon icon={WorkflowCircle01Icon} strokeWidth={2} />
-								</span>
-								Your Workflows
-							</CardTitle>
-						</CardHeader>
-						<CardContent className="px-1">
-							<Table>
+					<section
+						aria-labelledby="workflow-list-heading"
+						className="space-y-3"
+					>
+						<h2 id="workflow-list-heading" className="text-base font-medium">
+							Your workflows
+						</h2>
+						<div className="rounded-md border">
+							<Table className="min-w-120">
 								<TableHeader>
 									<TableRow>
-										<TableHead>Name</TableHead>
-										<TableHead>Status</TableHead>
-										<TableHead className="hidden sm:table-cell">Runs</TableHead>
-										<TableHead className="hidden md:table-cell">
-											Last Run
-										</TableHead>
-										<TableHead className="hidden md:table-cell">
-											Created
-										</TableHead>
+										<TableHead>Workflow</TableHead>
+										<TableHead className="text-center">Status</TableHead>
+										<TableHead className="text-right">Total runs</TableHead>
+										<TableHead>Last run</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
-									{workflows.map((workflow) => (
-										<TableRow key={workflow.id}>
-											<TableCell className="max-w-38">
-												<Link
-													to={"/workflow/$workflowId"}
-													params={{ workflowId: workflow.id }}
-													className="font-medium hover:underline underline-offset-4 max-w-75 truncate block"
-												>
-													{workflow.name}
-												</Link>
-											</TableCell>
-											<TableCell>
-												<Badge variant={statusVariant[workflow.status]}>
-													{workflow.status}
-												</Badge>
-											</TableCell>
-											<TableCell className="hidden sm:table-cell text-muted-foreground">
-												{workflow.executionCount}
-											</TableCell>
-											<TableCell className="hidden md:table-cell text-muted-foreground">
-												{formatDate(workflow.lastExecutedAt)}
-											</TableCell>
-											<TableCell className="hidden md:table-cell text-muted-foreground">
-												{formatDate(workflow.createdAt)}
+									{workflows.length === 0 ? (
+										<TableRow>
+											<TableCell
+												colSpan={4}
+												className="py-10 text-center text-muted-foreground"
+											>
+												No workflows yet. Use New Workflow to create your first
+												automation.
 											</TableCell>
 										</TableRow>
-									))}
+									) : (
+										workflows.map((workflow) => (
+											<TableRow key={workflow.id}>
+												<TableCell>
+													<Link
+														to="/workflow/$workflowId"
+														params={{ workflowId: workflow.id }}
+														title={workflow.name}
+														className="block max-w-75 truncate font-medium hover:underline underline-offset-4"
+													>
+														{workflow.name}
+													</Link>
+												</TableCell>
+												<TableCell className="text-center">
+													<Badge
+														variant={
+															workflow.status === "active"
+																? "default"
+																: "secondary"
+														}
+													>
+														{workflow.status}
+													</Badge>
+												</TableCell>
+												<TableCell className="text-right tabular-nums">
+													{workflow.executionCount}
+												</TableCell>
+												<TableCell className="whitespace-nowrap text-muted-foreground">
+													{formatDate(workflow.lastExecutedAt)}
+												</TableCell>
+											</TableRow>
+										))
+									)}
 								</TableBody>
 							</Table>
-						</CardContent>
-					</Card>
+						</div>
+					</section>
 				</>
 			) : null}
 		</div>
