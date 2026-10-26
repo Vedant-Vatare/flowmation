@@ -26,6 +26,7 @@ import {
 import {
 	GmailApiError,
 	type GmailMessage,
+	getGmailArrivalLabels,
 	getGmailMessageOutput,
 	gmailHistorySchema,
 	gmailMessageSchema,
@@ -414,9 +415,13 @@ const readMatchingEmail = async (
 	messageId: string,
 	token: string,
 	labelId: string,
+	arrivalHistoryId: string,
 	eventLabels?: string[],
 ) => {
-	if (eventLabels && !eventLabels.includes(labelId)) {
+	if (
+		eventLabels &&
+		(!eventLabels.includes(labelId) || eventLabels.includes("DRAFT"))
+	) {
 		return;
 	}
 	let message: GmailMessage;
@@ -433,7 +438,10 @@ const readMatchingEmail = async (
 		}
 		throw error;
 	}
-	if (!isMatchingGmailMessage(message, labelId, eventLabels)) {
+	const arrivalLabels =
+		eventLabels ??
+		(await getGmailArrivalLabels(message, token, arrivalHistoryId, labelId));
+	if (!isMatchingGmailMessage(message, labelId, arrivalLabels)) {
 		return;
 	}
 	return { id: message.id, data: await getGmailMessageOutput(message, token) };
@@ -549,15 +557,21 @@ const syncGmailTrigger = async (id: string, notifiedHistoryId?: string) => {
 		throw new Error("Gmail history did not advance correctly");
 	}
 	const emails: { id: string; data: unknown }[] = [];
+	const matchedMessageIds = new Set<string>();
 	for (const entry of page.history) {
 		for (const added of entry.messagesAdded || []) {
+			if (matchedMessageIds.has(added.message.id)) {
+				continue;
+			}
 			const email = await readMatchingEmail(
 				added.message.id,
 				token,
 				value.labelId,
+				entry.id,
 				added.message.labelIds,
 			);
 			if (email) {
+				matchedMessageIds.add(email.id);
 				emails.push(email);
 			}
 		}

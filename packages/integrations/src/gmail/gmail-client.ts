@@ -68,6 +68,11 @@ const messageRef = z.object({
 	labelIds: z.array(z.string()).optional(),
 });
 
+const labelChangeSchema = z.object({
+	message: messageRef,
+	labelIds: z.array(z.string()),
+});
+
 export const gmailHistorySchema = z.object({
 	historyId: z.string().regex(/^\d+$/),
 	nextPageToken: z.string().optional(),
@@ -76,6 +81,8 @@ export const gmailHistorySchema = z.object({
 			z.object({
 				id: z.string().regex(/^\d+$/),
 				messagesAdded: z.array(z.object({ message: messageRef })).optional(),
+				labelsAdded: z.array(labelChangeSchema).optional(),
+				labelsRemoved: z.array(labelChangeSchema).optional(),
 			}),
 		)
 		.default([]),
@@ -112,6 +119,68 @@ export const gmailMessageSchema = z.looseObject({
 });
 
 export type GmailMessage = z.infer<typeof gmailMessageSchema>;
+
+export const getGmailArrivalLabels = async (
+	message: GmailMessage,
+	token: string,
+	arrivalHistoryId: string,
+	labelId: string,
+) => {
+	if (
+		!message.historyId ||
+		BigInt(message.historyId) < BigInt(arrivalHistoryId)
+	) {
+		throw new Error("Gmail message history is incomplete; retry the arrival");
+	}
+	const labels = new Set(message.labelIds || []);
+	if (message.historyId === arrivalHistoryId) {
+		return [...labels];
+	}
+	const unresolved = new Set([labelId, "DRAFT"]);
+	const params = new URLSearchParams({
+		startHistoryId: arrivalHistoryId,
+		historyTypes: "labelAdded",
+		maxResults: "500",
+	});
+	params.append("historyTypes", "labelRemoved");
+	const pageTokens = new Set<string>();
+	while (true) {
+		const page = gmailHistorySchema.parse(
+			await gmailRequest(token, `history?${params}`),
+		);
+		if (BigInt(page.historyId) < BigInt(message.historyId)) {
+			throw new Error("Gmail label history is incomplete; retry the arrival");
+		}
+		for (const entry of page.history) {
+			if (BigInt(entry.id) > BigInt(message.historyId)) {
+				return [...labels];
+			}
+			if (BigInt(entry.id) <= BigInt(arrivalHistoryId)) {
+				continue;
+			}
+			for (const [changes, wasPresent] of [
+				[entry.labelsAdded || [], false],
+				[entry.labelsRemoved || [], true],
+			] as const) {
+				for (const change of changes) {
+					if (change.message.id !== message.id) continue;
+					for (const label of change.labelIds) {
+						if (!unresolved.delete(label)) continue;
+						if (wasPresent) labels.add(label);
+						else labels.delete(label);
+					}
+				}
+			}
+			if (unresolved.size === 0) return [...labels];
+		}
+		if (!page.nextPageToken) return [...labels];
+		if (pageTokens.has(page.nextPageToken)) {
+			throw new Error("Gmail label history pagination did not advance");
+		}
+		pageTokens.add(page.nextPageToken);
+		params.set("pageToken", page.nextPageToken);
+	}
+};
 
 export const getGmailMessageOutput = async (
 	message: GmailMessage,
@@ -224,6 +293,7 @@ export const isMatchingGmailMessage = (
 ) => {
 	return (
 		(eventLabels || message.labelIds || []).includes(labelId) &&
+		!eventLabels?.includes("DRAFT") &&
 		!message.labelIds?.includes("DRAFT")
 	);
 };
