@@ -84,6 +84,11 @@ export type ExecutionEventType = "workflow-update" | "node-update";
 export type ExecutionUpdate = WorkflowExecutionUpdate | NodeExecutionUpdate;
 
 export type UserWorkflow = z.infer<typeof userWorkflowSchema>;
+export type DashboardWorkflow = Pick<UserWorkflow, "id" | "name"> & {
+	status: WorkflowStatus;
+	executionCount: number;
+	lastExecutedAt: string | null;
+};
 export type WorkflowNode = z.infer<typeof workflowNodeSchema>;
 export type PartialWorkflowNode = z.infer<typeof partialWorkflowNodeSchema>;
 export type WorkflowConnection = z.infer<typeof workflowConnectionSchema>;

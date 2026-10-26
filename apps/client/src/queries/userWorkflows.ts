@@ -1,4 +1,5 @@
 import type {
+	DashboardWorkflow,
 	ExecuteWorkflowRequest,
 	PartialWorkflowNode,
 	UpdateUserWorkflow,
@@ -24,6 +25,7 @@ import {
 	deleteWorkflowNodeApi,
 	executeWorkflowApi,
 	executionLogs,
+	getDashboardWorkflowsApi,
 	getPublishStatusApi,
 	getUserWorkflowsApi,
 	getWorkflowConnections,
@@ -52,6 +54,17 @@ export const userWorkflowsOptions = () =>
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 
+export const dashboardWorkflowsOptions = () =>
+	queryOptions({
+		queryKey: ["dashboard-workflows"],
+		queryFn: getDashboardWorkflowsApi,
+		staleTime: 30_000,
+		retry: 1,
+	});
+
+export const useDashboardWorkflowsQuery = () =>
+	useQuery(dashboardWorkflowsOptions());
+
 export const workflowNodesOptions = (workflowId: string) =>
 	queryOptions({
 		queryKey: ["workflow-nodes", { workflowId }],
@@ -64,6 +77,24 @@ export const useCreateUserWorkflowQuery = () => {
 	return useMutation({
 		mutationFn: createUserWorkflowApi,
 		onSuccess: (workflow) => {
+			queryClient.setQueryData<DashboardWorkflow[]>(
+				dashboardWorkflowsOptions().queryKey,
+				(old) =>
+					old
+						? [
+								...old.filter((item) => item.id !== workflow.id),
+								{
+									...workflow,
+									status: "inactive",
+									executionCount: 0,
+									lastExecutedAt: null,
+								},
+							]
+						: undefined,
+			);
+			void queryClient.invalidateQueries({
+				queryKey: dashboardWorkflowsOptions().queryKey,
+			});
 			queryClient.setQueryData<UserWorkflow[]>(
 				userWorkflowsOptions().queryKey,
 				(old) =>
@@ -348,6 +379,9 @@ export const useUpdateUserWorkflow = () => {
 			data: UpdateUserWorkflow;
 		}) => updateUserWorkflowApi(workflowId, data),
 		onSuccess: (data, { workflowId }) => {
+			void queryClient.invalidateQueries({
+				queryKey: dashboardWorkflowsOptions().queryKey,
+			});
 			queryClient.setQueryData(
 				userWorkflowsOptions().queryKey,
 				(old: UserWorkflow[] | undefined) =>
@@ -435,6 +469,9 @@ export const usePublishWorkflow = () => {
 				queryKey: ["publishStatus", { workflowId }],
 			});
 			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			void queryClient.invalidateQueries({
+				queryKey: dashboardWorkflowsOptions().queryKey,
+			});
 			reset();
 			toast.success("Workflow published");
 		},
@@ -454,6 +491,9 @@ export const useUnpublishWorkflow = () => {
 				queryKey: ["publishStatus", { workflowId }],
 			});
 			queryClient.invalidateQueries({ queryKey: ["user-workflows"] });
+			void queryClient.invalidateQueries({
+				queryKey: dashboardWorkflowsOptions().queryKey,
+			});
 			reset();
 			toast.success("Workflow unpublished");
 		},

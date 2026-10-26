@@ -1,4 +1,5 @@
 import type {
+	DashboardWorkflow,
 	ExecuteWorkflowRequest,
 	ExecutionLog,
 	NodeIdsWithPosition,
@@ -24,6 +25,13 @@ export const getUserWorkflowsApi = async () => {
 		"/workflows/all",
 	);
 	return response.data.userWorkflows;
+};
+
+export const getDashboardWorkflowsApi = async () => {
+	const response = await api.get<{ workflows: DashboardWorkflow[] }>(
+		"/workflows/dashboard",
+	);
+	return response.data.workflows;
 };
 
 export const getWorkflowNodes = async (workflowId: string) => {

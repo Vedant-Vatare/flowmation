@@ -5,7 +5,9 @@ export const getErrorMessage = (
 	fallback = "Something went wrong",
 ) => {
 	if (axios.isAxiosError<{ message: string }>(error)) {
-		return error.response?.data?.message || fallback;
+		if (error.response && error.response.status >= 500) return fallback;
+		const message = error.response?.data?.message;
+		return typeof message === "string" && message.trim() ? message : fallback;
 	}
 	return fallback;
 };
