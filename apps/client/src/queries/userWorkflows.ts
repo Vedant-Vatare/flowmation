@@ -59,11 +59,24 @@ export const workflowNodesOptions = (workflowId: string) =>
 		staleTime: Number.POSITIVE_INFINITY,
 	});
 
-export const useCreateUserWorkflowQuery = () =>
-	useMutation({
+export const useCreateUserWorkflowQuery = () => {
+	const queryClient = useQueryClient();
+	return useMutation({
 		mutationFn: createUserWorkflowApi,
-		onSuccess: () => {},
+		onSuccess: (workflow) => {
+			queryClient.setQueryData<UserWorkflow[]>(
+				userWorkflowsOptions().queryKey,
+				(old) =>
+					old
+						? [...old.filter((item) => item.id !== workflow.id), workflow]
+						: undefined,
+			);
+			void queryClient.invalidateQueries({
+				queryKey: userWorkflowsOptions().queryKey,
+			});
+		},
 	});
+};
 
 export const useUserWorkflowQuery = () => useQuery(userWorkflowsOptions());
 
