@@ -11,13 +11,10 @@ import {
 	userWorkflowsTable as workflows,
 } from "@nodebase/db";
 import { addIntegrationEvent, addWorkflowInQueue } from "@nodebase/queue";
-import {
-	gmailTriggerNodeSchema,
-	type WorkflowConnection,
-	type WorkflowNode,
-} from "@nodebase/shared";
+import { gmailTriggerNodeSchema, type WorkflowNode } from "@nodebase/shared";
 import createHttpError from "http-errors";
 import { z } from "zod";
+import type { TriggerSetup } from "../triggers.registry.js";
 import {
 	acceptTriggerEvent,
 	claimTriggerEvent,
@@ -223,12 +220,13 @@ const renewGmailMailbox = async (mailbox: string) => {
 	throw failure;
 };
 
-export const publishGmailWorkflow = async (
+type TriggerTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export const prepareGmailWorkflow = async (
 	workflowId: string,
 	userId: string,
 	nodes: WorkflowNode[],
-	connections: WorkflowConnection[],
-) => {
+): Promise<TriggerSetup> => {
 	const enabled = nodes.filter((node) => {
 		return node.task === "trigger.gmail" && !node.settings?.disabled;
 	});
@@ -278,15 +276,7 @@ export const publishGmailWorkflow = async (
 			topic,
 		});
 	}
-	await db.transaction(async (tx) => {
-		const [workflow] = await tx
-			.select()
-			.from(workflows)
-			.where(and(eq(workflows.id, workflowId), eq(workflows.userId, userId)))
-			.for("update");
-		if (!workflow) {
-			throw createHttpError.NotFound("Workflow not found");
-		}
+	const save = async (tx: TriggerTransaction) => {
 		const previous = await tx
 			.select()
 			.from(triggerStates)
@@ -353,62 +343,17 @@ export const publishGmailWorkflow = async (
 				}
 			}
 		}
-		const [snapshot] = await tx
-			.select({ id: snapshots.id })
-			.from(snapshots)
-			.where(eq(snapshots.workflowId, workflowId));
-		if (snapshot) {
-			await tx
-				.update(snapshots)
-				.set({ nodes, connections, publishedAt: new Date() })
-				.where(eq(snapshots.id, snapshot.id));
-		} else {
-			await tx
-				.insert(snapshots)
-				.values({ workflowId, nodes, connections, publishedAt: new Date() });
+	};
+	const afterPublish = async () => {
+		const mailboxes = new Set(prepared.map((trigger) => trigger.mailbox));
+		for (const mailbox of mailboxes) {
+			await addIntegrationEvent({
+				provider: GMAIL_PROVIDER,
+				data: { mailbox },
+			});
 		}
-		await tx
-			.update(workflows)
-			.set({ status: "active" })
-			.where(eq(workflows.id, workflowId));
-	});
-	const mailboxes = new Set(
-		prepared.map((trigger) => {
-			return trigger.mailbox;
-		}),
-	);
-	for (const mailbox of mailboxes) {
-		await addIntegrationEvent({ provider: GMAIL_PROVIDER, data: { mailbox } });
-	}
-};
-
-export const unpublishGmailWorkflow = async (
-	workflowId: string,
-	userId: string,
-) => {
-	await db.transaction(async (tx) => {
-		const [workflow] = await tx
-			.select()
-			.from(workflows)
-			.where(and(eq(workflows.id, workflowId), eq(workflows.userId, userId)))
-			.for("update");
-		if (!workflow) {
-			throw createHttpError.NotFound("Workflow not found");
-		}
-		await tx
-			.delete(triggerStates)
-			.where(
-				and(
-					eq(triggerStates.provider, GMAIL_PROVIDER),
-					eq(triggerStates.workflowId, workflowId),
-				),
-			);
-		await tx.delete(snapshots).where(eq(snapshots.workflowId, workflowId));
-		await tx
-			.update(workflows)
-			.set({ status: "inactive" })
-			.where(eq(workflows.id, workflowId));
-	});
+	};
+	return { save, afterPublish };
 };
 
 const readMatchingEmail = async (

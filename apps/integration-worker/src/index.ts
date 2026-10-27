@@ -1,12 +1,12 @@
-import { startGmailWatchRenewal } from "@nodebase/integrations";
+import { startTriggerWatchRenewals } from "@nodebase/integrations";
 import { startIntegrationEventWorker } from "./integration-worker.js";
 
 const worker = startIntegrationEventWorker();
-const watchRenewalTimer = startGmailWatchRenewal();
+const watchRenewalTimers = startTriggerWatchRenewals();
 
 const shutdown = async () => {
-	if (watchRenewalTimer) {
-		clearInterval(watchRenewalTimer);
+	for (const timer of watchRenewalTimers) {
+		if (timer) clearInterval(timer);
 	}
 	await worker.close();
 };

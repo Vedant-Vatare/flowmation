@@ -10,8 +10,8 @@ import {
 	workflowSnapshotsTable,
 } from "@nodebase/db";
 import {
-	publishGmailWorkflow,
-	unpublishGmailWorkflow,
+	publishWorkflowWithTriggers,
+	unpublishWorkflowWithTriggers,
 } from "@nodebase/integrations";
 import { removeScheduledWorkflow, scheduleWorkflow } from "@nodebase/queue";
 import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
@@ -183,33 +183,7 @@ export const publishWorkflow = async (req: Request, res: Response) => {
 		.from(workflowConnectionsTable)
 		.where(eq(workflowConnectionsTable.workflowId, workflowId));
 
-	const [existingSnapshot] = await db
-		.select()
-		.from(workflowSnapshotsTable)
-		.where(eq(workflowSnapshotsTable.workflowId, workflowId));
-
-	if (
-		nodes.some((n) => n.task === "trigger.gmail") ||
-		existingSnapshot?.nodes.some((n) => n.task === "trigger.gmail")
-	) {
-		await publishGmailWorkflow(workflowId, userId, nodes, connections);
-	} else if (existingSnapshot) {
-		await db
-			.update(workflowSnapshotsTable)
-			.set({
-				nodes,
-				connections,
-				publishedAt: new Date(),
-			})
-			.where(eq(workflowSnapshotsTable.workflowId, workflowId));
-	} else {
-		await db.insert(workflowSnapshotsTable).values({
-			workflowId,
-			nodes,
-			connections,
-			publishedAt: new Date(),
-		});
-	}
+	await publishWorkflowWithTriggers(workflowId, userId, nodes, connections);
 
 	const scheduleNode = nodes.find((n) => n.task === "trigger.cron");
 	if (scheduleNode) {
@@ -218,11 +192,6 @@ export const publishWorkflow = async (req: Request, res: Response) => {
 			await scheduleWorkflow(workflowId, userId, nodes, connections, repeat);
 		}
 	}
-
-	await db
-		.update(userWorkflowsTable)
-		.set({ status: "active" })
-		.where(eq(userWorkflowsTable.id, workflowId));
 
 	return res.status(200).json({ message: "workflow published successfully" });
 };
@@ -245,20 +214,7 @@ export const unpublishWorkflow = async (req: Request, res: Response) => {
 
 	if (!workflow) throw createHttpError.NotFound("workflow not found");
 
-	const snapshot = await db.query.workflowSnapshotsTable.findFirst({
-		where: eq(workflowSnapshotsTable.workflowId, workflowId),
-	});
-	if (snapshot?.nodes.some((node) => node.task === "trigger.gmail")) {
-		await unpublishGmailWorkflow(workflowId, userId);
-	} else {
-		await db
-			.delete(workflowSnapshotsTable)
-			.where(eq(workflowSnapshotsTable.workflowId, workflowId));
-		await db
-			.update(userWorkflowsTable)
-			.set({ status: "inactive" })
-			.where(eq(userWorkflowsTable.id, workflowId));
-	}
+	await unpublishWorkflowWithTriggers(workflowId, userId);
 
 	await removeScheduledWorkflow(workflowId);
 
