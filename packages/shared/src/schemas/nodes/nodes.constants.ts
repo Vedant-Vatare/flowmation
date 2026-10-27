@@ -17,6 +17,10 @@ import {
 	gmailTriggerNodeSchema,
 	gmailTriggerNodeValueSchemas,
 } from "./gmail-trigger.schema.js";
+import {
+	googleCalendarTriggerNodeSchema,
+	googleCalendarTriggerNodeValueSchemas,
+} from "./google-calendar-trigger.schema.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import {
 	airtableNodeSchema,
@@ -183,6 +187,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.discord", discordTriggerNodeSchema],
 	["trigger.github", githubTriggerNodeSchema],
 	["trigger.gmail", gmailTriggerNodeSchema],
+	["trigger.google_calendar", googleCalendarTriggerNodeSchema],
 	["action.airtable", airtableNodeSchema],
 	["action.ai", aiNodeSchema],
 	["action.asana", asanaNodeSchema],
@@ -225,6 +230,7 @@ export const nodeParamValueRegistry = new Map<
 	["trigger.discord", discordTriggerNodeValueSchemas],
 	["trigger.github", githubTriggerNodeValueSchemas],
 	["trigger.gmail", gmailTriggerNodeValueSchemas],
+	["trigger.google_calendar", googleCalendarTriggerNodeValueSchemas],
 	["action.http", httpNodeValueSchemas],
 	["action.wait", waitingNodeValueSchemas],
 	["action.set_variable", setVariableNodeValueSchemas],

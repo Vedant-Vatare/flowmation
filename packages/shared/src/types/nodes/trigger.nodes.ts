@@ -1,5 +1,6 @@
 import type z from "zod";
 import type { gmailTriggerNodeSchema } from "@/schemas/nodes/gmail-trigger.schema.js";
+import type { googleCalendarTriggerNodeSchema } from "@/schemas/nodes/google-calendar-trigger.schema.js";
 import type {
 	clickNodeSchema,
 	discordTriggerNodeSchema,
@@ -15,3 +16,6 @@ export type DiscordTriggerNode = z.infer<typeof discordTriggerNodeSchema>;
 export type GitHubTriggerNode = z.infer<typeof githubTriggerNodeSchema>;
 
 export type GmailTriggerNode = z.infer<typeof gmailTriggerNodeSchema>;
+export type GoogleCalendarTriggerNode = z.infer<
+	typeof googleCalendarTriggerNodeSchema
+>;

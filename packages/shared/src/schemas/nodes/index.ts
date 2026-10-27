@@ -2,6 +2,7 @@ export * from "./action.nodes.js";
 export * from "./base.nodes.js";
 export * from "./control.nodes.js";
 export * from "./gmail-trigger.schema.js";
+export * from "./google-calendar-trigger.schema.js";
 export * from "./integrations/ai.schema.js";
 export * from "./integrations/airtable.schema.js";
 export * from "./integrations/asana.schema.js";
