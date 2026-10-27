@@ -216,6 +216,20 @@ export const connectOAuth = async (req: Request, res: Response) => {
 	const isPopup = req.query.source === "popup";
 	const label =
 		typeof req.query.label === "string" ? req.query.label.trim() : "";
+	const reconnectId = req.query.credentialId;
+	if (reconnectId !== undefined) {
+		if (!credentialIdSchema.safeParse(reconnectId).success)
+			throw createHttpError.BadRequest("Invalid credential ID.");
+		const existing = await db.query.credentialsTable.findFirst({
+			where: and(
+				eq(credentialsTable.id, reconnectId as string),
+				eq(credentialsTable.userId, userId),
+				eq(credentialsTable.provider, provider),
+			),
+			columns: { id: true },
+		});
+		if (!existing) throw createHttpError.NotFound("Credential not found.");
+	}
 
 	const credentialDefinition = credentialRegistry[provider];
 
@@ -232,7 +246,11 @@ export const connectOAuth = async (req: Request, res: Response) => {
 
 	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/credentials/oauth/${provider}/callback`;
 
-	const stateObj = { userId, nonce: crypto.randomBytes(16).toString("hex") };
+	const stateObj = {
+		userId,
+		credentialId: reconnectId,
+		nonce: crypto.randomBytes(16).toString("hex"),
+	};
 	const state = Buffer.from(JSON.stringify(stateObj)).toString("base64url");
 	const codeVerifier = crypto.randomBytes(32).toString("base64url");
 	const codeChallenge = crypto
@@ -249,6 +267,12 @@ export const connectOAuth = async (req: Request, res: Response) => {
 	};
 
 	res.cookie(`oauth_${provider}_state`, state, cookieOptions);
+	res.clearCookie(`oauth_${provider}_label`, {
+		domain: getCookieDomain(),
+		path: "/",
+		sameSite: "none",
+		secure: true,
+	});
 	res.cookie(`oauth_${provider}_verifier`, codeVerifier, cookieOptions);
 	res.cookie(
 		`oauth_${provider}_isPopup`,
@@ -284,6 +308,9 @@ export const connectOAuth = async (req: Request, res: Response) => {
 };
 
 export const oauthCallback = async (req: Request, res: Response) => {
+	const clientUrl = process.env.CLIENT_URL;
+	if (!clientUrl)
+		throw createHttpError.InternalServerError("Client URL is not configured.");
 	const provider = req.params.provider as CredentialProvider;
 	const { code, state } = req.query;
 	const def = credentialRegistry[provider];
@@ -327,6 +354,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 	const stateStr = Buffer.from(state, "base64url").toString("utf8");
 	const stateObj = JSON.parse(stateStr);
 	const userId = stateObj.userId;
+	const reconnectId = stateObj.credentialId as string | undefined;
 
 	if (!userId) throw createHttpError.Unauthorized();
 
@@ -389,7 +417,7 @@ export const oauthCallback = async (req: Request, res: Response) => {
 
 	if (!tokenResponse.ok || tokens.ok === false) {
 		throw createHttpError.BadRequest(
-			`Failed to exchange code: ${tokens.error ?? JSON.stringify(tokens)}`,
+			"Authorization failed. Please try connecting the account again.",
 		);
 	}
 
@@ -419,28 +447,58 @@ export const oauthCallback = async (req: Request, res: Response) => {
 			: accountIdentifier
 		: `${savedLabel || def.name} Account`;
 
-	await db.insert(credentialsTable).values({
-		userId: userId,
-		provider: provider,
-		name: credentialName,
-		type: "oauth",
+	const tokenValues = {
 		accessToken: encrypt(accessToken),
 		refreshToken: tokens.refresh_token ? encrypt(tokens.refresh_token) : null,
 		expiresAt,
-	});
+	};
+	let credentialId: string | undefined;
+	if (reconnectId) {
+		const [updated] = await db
+			.update(credentialsTable)
+			.set({
+				...tokenValues,
+				refreshToken: tokens.refresh_token
+					? tokenValues.refreshToken
+					: undefined,
+			})
+			.where(
+				and(
+					eq(credentialsTable.id, reconnectId),
+					eq(credentialsTable.userId, userId),
+					eq(credentialsTable.provider, provider),
+				),
+			)
+			.returning({ id: credentialsTable.id });
+		if (!updated)
+			throw createHttpError.NotFound(
+				"Credential no longer exists. Add a new connection.",
+			);
+		credentialId = updated.id;
+	} else {
+		const [created] = await db
+			.insert(credentialsTable)
+			.values({
+				userId: userId,
+				provider: provider,
+				name: credentialName,
+				type: "oauth",
+				...tokenValues,
+			})
+			.returning({ id: credentialsTable.id });
+		credentialId = created?.id;
+	}
 
 	if (isPopup) {
 		return res.send(`
 			<script>
-				window.opener.postMessage({ type: 'OAUTH_SUCCESS', provider: '${provider}' }, '*');
+				if (window.opener) window.opener.postMessage(${JSON.stringify({ type: "OAUTH_SUCCESS", provider, credentialId }).replace(/</g, "\\u003c")}, ${JSON.stringify(new URL(clientUrl).origin)});
 				window.close();
 			</script>
 		`);
 	}
 
-	return res.redirect(
-		`${process.env.CLIENT_URL}/settings/credentials?connected=${provider}`,
-	);
+	return res.redirect(`${clientUrl}/settings/credentials`);
 };
 
 export const saveApiKey = async (req: Request, res: Response) => {
