@@ -241,6 +241,7 @@ export const executeTriggerNode = async (
 		case "trigger.discord":
 		case "trigger.github":
 		case "trigger.gmail":
+		case "trigger.google_calendar":
 			return { success: true, output: job.data.triggerData };
 		default:
 			return {

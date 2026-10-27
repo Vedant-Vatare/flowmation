@@ -38,6 +38,7 @@ const storedEventSchema = z.looseObject({
 
 export const googleCalendarStateSchema = z.object({
 	calendarId: googleCalendarTriggerNodeValueSchemas.calendarId,
+	callbackUrl: z.url().startsWith("https://").optional(),
 	event: googleCalendarTriggerNodeValueSchemas.event,
 	titleContains: googleCalendarTriggerNodeValueSchemas.titleContains,
 	includeAllDay: googleCalendarTriggerNodeValueSchemas.includeAllDay,

@@ -4,6 +4,10 @@ import {
 	prepareGmailWorkflow,
 	startGmailWatchRenewal,
 } from "./gmail/gmail-trigger.js";
+import {
+	prepareGoogleCalendarWorkflow,
+	startGoogleCalendarWatchRenewal,
+} from "./google-calendar/google-calendar-watch.js";
 
 type TriggerTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -26,6 +30,13 @@ export const triggerHandlers = new Map<string, TriggerHandler>([
 	[
 		"trigger.gmail",
 		{ prepare: prepareGmailWorkflow, startRenewal: startGmailWatchRenewal },
+	],
+	[
+		"trigger.google_calendar",
+		{
+			prepare: prepareGoogleCalendarWorkflow,
+			startRenewal: startGoogleCalendarWatchRenewal,
+		},
 	],
 ]);
 
