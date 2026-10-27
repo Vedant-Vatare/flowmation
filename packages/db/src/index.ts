@@ -14,7 +14,18 @@ export const db = drizzle(pool, {
 	casing: "snake_case",
 });
 
-export { and, desc, eq, inArray, lte, not, or, SQL, sql } from "drizzle-orm";
+export {
+	and,
+	desc,
+	eq,
+	exists,
+	inArray,
+	lte,
+	not,
+	or,
+	SQL,
+	sql,
+} from "drizzle-orm";
 export { DrizzleQueryError } from "drizzle-orm/errors";
 export * from "./db/schema.js";
 export { getDecryptedCredential } from "./utils/credentials.js";

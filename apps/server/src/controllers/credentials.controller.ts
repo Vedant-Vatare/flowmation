@@ -1,5 +1,17 @@
 import crypto from "node:crypto";
-import { credentialsTable, db, eq } from "@nodebase/db";
+import {
+	and,
+	credentialsTable,
+	db,
+	eq,
+	exists,
+	integrationTriggerStateTable,
+	or,
+	sql,
+	userWorkflowsTable,
+	workflowNodesTable,
+	workflowSnapshotsTable,
+} from "@nodebase/db";
 import {
 	CREDENTIALS_PROVIDER,
 	type CredentialProvider,
@@ -8,23 +20,194 @@ import {
 import { encrypt } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
+import { z } from "zod";
 import { getCookieDomain } from "@/utils/auth.utils.js";
+import {
+	credentialIdSchema,
+	credentialUpdateSchema,
+	prepareCredentialFields,
+} from "@/utils/credential-management.js";
+
+const publicCredentialColumns = {
+	id: credentialsTable.id,
+	name: credentialsTable.name,
+	provider: credentialsTable.provider,
+	type: credentialsTable.type,
+	createdAt: credentialsTable.createdAt,
+	updatedAt: credentialsTable.updatedAt,
+};
+
+type CredentialReference = string | typeof credentialsTable.id;
+
+function workflowUsesCredential(credentialId: CredentialReference) {
+	const matchingDraftNode = db
+		.select({ id: workflowNodesTable.id })
+		.from(workflowNodesTable)
+		.where(
+			and(
+				eq(workflowNodesTable.workflowId, userWorkflowsTable.id),
+				eq(workflowNodesTable.credentialId, credentialId),
+			),
+		);
+
+	const matchingPublishedVersion = db
+		.select({ id: workflowSnapshotsTable.id })
+		.from(workflowSnapshotsTable)
+		.where(
+			and(
+				eq(workflowSnapshotsTable.workflowId, userWorkflowsTable.id),
+				sql`${workflowSnapshotsTable.nodes} @> jsonb_build_array(jsonb_build_object('credentialId', ${credentialId}::text))`,
+			),
+		);
+
+	const matchingTriggerRegistration = db
+		.select({ id: integrationTriggerStateTable.id })
+		.from(integrationTriggerStateTable)
+		.where(
+			and(
+				eq(integrationTriggerStateTable.workflowId, userWorkflowsTable.id),
+				eq(integrationTriggerStateTable.credentialId, credentialId),
+			),
+		);
+
+	return or(
+		exists(matchingDraftNode),
+		exists(matchingPublishedVersion),
+		exists(matchingTriggerRegistration),
+	);
+}
 
 export const getCredentials = async (_req: Request, res: Response) => {
 	const userId = res.locals.userId;
 
 	const credentials = await db
 		.select({
-			id: credentialsTable.id,
-			name: credentialsTable.name,
-			provider: credentialsTable.provider,
-			type: credentialsTable.type,
-			createdAt: credentialsTable.createdAt,
+			...publicCredentialColumns,
+			workflowCount: db.$count(
+				userWorkflowsTable,
+				and(
+					eq(userWorkflowsTable.userId, userId),
+					workflowUsesCredential(credentialsTable.id),
+				),
+			),
 		})
 		.from(credentialsTable)
 		.where(eq(credentialsTable.userId, userId));
 
 	return res.status(200).json({ credentials });
+};
+
+export const getCredentialUsage = async (req: Request, res: Response) => {
+	const id = credentialIdSchema.safeParse(req.params.id);
+	if (!id.success) throw createHttpError.BadRequest("Invalid credential ID.");
+	const userId = res.locals.userId as string;
+	const credential = await db.query.credentialsTable.findFirst({
+		where: and(
+			eq(credentialsTable.id, id.data),
+			eq(credentialsTable.userId, userId),
+		),
+		columns: { id: true },
+	});
+	if (!credential) throw createHttpError.NotFound("Credential not found.");
+	const workflows = await db
+		.select({
+			id: userWorkflowsTable.id,
+			name: userWorkflowsTable.name,
+			status: userWorkflowsTable.status,
+		})
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.userId, userId),
+				workflowUsesCredential(id.data),
+			),
+		);
+	return res.json({ workflows });
+};
+
+export const updateCredential = async (req: Request, res: Response) => {
+	const id = credentialIdSchema.safeParse(req.params.id);
+	const body = credentialUpdateSchema.safeParse(req.body);
+	if (!id.success || !body.success)
+		throw createHttpError.BadRequest(
+			"Provide a valid name or credential fields.",
+		);
+	const userId = res.locals.userId as string;
+	const credential = await db.transaction(async (tx) => {
+		const [existing] = await tx
+			.select()
+			.from(credentialsTable)
+			.where(
+				and(
+					eq(credentialsTable.id, id.data),
+					eq(credentialsTable.userId, userId),
+				),
+			)
+			.for("update");
+		if (!existing) throw createHttpError.NotFound("Credential not found.");
+		const definition = credentialRegistry[existing.provider];
+		if (!definition)
+			throw createHttpError.BadRequest("Unsupported credential provider.");
+		const fields =
+			body.data.fields === undefined
+				? undefined
+				: prepareCredentialFields(
+						definition,
+						body.data.fields,
+						encrypt,
+						existing.fields,
+					);
+		const [updated] = await tx
+			.update(credentialsTable)
+			.set({ name: body.data.name, fields })
+			.where(
+				and(
+					eq(credentialsTable.id, id.data),
+					eq(credentialsTable.userId, userId),
+				),
+			)
+			.returning(publicCredentialColumns);
+		return updated;
+	});
+	return res.json({ credential });
+};
+
+export const deleteCredential = async (req: Request, res: Response) => {
+	const id = credentialIdSchema.safeParse(req.params.id);
+	if (!id.success) throw createHttpError.BadRequest("Invalid credential ID.");
+	const userId = res.locals.userId as string;
+	await db.transaction(async (tx) => {
+		const [existing] = await tx
+			.select({ id: credentialsTable.id })
+			.from(credentialsTable)
+			.where(
+				and(
+					eq(credentialsTable.id, id.data),
+					eq(credentialsTable.userId, userId),
+				),
+			)
+			.for("update");
+		if (!existing) throw createHttpError.NotFound("Credential not found.");
+		// Check all references, including inconsistent cross-owner data, before deleting.
+		const [usage] = await tx
+			.select({ id: userWorkflowsTable.id })
+			.from(userWorkflowsTable)
+			.where(workflowUsesCredential(id.data))
+			.limit(1);
+		if (usage)
+			throw createHttpError.Conflict(
+				"This credential is used by a workflow. Replace it in drafts and published versions before deleting it.",
+			);
+		await tx
+			.delete(credentialsTable)
+			.where(
+				and(
+					eq(credentialsTable.id, id.data),
+					eq(credentialsTable.userId, userId),
+				),
+			);
+	});
+	return res.status(204).send();
 };
 
 export const connectOAuth = async (req: Request, res: Response) => {
@@ -263,7 +446,17 @@ export const oauthCallback = async (req: Request, res: Response) => {
 export const saveApiKey = async (req: Request, res: Response) => {
 	const provider = req.params.provider as CredentialProvider;
 	const userId = res.locals.userId as string;
-	const name = req.body.name || `${provider} Account`;
+	const parsedName = z
+		.string()
+		.trim()
+		.min(1)
+		.max(255)
+		.safeParse(req.body.name ?? `${provider} Account`);
+	if (!parsedName.success)
+		throw createHttpError.BadRequest(
+			"Credential name must be between 1 and 255 characters.",
+		);
+	const name = parsedName.data;
 
 	if (!userId) throw createHttpError.Unauthorized();
 
@@ -275,16 +468,8 @@ export const saveApiKey = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("Invalid credential provider type");
 	}
 
-	const encryptedFields: Record<string, string> = {};
-	for (const field of def.fields) {
-		const value = req.body[field.key];
-		if (!value && field.secret) {
-			throw createHttpError.BadRequest(`Missing required field: ${field.key}`);
-		}
-		if (value) {
-			encryptedFields[field.key] = field.secret ? encrypt(value) : value;
-		}
-	}
+	const { name: _name, ...inputFields } = req.body;
+	const encryptedFields = prepareCredentialFields(def, inputFields, encrypt);
 
 	const credentialType = def.type === "database" ? "database" : "apiKey";
 
