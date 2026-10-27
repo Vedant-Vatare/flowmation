@@ -6,16 +6,16 @@ export class GoogleCalendarApiError extends Error {
 	}
 }
 
-const calendarRequest = async (token: string, path: string, body: unknown) => {
+const calendarRequest = async (token: string, path: string, body?: unknown) => {
 	const response = await fetch(
 		`https://www.googleapis.com/calendar/v3/${path}`,
 		{
-			method: "POST",
+			method: body === undefined ? "GET" : "POST",
 			headers: {
 				Authorization: `Bearer ${token}`,
 				"Content-Type": "application/json",
 			},
-			body: JSON.stringify(body),
+			...(body === undefined ? {} : { body: JSON.stringify(body) }),
 			signal: AbortSignal.timeout(15000),
 		},
 	);
@@ -23,6 +23,55 @@ const calendarRequest = async (token: string, path: string, body: unknown) => {
 		throw new GoogleCalendarApiError(response.status);
 	}
 	return response;
+};
+
+const eventDateSchema = z.looseObject({
+	date: z.iso.date().optional(),
+	dateTime: z.iso.datetime({ offset: true }).optional(),
+	timeZone: z.string().optional(),
+});
+
+export const googleCalendarEventSchema = z.looseObject({
+	id: z.string().min(1),
+	etag: z.string().min(1).optional(),
+	status: z.enum(["confirmed", "tentative", "cancelled"]).optional(),
+	summary: z.string().optional(),
+	start: eventDateSchema.optional(),
+	end: eventDateSchema.optional(),
+});
+
+const eventPageSchema = z
+	.object({
+		items: z.array(googleCalendarEventSchema).default([]),
+		nextPageToken: z.string().min(1).optional(),
+		nextSyncToken: z.string().min(1).optional(),
+	})
+	.refine(
+		(page) => Boolean(page.nextPageToken) !== Boolean(page.nextSyncToken),
+		"Google Calendar must return a page token or a sync token",
+	);
+
+export const getGoogleCalendarEventPage = async (
+	accessToken: string,
+	calendarId: string,
+	checkpoint: { syncToken?: string; pageToken?: string },
+) => {
+	const params = new URLSearchParams({
+		maxResults: "100",
+		showDeleted: "true",
+		singleEvents: "false",
+	});
+	if (checkpoint.syncToken) params.set("syncToken", checkpoint.syncToken);
+	if (checkpoint.pageToken) params.set("pageToken", checkpoint.pageToken);
+	const response = await calendarRequest(
+		accessToken,
+		`calendars/${encodeURIComponent(calendarId)}/events?${params}`,
+	);
+	return eventPageSchema.parse(
+		await response.json().catch(() => {
+			throw new Error("Google Calendar returned an invalid JSON response");
+		}),
+	);
 };
 
 const watchRequestSchema = z.object({

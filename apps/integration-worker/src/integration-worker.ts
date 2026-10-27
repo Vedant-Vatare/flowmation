@@ -1,4 +1,7 @@
-import { processGmailNotification } from "@nodebase/integrations";
+import {
+	processGmailNotification,
+	processGoogleCalendarNotification,
+} from "@nodebase/integrations";
 import {
 	createIntegrationEventWorker,
 	type IntegrationEvent,
@@ -8,6 +11,10 @@ const processIntegrationEvent = async (event: IntegrationEvent) => {
 	switch (event.provider) {
 		case "gmail": {
 			await processGmailNotification(event.data);
+			return;
+		}
+		case "google_calendar": {
+			await processGoogleCalendarNotification(event.data);
 			return;
 		}
 		default: {
