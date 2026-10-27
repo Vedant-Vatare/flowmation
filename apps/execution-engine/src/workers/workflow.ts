@@ -117,7 +117,6 @@ workflowWorker.on(
 		if (!job) return;
 		console.error(err);
 
-		await deleteWorkflowExecutionQuery(job.data.executionId);
 		await updateWorkflowStatusQuery(job.data.executionId, "failed");
 	},
 );
