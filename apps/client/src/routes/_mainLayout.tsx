@@ -1,6 +1,7 @@
 import {
 	DashboardSquare01Icon,
 	DiscoverCircleIcon,
+	Key01Icon,
 	Settings01Icon,
 	TimelineListIcon,
 	User03Icon,
@@ -188,6 +189,11 @@ function AppSidebar() {
 
 			<SidebarFooter>
 				<SidebarMenu>
+					<NavItem
+						to="/settings/credentials"
+						label="Credentials"
+						icon={Key01Icon}
+					/>
 					<NavItem to="/logs" label="Logs" icon={TimelineListIcon} />
 					<NavItem
 						to="/templates"

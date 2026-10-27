@@ -20,6 +20,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
 import { Route as MainLayoutDashboardRouteImport } from './routes/_mainLayout/dashboard'
 import { Route as MainLayoutWorkflowWorkflowIdRouteImport } from './routes/_mainLayout/workflow/$workflowId'
+import { Route as MainLayoutSettingsCredentialsRouteImport } from './routes/_mainLayout/settings/credentials'
 
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
@@ -76,6 +77,12 @@ const MainLayoutWorkflowWorkflowIdRoute =
     path: '/workflow/$workflowId',
     getParentRoute: () => MainLayoutRoute,
   } as any)
+const MainLayoutSettingsCredentialsRoute =
+  MainLayoutSettingsCredentialsRouteImport.update({
+    id: '/settings/credentials',
+    path: '/settings/credentials',
+    getParentRoute: () => MainLayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates': typeof TemplatesIndexRoute
+  '/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRoutesById {
@@ -112,6 +121,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/_mainLayout/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
   '/_mainLayout/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates/'
+    | '/settings/credentials'
     | '/workflow/$workflowId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -137,6 +148,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates'
+    | '/settings/credentials'
     | '/workflow/$workflowId'
   id:
     | '__root__'
@@ -150,6 +162,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates/'
+    | '/_mainLayout/settings/credentials'
     | '/_mainLayout/workflow/$workflowId'
   fileRoutesById: FileRoutesById
 }
@@ -241,18 +254,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainLayoutWorkflowWorkflowIdRouteImport
       parentRoute: typeof MainLayoutRoute
     }
+    '/_mainLayout/settings/credentials': {
+      id: '/_mainLayout/settings/credentials'
+      path: '/settings/credentials'
+      fullPath: '/settings/credentials'
+      preLoaderRoute: typeof MainLayoutSettingsCredentialsRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
   }
 }
 
 interface MainLayoutRouteChildren {
   MainLayoutDashboardRoute: typeof MainLayoutDashboardRoute
   MainLayoutLogsRoute: typeof MainLayoutLogsRoute
+  MainLayoutSettingsCredentialsRoute: typeof MainLayoutSettingsCredentialsRoute
   MainLayoutWorkflowWorkflowIdRoute: typeof MainLayoutWorkflowWorkflowIdRoute
 }
 
 const MainLayoutRouteChildren: MainLayoutRouteChildren = {
   MainLayoutDashboardRoute: MainLayoutDashboardRoute,
   MainLayoutLogsRoute: MainLayoutLogsRoute,
+  MainLayoutSettingsCredentialsRoute: MainLayoutSettingsCredentialsRoute,
   MainLayoutWorkflowWorkflowIdRoute: MainLayoutWorkflowWorkflowIdRoute,
 }
 
