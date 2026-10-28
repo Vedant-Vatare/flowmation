@@ -1,7 +1,6 @@
 import type { TwilioNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const TWILIO_API = "https://api.twilio.com/2010-04-01/Accounts";
@@ -20,14 +19,8 @@ const parseTwilioError = async (res: Response): Promise<string> => {
 export const twilioNodeExecutor = async (
 	node: TwilioNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Twilio node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -35,7 +28,6 @@ export const twilioNodeExecutor = async (
 		throw new UnrecoverableError("twilio node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,
@@ -53,8 +45,7 @@ export const twilioNodeExecutor = async (
 			};
 		}
 
-		const authHeader =
-			"Basic " + Buffer.from(`${accountSid}:${authToken}`).toString("base64");
+		const authHeader = `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`;
 
 		const headers = {
 			Authorization: authHeader,
@@ -75,7 +66,8 @@ export const twilioNodeExecutor = async (
 			}
 
 			const toNumber = operation === "send_whatsapp" ? `whatsapp:${to}` : to;
-			const fromNumber = operation === "send_whatsapp" ? `whatsapp:${from}` : from;
+			const fromNumber =
+				operation === "send_whatsapp" ? `whatsapp:${from}` : from;
 
 			const formBody = new URLSearchParams();
 			formBody.set("To", toNumber);

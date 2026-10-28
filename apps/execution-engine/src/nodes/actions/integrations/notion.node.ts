@@ -1,7 +1,6 @@
 import type { NotionNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const NOTION_API = "https://api.notion.com/v1";
@@ -168,16 +167,9 @@ const mergeProperties = (
 export const notionNodeExecutor = async (
 	node: NotionNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Notion node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return {
 				success: false,
@@ -188,8 +180,7 @@ export const notionNodeExecutor = async (
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value as string;
 
-		if (!operation)
-			throw new Error("Notion node operation is invalid");
+		if (!operation) throw new Error("Notion node operation is invalid");
 
 		const headers: Record<string, string> = {
 			Authorization: `Bearer ${credential.accessToken}`,
@@ -228,8 +219,7 @@ export const notionNodeExecutor = async (
 			const title = params.title?.value as string;
 			const content = params.content?.value as string | undefined;
 
-			if (!parentPageId)
-				throw new Error("parentPageId is required");
+			if (!parentPageId) throw new Error("parentPageId is required");
 			if (!title) throw new Error("title is required");
 
 			const body: Record<string, unknown> = {

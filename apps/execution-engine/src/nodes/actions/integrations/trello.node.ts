@@ -1,7 +1,6 @@
 import type { TrelloNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const TRELLO_API = "https://api.trello.com/1";
@@ -27,14 +26,8 @@ const parseTrelloError = async (res: Response): Promise<string> => {
 export const trelloNodeExecutor = async (
 	node: TrelloNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Trello node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -42,7 +35,6 @@ export const trelloNodeExecutor = async (
 		throw new UnrecoverableError("trello node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,

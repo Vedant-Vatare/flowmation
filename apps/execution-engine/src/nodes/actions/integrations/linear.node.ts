@@ -1,12 +1,16 @@
 import type { LinearNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const toErrorMessage = (err: unknown): string => {
 	if (typeof err === "string") return err;
-	if (err && typeof err === "object" && "message" in err && typeof err.message === "string")
+	if (
+		err &&
+		typeof err === "object" &&
+		"message" in err &&
+		typeof err.message === "string"
+	)
 		return err.message;
 	return JSON.stringify(err);
 };
@@ -23,7 +27,10 @@ const graphqlRequest = async (
 		body: JSON.stringify({ query, variables }),
 	});
 
-	const result = await response.json().catch(() => ({})) as { data?: unknown; errors?: Array<{ message: string }> };
+	const result = (await response.json().catch(() => ({}))) as {
+		data?: unknown;
+		errors?: Array<{ message: string }>;
+	};
 
 	if (result.errors?.length) {
 		throw new Error(toErrorMessage(result.errors[0]?.message));
@@ -34,17 +41,14 @@ const graphqlRequest = async (
 export const linearNodeExecutor = async (
 	node: LinearNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return { success: false, message: "Credential ID is missing for Linear node" };
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value as string;
 
-		if (!operation) throw new UnrecoverableError("Linear node operation is invalid");
+		if (!operation)
+			throw new UnrecoverableError("Linear node operation is invalid");
 
 		let headers: Record<string, string>;
 
@@ -64,7 +68,10 @@ export const linearNodeExecutor = async (
 				"Content-Type": "application/json",
 			};
 		} else {
-			return { success: false, message: "Invalid credential format for Linear" };
+			return {
+				success: false,
+				message: "Invalid credential format for Linear",
+			};
 		}
 
 		const endpoint = "https://api.linear.app/graphql";
@@ -95,7 +102,10 @@ export const linearNodeExecutor = async (
 			if (assigneeId) input.assigneeId = assigneeId;
 			if (stateId) input.stateId = stateId;
 			if (labels) {
-				input.labelIds = labels.split(",").map((l) => l.trim()).filter(Boolean);
+				input.labelIds = labels
+					.split(",")
+					.map((l) => l.trim())
+					.filter(Boolean);
 			}
 
 			const result = await graphqlRequest(
@@ -181,7 +191,10 @@ export const linearNodeExecutor = async (
 		if (err instanceof UnrecoverableError) throw err;
 		return {
 			success: false,
-			message: err instanceof Error ? err.message : "Something went wrong in Linear node",
+			message:
+				err instanceof Error
+					? err.message
+					: "Something went wrong in Linear node",
 		};
 	}
 };

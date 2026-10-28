@@ -1,3 +1,4 @@
+import { validateWorkflowExecution } from "@nodebase/db";
 import {
 	addNodeInQueue,
 	connection,
@@ -43,6 +44,13 @@ export const workflowWorker = new Worker(
 	async (job: Job<WorkflowJobPayload>) => {
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
+		);
+
+		await validateWorkflowExecution(
+			job.data.workflowId,
+			job.data.userId,
+			job.data.nodes,
+			job.data.triggerNodeId,
 		);
 
 		if (job.data.triggerType === "schedule")
@@ -211,7 +219,7 @@ const handleSequentialNodeExecution = async (
 	startNode: WorkflowNode,
 	globalPendingBranches: WorkflowNode[],
 ): Promise<{ success: boolean; nodeFailed?: boolean }> => {
-	const { nodes, connections, executionId, workflowId } = job.data;
+	const { nodes, connections, executionId, workflowId, userId } = job.data;
 
 	let currentNode: WorkflowNode | undefined = startNode;
 	let previousExecution: PreviousExecution = null;
@@ -237,6 +245,7 @@ const handleSequentialNodeExecution = async (
 		const nodeJob = await addNodeInQueue(
 			{
 				node,
+				userId,
 				executionId,
 				workflowId,
 				liveUpdates: job.data.liveUpdates,

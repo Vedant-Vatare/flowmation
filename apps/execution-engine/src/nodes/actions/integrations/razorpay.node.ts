@@ -1,7 +1,6 @@
 import type { RazorpayNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const RAZORPAY_BASE = "https://api.razorpay.com/v1";
@@ -18,7 +17,12 @@ const toErrorMessage = (err: unknown): string => {
 	if (err && typeof err === "object" && "error" in err) {
 		const e = err.error;
 		if (typeof e === "string") return e;
-		if (e && typeof e === "object" && "description" in e && typeof e.description === "string")
+		if (
+			e &&
+			typeof e === "object" &&
+			"description" in e &&
+			typeof e.description === "string"
+		)
 			return e.description;
 	}
 	return JSON.stringify(err);
@@ -55,7 +59,8 @@ const callRazorpayApi = async (
 	}
 
 	if (!response.ok) {
-		const message = toErrorMessage(data) || `Razorpay API error: ${response.status}`;
+		const message =
+			toErrorMessage(data) || `Razorpay API error: ${response.status}`;
 		return { success: false, message };
 	}
 
@@ -65,14 +70,8 @@ const callRazorpayApi = async (
 export const razorpayNodeExecutor = async (
 	node: RazorpayNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Razorpay node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value;
 
@@ -80,8 +79,11 @@ export const razorpayNodeExecutor = async (
 		throw new UnrecoverableError("razorpay node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
-		if (credential.type !== "apiKey" || !credential.fields?.keyId || !credential.fields?.keySecret) {
+		if (
+			credential.type !== "apiKey" ||
+			!credential.fields?.keyId ||
+			!credential.fields?.keySecret
+		) {
 			return {
 				success: false,
 				message: "Invalid credential format for Razorpay",
@@ -127,7 +129,9 @@ export const razorpayNodeExecutor = async (
 			const description = params.description?.value as string | undefined;
 			const customerName = params.customerName?.value as string | undefined;
 			const customerEmail = params.customerEmail?.value as string | undefined;
-			const customerContact = params.customerContact?.value as string | undefined;
+			const customerContact = params.customerContact?.value as
+				| string
+				| undefined;
 			const notifyEmail = params.notifyEmail?.value;
 			const notifySms = params.notifySms?.value;
 
@@ -147,8 +151,10 @@ export const razorpayNodeExecutor = async (
 				body.customer = {
 					name: customerName,
 				};
-				if (customerEmail) (body.customer as Record<string, unknown>).email = customerEmail;
-				if (customerContact) (body.customer as Record<string, unknown>).contact = customerContact;
+				if (customerEmail)
+					(body.customer as Record<string, unknown>).email = customerEmail;
+				if (customerContact)
+					(body.customer as Record<string, unknown>).contact = customerContact;
 			}
 			body.notify = {
 				email: notifyEmail === true || notifyEmail === "true",

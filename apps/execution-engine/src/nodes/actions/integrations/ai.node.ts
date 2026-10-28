@@ -1,6 +1,5 @@
 import type { AiNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const PROVIDER_CONFIG: Record<
@@ -79,9 +78,8 @@ const PROVIDER_CONFIG: Record<
 			messages: [{ role: "user", content: prompt }],
 		}),
 		extractContent: (data) =>
-			(
-				data.content as Array<{ type?: string; text?: string }>
-			)?.[0]?.text || "",
+			(data.content as Array<{ type?: string; text?: string }>)?.[0]?.text ||
+			"",
 	},
 	gemini: {
 		baseUrl: "",
@@ -105,16 +103,9 @@ const PROVIDER_CONFIG: Record<
 export const aiNodeExecutor = async (
 	node: AiNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for AI node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,

@@ -1,7 +1,6 @@
 import type { AsanaNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const ASANA_API = "https://app.asana.com/api/1.0";
@@ -23,14 +22,8 @@ const parseAsanaError = async (res: Response): Promise<string> => {
 export const asanaNodeExecutor = async (
 	node: AsanaNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Asana node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -38,7 +31,6 @@ export const asanaNodeExecutor = async (
 		throw new UnrecoverableError("asana node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,

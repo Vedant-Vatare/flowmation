@@ -92,7 +92,7 @@ const getGoogleAccessToken = async (
 		return pending;
 	}
 	const request = (async () => {
-		const decrypted = await getDecryptedCredential(credential.id);
+		const decrypted = await getDecryptedCredential(credential.id, userId);
 		if (decrypted.type !== "oauth2" || !decrypted.accessToken) {
 			throw new Error("Reconnect the Google credential for this Gmail trigger");
 		}

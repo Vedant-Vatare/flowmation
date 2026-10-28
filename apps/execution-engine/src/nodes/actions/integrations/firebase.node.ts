@@ -1,7 +1,6 @@
 import type { FirebaseNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const parseFirebaseError = async (res: Response): Promise<string> => {
@@ -17,14 +16,8 @@ const parseFirebaseError = async (res: Response): Promise<string> => {
 export const firebaseNodeExecutor = async (
 	node: FirebaseNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Firebase node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -32,7 +25,6 @@ export const firebaseNodeExecutor = async (
 		throw new UnrecoverableError("firebase node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,

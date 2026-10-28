@@ -1,7 +1,6 @@
 import type { SentryNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const SENTRY_API = "https://sentry.io/api/0";
@@ -23,14 +22,8 @@ const parseSentryError = async (res: Response): Promise<string> => {
 export const sentryNodeExecutor = async (
 	node: SentryNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Sentry node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -38,7 +31,6 @@ export const sentryNodeExecutor = async (
 		throw new UnrecoverableError("sentry node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,
@@ -164,9 +156,7 @@ export const sentryNodeExecutor = async (
 		}
 
 		if (operation === "list_projects") {
-			const url = new URL(
-				`${SENTRY_API}/organizations/${orgSlug}/projects/`,
-			);
+			const url = new URL(`${SENTRY_API}/organizations/${orgSlug}/projects/`);
 
 			const limit = params.limit?.value as string;
 			if (limit) {
@@ -196,9 +186,7 @@ export const sentryNodeExecutor = async (
 		}
 
 		if (operation === "list_releases") {
-			const url = new URL(
-				`${SENTRY_API}/organizations/${orgSlug}/releases/`,
-			);
+			const url = new URL(`${SENTRY_API}/organizations/${orgSlug}/releases/`);
 
 			const limit = params.limit?.value as string;
 			if (limit) {

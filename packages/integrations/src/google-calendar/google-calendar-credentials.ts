@@ -28,7 +28,7 @@ export const getGoogleCalendarAccessToken = async (
 			"Select a Google credential belonging to this workflow's owner",
 		);
 	}
-	const decrypted = await getDecryptedCredential(credential.id);
+	const decrypted = await getDecryptedCredential(credential.id, userId);
 	if (decrypted.type !== "oauth2" || !decrypted.accessToken) {
 		throw new Error(
 			"Reconnect the Google credential for this Calendar trigger",

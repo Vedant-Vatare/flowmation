@@ -1,22 +1,14 @@
 import type { GoogleDocsNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const googleDocsNodeExecutor = async (
 	node: GoogleDocsNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Google Docs node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return {
 				success: false,
@@ -27,8 +19,7 @@ export const googleDocsNodeExecutor = async (
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value as string;
 
-		if (!operation)
-			throw new Error("google docs node operation is invalid");
+		if (!operation) throw new Error("google docs node operation is invalid");
 
 		const authHeaders = {
 			Authorization: `Bearer ${credential.accessToken}`,
@@ -44,14 +35,11 @@ export const googleDocsNodeExecutor = async (
 				return { success: false, message: "Title is required" };
 			}
 
-			const response = await fetch(
-				"https://docs.googleapis.com/v1/documents",
-				{
-					method: "POST",
-					headers: jsonHeaders,
-					body: JSON.stringify({ title }),
-				},
-			);
+			const response = await fetch("https://docs.googleapis.com/v1/documents", {
+				method: "POST",
+				headers: jsonHeaders,
+				body: JSON.stringify({ title }),
+			});
 
 			return handleGoogleAPIResponse(response);
 		}
@@ -167,9 +155,7 @@ export const googleDocsNodeExecutor = async (
 					string,
 					unknown
 				>;
-				const errorData = data.error as
-					| { message?: string }
-					| undefined;
+				const errorData = data.error as { message?: string } | undefined;
 				return {
 					success: false,
 					message:
@@ -189,9 +175,7 @@ export const googleDocsNodeExecutor = async (
 				? `name contains '${query}' and mimeType='application/vnd.google-apps.document'`
 				: `mimeType='application/vnd.google-apps.document'`;
 
-			const url = new URL(
-				"https://www.googleapis.com/drive/v3/files",
-			);
+			const url = new URL("https://www.googleapis.com/drive/v3/files");
 			url.searchParams.set("q", searchQuery);
 			url.searchParams.set("pageSize", pageSize);
 			url.searchParams.set(

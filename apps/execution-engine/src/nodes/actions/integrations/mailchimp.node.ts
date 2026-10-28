@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import type { MailchimpNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const parseJson = (value: string | undefined, paramName: string): unknown => {
@@ -19,16 +18,9 @@ const emailToHash = (email: string): string =>
 export const mailchimpNodeExecutor = async (
 	node: MailchimpNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Mailchimp node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey") {
 			return {
 				success: false,

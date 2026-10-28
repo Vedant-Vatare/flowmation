@@ -1,7 +1,6 @@
 import type { TodoistNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const TODOIST_API_BASE = "https://api.todoist.com/api/v1";
@@ -20,16 +19,9 @@ const parseTodoistError = async (res: Response): Promise<string> => {
 export const todoistNodeExecutor = async (
 	node: TodoistNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Todoist node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return {
 				success: false,

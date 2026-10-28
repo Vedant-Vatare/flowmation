@@ -42,6 +42,7 @@ export type LoopState = {
 };
 
 export type NodeJobPayload = {
+	userId?: string;
 	executionId: string;
 	workflowId: string;
 	node: WorkflowNode;

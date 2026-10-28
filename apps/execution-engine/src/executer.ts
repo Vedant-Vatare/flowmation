@@ -1,3 +1,4 @@
+import { getDecryptedCredential } from "@nodebase/db";
 import type { NodeJobPayload, WorkflowJobPayload } from "@nodebase/queue";
 import type {
 	AiNode,
@@ -92,16 +93,93 @@ import { waitNodeExecutor } from "./nodes/actions/wait.node.js";
 import { inputNodeExecutor } from "./nodes/triggers/input.node.js";
 import { scheduleNodeExecutor } from "./nodes/triggers/schedule.node.js";
 import type {
+	DecryptedCredential,
 	NodeExecutorOutput,
 	TriggerNodeExecutorOutput,
 } from "./types/nodes.js";
-import { checkRequiredParameters } from "./utils/node.executor.utils.js";
+import {
+	checkRequiredParameters,
+	getResolvedParams,
+} from "./utils/node.executor.utils.js";
 
-export const executeNode = ({
+const credentialNodeExecutors: Record<
+	string,
+	(
+		node: WorkflowNode,
+		executionId: string,
+		credential: DecryptedCredential,
+	) => Promise<NodeExecutorOutput>
+> = {
+	"action.ai": (node, executionId, credential) =>
+		aiNodeExecutor(node as AiNode, executionId, credential),
+	"action.airtable": (node, executionId, credential) =>
+		airtableNodeExecutor(node as AirtableNode, executionId, credential),
+	"action.asana": (node, executionId, credential) =>
+		asanaNodeExecutor(node as AsanaNode, executionId, credential),
+	"action.calcom": (node, executionId, credential) =>
+		calcomNodeExecutor(node as CalcomNode, executionId, credential),
+	"action.clickup": (node, executionId, credential) =>
+		clickupNodeExecutor(node as ClickUpNode, executionId, credential),
+	"action.discord": (node, executionId, credential) =>
+		discordNodeExecutor(node as DiscordNode, executionId, credential),
+	"action.firebase": (node, executionId, credential) =>
+		firebaseNodeExecutor(node as FirebaseNode, executionId, credential),
+	"action.github": (node, executionId, credential) =>
+		githubNodeExecutor(node as GitHubNode, executionId, credential),
+	"action.gmail": (node, executionId, credential) =>
+		gmailNodeExecutor(node as GmailNode, executionId, credential),
+	"action.google_calendar": (node, executionId, credential) =>
+		googleCalendarNodeExecutor(
+			node as GoogleCalendarNode,
+			executionId,
+			credential,
+		),
+	"action.google_docs": (node, executionId, credential) =>
+		googleDocsNodeExecutor(node as GoogleDocsNode, executionId, credential),
+	"action.google_drive": (node, executionId, credential) =>
+		googleDriveNodeExecutor(node as GoogleDriveNode, executionId, credential),
+	"action.google_sheets": (node, executionId, credential) =>
+		googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId, credential),
+	"action.hubspot": (node, executionId, credential) =>
+		hubspotNodeExecutor(node as HubSpotNode, executionId, credential),
+	"action.jira": (node, executionId, credential) =>
+		jiraNodeExecutor(node as JiraNode, executionId, credential),
+	"action.linear": (node, executionId, credential) =>
+		linearNodeExecutor(node as LinearNode, executionId, credential),
+	"action.mailchimp": (node, executionId, credential) =>
+		mailchimpNodeExecutor(node as MailchimpNode, executionId, credential),
+	"action.mongodb": (node, executionId, credential) =>
+		mongodbNodeExecutor(node as MongodbNode, executionId, credential),
+	"action.notion": (node, executionId, credential) =>
+		notionNodeExecutor(node as NotionNode, executionId, credential),
+	"action.postgres": (node, executionId, credential) =>
+		postgresNodeExecutor(node as PostgresNode, executionId, credential),
+	"action.razorpay": (node, executionId, credential) =>
+		razorpayNodeExecutor(node as RazorpayNode, executionId, credential),
+	"action.redis": (node, executionId, credential) =>
+		redisNodeExecutor(node as RedisNode, executionId, credential),
+	"action.sentry": (node, executionId, credential) =>
+		sentryNodeExecutor(node as SentryNode, executionId, credential),
+	"action.slack": (node, executionId, credential) =>
+		slackNodeExecutor(node as SlackNode, executionId, credential),
+	"action.supabase": (node, executionId, credential) =>
+		supabaseNodeExecutor(node as SupabaseNode, executionId, credential),
+	"action.telegram": (node, executionId, credential) =>
+		telegramNodeExecutor(node as TelegramNode, executionId, credential),
+	"action.todoist": (node, executionId, credential) =>
+		todoistNodeExecutor(node as TodoistNode, executionId, credential),
+	"action.trello": (node, executionId, credential) =>
+		trelloNodeExecutor(node as TrelloNode, executionId, credential),
+	"action.twilio": (node, executionId, credential) =>
+		twilioNodeExecutor(node as TwilioNode, executionId, credential),
+};
+
+export const executeNode = async ({
+	userId,
 	executionId,
 	node,
 	nodeData,
-}: NodeJobPayload): Promise<NodeExecutorOutput> | NodeExecutorOutput => {
+}: NodeJobPayload): Promise<NodeExecutorOutput> => {
 	const { valid, missing } = checkRequiredParameters(node.parameters);
 
 	if (!valid) {
@@ -110,21 +188,65 @@ export const executeNode = ({
 			message: `Missing required parameters: ${missing.join(", ")}`,
 		};
 	}
+
+	const credentialExecutor = Object.hasOwn(credentialNodeExecutors, node.task)
+		? credentialNodeExecutors[node.task]
+		: undefined;
+
+	if (credentialExecutor) {
+		let executionNode = node;
+
+		if (node.task === "action.discord") {
+			try {
+				const params = await getResolvedParams(node, executionId);
+				executionNode = {
+					...node,
+					parameters: Object.values(params),
+					settings: { ...node.settings, hasExpressions: false },
+				};
+
+				if (params.operation?.value !== "send_dm") {
+					return discordNodeExecutor(
+						executionNode as DiscordNode,
+						executionId,
+						null,
+					);
+				}
+			} catch {
+				return {
+					success: false,
+					message: "Could not resolve Discord parameters",
+				};
+			}
+		}
+
+		if (!node.credentialId)
+			return { success: false, message: "Select a credential for this node" };
+
+		if (!userId)
+			return { success: false, message: "Workflow execution owner is missing" };
+
+		let credential: DecryptedCredential;
+
+		try {
+			credential = await getDecryptedCredential(node.credentialId, userId);
+		} catch {
+			return {
+				success: false,
+				message:
+					"Could not load the selected credential. Check the connection and try again.",
+			};
+		}
+
+		return credentialExecutor(executionNode, executionId, credential);
+	}
+
 	switch (node.task) {
 		case "action.xml":
 			return xmlNodeExecutor(node as XmlNode, executionId);
 		case "action.csv":
 			return csvNodeExecutor(node as CsvNode, executionId);
-		case "action.airtable":
-			return airtableNodeExecutor(node as AirtableNode, executionId);
-		case "action.ai":
-			return aiNodeExecutor(node as AiNode, executionId);
-		case "action.asana":
-			return asanaNodeExecutor(node as AsanaNode, executionId);
-		case "action.calcom":
-			return calcomNodeExecutor(node as CalcomNode, executionId);
-		case "action.clickup":
-			return clickupNodeExecutor(node as ClickUpNode, executionId);
+
 		case "action.http":
 			return httpNodeExecutor(node as HttpNode, executionId);
 		case "action.wait":
@@ -139,57 +261,7 @@ export const executeNode = ({
 				executionId,
 				nodeData?.inputNodeNames,
 			);
-		case "action.google_drive":
-			return googleDriveNodeExecutor(node as GoogleDriveNode, executionId);
-		case "action.gmail":
-			return gmailNodeExecutor(node as GmailNode, executionId);
-		case "action.google_calendar":
-			return googleCalendarNodeExecutor(
-				node as GoogleCalendarNode,
-				executionId,
-			);
-		case "action.google_docs":
-			return googleDocsNodeExecutor(node as GoogleDocsNode, executionId);
-		case "action.google_sheets":
-			return googleSheetsNodeExecutor(node as GoogleSheetsNode, executionId);
-		case "action.hubspot":
-			return hubspotNodeExecutor(node as HubSpotNode, executionId);
-		case "action.github":
-			return githubNodeExecutor(node as GitHubNode, executionId);
-		case "action.discord":
-			return discordNodeExecutor(node as DiscordNode, executionId);
-		case "action.firebase":
-			return firebaseNodeExecutor(node as FirebaseNode, executionId);
-		case "action.jira":
-			return jiraNodeExecutor(node as JiraNode, executionId);
-		case "action.linear":
-			return linearNodeExecutor(node as LinearNode, executionId);
-		case "action.mailchimp":
-			return mailchimpNodeExecutor(node as MailchimpNode, executionId);
-		case "action.mongodb":
-			return mongodbNodeExecutor(node as MongodbNode, executionId);
-		case "action.notion":
-			return notionNodeExecutor(node as NotionNode, executionId);
-		case "action.postgres":
-			return postgresNodeExecutor(node as PostgresNode, executionId);
-		case "action.redis":
-			return redisNodeExecutor(node as RedisNode, executionId);
-		case "action.razorpay":
-			return razorpayNodeExecutor(node as RazorpayNode, executionId);
-		case "action.sentry":
-			return sentryNodeExecutor(node as SentryNode, executionId);
-		case "action.slack":
-			return slackNodeExecutor(node as SlackNode, executionId);
-		case "action.supabase":
-			return supabaseNodeExecutor(node as SupabaseNode, executionId);
-		case "action.telegram":
-			return telegramNodeExecutor(node as TelegramNode, executionId);
-		case "action.todoist":
-			return todoistNodeExecutor(node as TodoistNode, executionId);
-		case "action.trello":
-			return trelloNodeExecutor(node as TrelloNode, executionId);
-		case "action.twilio":
-			return twilioNodeExecutor(node as TwilioNode, executionId);
+
 		case "action.json_transform":
 			return jsonTransformNodeExecutor(node as JsonTransformNode, executionId);
 		case "action.text_transform":

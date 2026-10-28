@@ -1,23 +1,14 @@
 import type { GitHubNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const githubNodeExecutor = async (
 	node: GitHubNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	const credentialId = node.credentialId;
-	if (!credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for GitHub node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return {
 				success: false,

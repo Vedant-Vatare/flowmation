@@ -1,7 +1,6 @@
 import type { GmailNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const createEmailMessage = (
@@ -25,16 +24,9 @@ const createEmailMessage = (
 export const gmailNodeExecutor = async (
 	node: GmailNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Gmail node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return { success: false, message: "Invalid credential format for Gmail" };
 		}
@@ -42,8 +34,7 @@ export const gmailNodeExecutor = async (
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value as string;
 
-		if (!operation)
-			throw new Error("gmail node operation is invalid");
+		if (!operation) throw new Error("gmail node operation is invalid");
 
 		if (operation === "send_email" || operation === "create_draft") {
 			const to = params.to?.value as string;

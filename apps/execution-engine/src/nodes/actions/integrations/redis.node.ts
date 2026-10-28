@@ -1,6 +1,5 @@
 import type { RedisNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const parseJson = (value: string | undefined, paramName: string): unknown => {
@@ -15,14 +14,13 @@ const parseJson = (value: string | undefined, paramName: string): unknown => {
 export const redisNodeExecutor = async (
 	node: RedisNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return { success: false, message: "Credential ID is missing" };
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
-		if (credential.type !== "database" || !credential.fields?.connectionString) {
+		if (
+			credential.type !== "database" ||
+			!credential.fields?.connectionString
+		) {
 			return { success: false, message: "Invalid credential format for Redis" };
 		}
 
@@ -81,7 +79,10 @@ export const redisNodeExecutor = async (
 					if (keyType === "hash") {
 						const parsed = parseJson(value, "value") as Record<string, unknown>;
 						if (!parsed || typeof parsed !== "object") {
-							return { success: false, message: "Value must be a JSON object for hash" };
+							return {
+								success: false,
+								message: "Value must be a JSON object for hash",
+							};
 						}
 						await redis.hset(key, parsed);
 					} else if (keyType === "list") {
@@ -117,7 +118,8 @@ export const redisNodeExecutor = async (
 				case "keys": {
 					const pattern = params.pattern?.value as string;
 					const getValues = params.getValues?.value as string;
-					if (!pattern) return { success: false, message: "Key pattern is required" };
+					if (!pattern)
+						return { success: false, message: "Key pattern is required" };
 
 					const keys = await redis.keys(pattern);
 
@@ -232,7 +234,8 @@ export const redisNodeExecutor = async (
 					const channel = params.channel?.value as string;
 					const data = params.data?.value as string;
 
-					if (!channel) return { success: false, message: "Channel is required" };
+					if (!channel)
+						return { success: false, message: "Channel is required" };
 					if (!data) return { success: false, message: "Data is required" };
 
 					const receivers = await redis.publish(channel, data);
@@ -255,7 +258,9 @@ export const redisNodeExecutor = async (
 		return {
 			success: false,
 			message:
-				err instanceof Error ? err.message : "Something went wrong in Redis node",
+				err instanceof Error
+					? err.message
+					: "Something went wrong in Redis node",
 		};
 	}
 };

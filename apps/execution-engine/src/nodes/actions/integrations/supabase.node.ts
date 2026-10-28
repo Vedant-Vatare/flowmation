@@ -1,7 +1,6 @@
 import type { SupabaseNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const parseSupabaseError = async (res: Response): Promise<string> => {
@@ -17,14 +16,8 @@ const parseSupabaseError = async (res: Response): Promise<string> => {
 export const supabaseNodeExecutor = async (
 	node: SupabaseNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Supabase node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -32,7 +25,6 @@ export const supabaseNodeExecutor = async (
 		throw new UnrecoverableError("supabase node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,
@@ -147,7 +139,8 @@ export const supabaseNodeExecutor = async (
 			const filter = params.filter?.value as string;
 			if (!table) return { success: false, message: "Table name is required" };
 			if (!dataStr) return { success: false, message: "Data is required" };
-			if (!filter) return { success: false, message: "Filter is required for update" };
+			if (!filter)
+				return { success: false, message: "Filter is required for update" };
 
 			let parsedData: unknown;
 			try {
@@ -192,7 +185,8 @@ export const supabaseNodeExecutor = async (
 			const table = params.table?.value as string;
 			const filter = params.filter?.value as string;
 			if (!table) return { success: false, message: "Table name is required" };
-			if (!filter) return { success: false, message: "Filter is required for delete" };
+			if (!filter)
+				return { success: false, message: "Filter is required for delete" };
 
 			const url = new URL(`${baseUrl}/rest/v1/${table}`);
 			const filterParts = filter.split("&");
@@ -276,14 +270,11 @@ export const supabaseNodeExecutor = async (
 				}
 			}
 
-			const response = await fetch(
-				`${baseUrl}/functions/v1/${functionName}`,
-				{
-					method: "POST",
-					headers,
-					body: body ?? undefined,
-				},
-			);
+			const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
+				method: "POST",
+				headers,
+				body: body ?? undefined,
+			});
 
 			if (!response.ok) {
 				return { success: false, message: await parseSupabaseError(response) };

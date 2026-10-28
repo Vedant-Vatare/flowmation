@@ -1,7 +1,6 @@
 import type { TelegramNode } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const TELEGRAM_API = "https://api.telegram.org/bot";
@@ -9,14 +8,8 @@ const TELEGRAM_API = "https://api.telegram.org/bot";
 export const telegramNodeExecutor = async (
 	node: TelegramNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Telegram node",
-		};
-	}
-
 	const params = await getResolvedParams(node, executionId);
 	const operation = params.operation?.value as string;
 
@@ -24,7 +17,6 @@ export const telegramNodeExecutor = async (
 		throw new UnrecoverableError("telegram node operation is invalid");
 
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "apiKey" || !credential.fields?.apiKey) {
 			return {
 				success: false,
@@ -56,14 +48,11 @@ export const telegramNodeExecutor = async (
 				body.parse_mode = parseMode;
 			}
 
-			const response = await fetch(
-				`${TELEGRAM_API}${botToken}/sendMessage`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(body),
-				},
-			);
+			const response = await fetch(`${TELEGRAM_API}${botToken}/sendMessage`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
 
 			const data = (await response.json()) as Record<string, unknown>;
 
@@ -95,14 +84,11 @@ export const telegramNodeExecutor = async (
 				body.caption = caption;
 			}
 
-			const response = await fetch(
-				`${TELEGRAM_API}${botToken}/sendPhoto`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(body),
-				},
-			);
+			const response = await fetch(`${TELEGRAM_API}${botToken}/sendPhoto`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
 
 			const data = (await response.json()) as Record<string, unknown>;
 
@@ -134,14 +120,11 @@ export const telegramNodeExecutor = async (
 				body.caption = caption;
 			}
 
-			const response = await fetch(
-				`${TELEGRAM_API}${botToken}/sendDocument`,
-				{
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(body),
-				},
-			);
+			const response = await fetch(`${TELEGRAM_API}${botToken}/sendDocument`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
 
 			const data = (await response.json()) as Record<string, unknown>;
 

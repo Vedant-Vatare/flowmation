@@ -1,7 +1,6 @@
 import type { GoogleSheetsNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const parseValues = (raw: string): string[][] => {
@@ -15,16 +14,9 @@ const parseValues = (raw: string): string[][] => {
 export const googleSheetsNodeExecutor = async (
 	node: GoogleSheetsNode,
 	executionId: string,
+	credential: DecryptedCredential,
 ): Promise<NodeExecutorOutput> => {
-	if (!node.credentialId) {
-		return {
-			success: false,
-			message: "Credential ID is missing for Google Sheets node",
-		};
-	}
-
 	try {
-		const credential = await getDecryptedCredential(node.credentialId);
 		if (credential.type !== "oauth2" || !credential.accessToken) {
 			return {
 				success: false,
@@ -35,8 +27,7 @@ export const googleSheetsNodeExecutor = async (
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value as string;
 
-		if (!operation)
-			throw new Error("google sheets node operation is invalid");
+		if (!operation) throw new Error("google sheets node operation is invalid");
 
 		const spreadsheetId = params.spreadsheetId?.value as string;
 		const range = params.range?.value as string;

@@ -1,6 +1,5 @@
 import type { DiscordNode } from "@nodebase/shared";
-import type { NodeExecutorOutput } from "@/types/nodes.js";
-import { getDecryptedCredential } from "@/utils/credentials.utils.js";
+import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 const discordRequest = async (
@@ -50,12 +49,13 @@ const discordRequest = async (
 export const discordNodeExecutor = async (
 	node: DiscordNode,
 	executionId: string,
+	credential: DecryptedCredential | null,
 ): Promise<NodeExecutorOutput> => {
 	try {
 		const params = await getResolvedParams(node, executionId);
 		const operation = params.operation?.value || "send_webhook";
 		if (operation === "send_dm") {
-			if (!node.credentialId)
+			if (!credential)
 				return {
 					success: false,
 					message: "Select a Discord Bot credential to send DMs",
@@ -76,7 +76,6 @@ export const discordNodeExecutor = async (
 					success: false,
 					message: "DM message must contain between 1 and 2000 characters",
 				};
-			const credential = await getDecryptedCredential(node.credentialId);
 			const botToken =
 				credential.type === "apiKey" ? credential.fields?.botToken : undefined;
 			if (!botToken)

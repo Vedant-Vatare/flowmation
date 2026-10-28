@@ -1,15 +1,23 @@
 import { credentialRegistry } from "@nodebase/shared";
 import { decrypt, encrypt } from "@nodebase/shared/utils";
-import { credentialsTable, db, eq } from "../index.js";
+import { and, credentialsTable, db, eq } from "../index.js";
 
-export const getDecryptedCredential = async (credentialId: string) => {
+export const getDecryptedCredential = async (
+	credentialId: string,
+	userId: string,
+) => {
 	const [credential] = await db
 		.select()
 		.from(credentialsTable)
-		.where(eq(credentialsTable.id, credentialId));
+		.where(
+			and(
+				eq(credentialsTable.id, credentialId),
+				eq(credentialsTable.userId, userId),
+			),
+		);
 
 	if (!credential) {
-		throw new Error(`Credential with id ${credentialId} not found`);
+		throw new Error("Credential not found");
 	}
 
 	if (credential.type === "apiKey" || credential.type === "database") {
@@ -77,8 +85,7 @@ export const getDecryptedCredential = async (credentialId: string) => {
 			});
 
 			if (!tokenResponse.ok) {
-				const err = await tokenResponse.text();
-				throw new Error(`Failed to fetch refresh token: ${err}`);
+				throw new Error("Failed to refresh credential token");
 			}
 
 			const tokens = (await tokenResponse.json()) as {
@@ -99,7 +106,12 @@ export const getDecryptedCredential = async (credentialId: string) => {
 					accessToken: encrypt(accessToken as string),
 					expiresAt: newExpiresAt,
 				})
-				.where(eq(credentialsTable.id, credentialId));
+				.where(
+					and(
+						eq(credentialsTable.id, credentialId),
+						eq(credentialsTable.userId, userId),
+					),
+				);
 		}
 
 		return { type: "oauth2", accessToken };

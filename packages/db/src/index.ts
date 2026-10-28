@@ -30,4 +30,8 @@ export { DrizzleQueryError } from "drizzle-orm/errors";
 export * from "./db/schema.js";
 export { getDecryptedCredential } from "./utils/credentials.js";
 
-export { validateNodeCredential } from "./utils/workflow-validation.js";
+export {
+	validateNodeCredential,
+	validateWorkflowExecution,
+	validateWorkflowGraph,
+} from "./utils/workflow-validation.js";

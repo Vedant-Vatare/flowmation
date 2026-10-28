@@ -1,3 +1,9 @@
+import type { getDecryptedCredential } from "@nodebase/db";
+
+export type DecryptedCredential = Awaited<
+	ReturnType<typeof getDecryptedCredential>
+>;
+
 export type NodeExecutorOutput = {
 	success?: boolean;
 	message?: string;

@@ -3,6 +3,7 @@ import {
 	db,
 	eq,
 	workflowSnapshotsTable as snapshots,
+	validateWorkflowGraph,
 	userWorkflowsTable as workflows,
 } from "@nodebase/db";
 import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
@@ -19,6 +20,20 @@ const changePublishedWorkflow = async (
 		.from(workflows)
 		.where(and(eq(workflows.id, workflowId), eq(workflows.userId, userId)));
 	if (!owner) throw createHttpError.NotFound("Workflow not found");
+	if (workflow) {
+		try {
+			await validateWorkflowGraph(
+				workflowId,
+				userId,
+				workflow.nodes,
+				workflow.connections,
+			);
+		} catch {
+			throw createHttpError.BadRequest(
+				"Invalid workflow graph or credential selection",
+			);
+		}
+	}
 	const [previous] = await db
 		.select()
 		.from(snapshots)
