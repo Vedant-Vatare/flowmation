@@ -2,10 +2,12 @@ import {
 	and,
 	db,
 	eq,
+	exists,
 	inArray,
 	type SQL,
 	sql,
 	userWorkflowsTable,
+	validateNodeCredential,
 	workflowNodesTable,
 } from "@nodebase/db";
 import type {
@@ -15,7 +17,9 @@ import type {
 } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
+import { z } from "zod";
 import { isDBQueryError } from "@/utils/api.utils.js";
+import { validateNodeSchema } from "@/utils/nodes.utils.js";
 
 export const addNodeInWorkflow = async (req: Request, res: Response) => {
 	try {
@@ -29,8 +33,9 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 		});
 
 		if (!workflow) {
-			throw createHttpError.Forbidden("workflow not found");
+			throw createHttpError.NotFound("workflow not found");
 		}
+		await validateCredential(node, userId);
 		const [userWorkflowNode] = await db
 			.insert(workflowNodesTable)
 			.values({
@@ -80,7 +85,7 @@ export const getNodesInWorkflow = async (req: Request, res: Response) => {
 	});
 
 	if (!userWorkflow) {
-		throw createHttpError.Forbidden("workflow not found");
+		throw createHttpError.NotFound("workflow not found");
 	}
 
 	const workflow = await db
@@ -97,11 +102,11 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	const userId = res.locals.userId as string;
 	const workflowId = req.params.workflowId as string;
 
-	if (!node.id) {
+	if (!node.id || !z.uuid().safeParse(node.id).success) {
 		throw createHttpError.BadRequest("invalid node id");
 	}
 
-	if (!workflowId) {
+	if (!z.uuid().safeParse(workflowId).success) {
 		throw createHttpError.BadRequest("invalid workflow id");
 	}
 
@@ -112,23 +117,59 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 		),
 	});
 
-	if (!userWorkflow) throw createHttpError.Forbidden("workflow not found");
+	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
 	const [existingNode] = await db
 		.select()
 		.from(workflowNodesTable)
-		.where(eq(workflowNodesTable.id, node.id));
+		.where(
+			and(
+				eq(workflowNodesTable.id, node.id),
+				eq(workflowNodesTable.workflowId, workflowId),
+			),
+		);
 
 	if (!existingNode) {
 		throw createHttpError.NotFound("node does not exist");
 	}
 
-	const mergedData = { ...existingNode, ...node };
+	for (const key of ["workflowId", "nodeId", "task", "type"] as const) {
+		if (node[key] !== undefined && node[key] !== existingNode[key]) {
+			throw createHttpError.BadRequest("node identity cannot be changed");
+		}
+	}
+
+	const updates = {
+		name: node.name,
+		description: node.description,
+		parameters: node.parameters,
+		settings: node.settings,
+		credentialId: node.credentialId,
+		positionX: node.positionX,
+		positionY: node.positionY,
+	};
+	const effectiveNode = {
+		...existingNode,
+		...Object.fromEntries(
+			Object.entries(updates).filter(([, value]) => value !== undefined),
+		),
+	};
+	const validation = validateNodeSchema(effectiveNode);
+
+	if (!validation.success)
+		throw createHttpError.BadRequest("invalid node configuration");
+
+	await validateCredential(effectiveNode, userId);
 
 	const [updatedNode] = await db
 		.update(workflowNodesTable)
-		.set(mergedData)
-		.where(eq(workflowNodesTable.id, node.id))
+		.set(updates)
+		.where(
+			and(
+				eq(workflowNodesTable.id, node.id),
+				eq(workflowNodesTable.workflowId, workflowId),
+			),
+		)
 		.returning();
 
 	return res.status(200).json({
@@ -154,7 +195,7 @@ export const updateNodesPositions = async (req: Request, res: Response) => {
 		),
 	});
 
-	if (!userWorkflow) throw createHttpError.Forbidden("workflow not found");
+	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
 	const ids: string[] = [];
 	const positionXChunks: SQL[] = [];
@@ -215,16 +256,40 @@ export const deleteNodeInWorkflow = async (req: Request, res: Response) => {
 		workflowId: string;
 	};
 
-	const query = await db
-		.delete(workflowNodesTable)
-		.where(
-			and(
-				eq(workflowNodesTable.id, id),
-				eq(workflowNodesTable.workflowId, workflowId),
+	if (
+		!z.uuid().safeParse(id).success ||
+		!z.uuid().safeParse(workflowId).success
+	) {
+		throw createHttpError.BadRequest("invalid node data");
+	}
+	const userId = res.locals.userId as string;
+	const query = await db.delete(workflowNodesTable).where(
+		and(
+			eq(workflowNodesTable.id, id),
+			exists(
+				db
+					.select({ id: userWorkflowsTable.id })
+					.from(userWorkflowsTable)
+					.where(
+						and(
+							eq(userWorkflowsTable.id, workflowId),
+							eq(userWorkflowsTable.userId, userId),
+						),
+					),
 			),
-		);
+			eq(workflowNodesTable.workflowId, workflowId),
+		),
+	);
 	if (query.rowCount === 0) {
 		throw createHttpError.NotFound("node was not found");
 	}
 	return res.status(200).json({ message: "node instance deleted" });
+};
+
+const validateCredential = async (node: WorkflowNode, userId: string) => {
+	try {
+		await validateNodeCredential(node, userId);
+	} catch {
+		throw createHttpError.BadRequest("invalid node or credential selection");
+	}
 };

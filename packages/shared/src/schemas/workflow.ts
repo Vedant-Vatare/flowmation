@@ -67,7 +67,7 @@ export const workflowConnectionSchema = z.object({
 
 export const partialWorkflowConnectionSchema = workflowConnectionSchema
 	.partial()
-	.extend({ id: z.string() });
+	.extend({ id: z.uuid(), workflowId: z.uuid() });
 
 export const NodeIdsWithPositionSchema = z.array(
 	z.object({
@@ -83,7 +83,9 @@ export const templateSchema = z.object({
 	isActive: z.boolean().default(false),
 	category: z.string(),
 	nodeCount: z.number().default(0),
-	triggerType: z.enum(["webhook", "schedule", "manual", "input_trigger"]).nullish(),
+	triggerType: z
+		.enum(["webhook", "schedule", "manual", "input_trigger"])
+		.nullish(),
 	integrationsUsed: z.array(z.string()).default([]),
 	difficulty: z.string().nullish(),
 	useCount: z.number(),
@@ -105,7 +107,9 @@ export const updateTemplateSchema = z.object({
 	isActive: z.boolean().optional(),
 	category: z.string().optional(),
 	nodeCount: z.number().optional(),
-	triggerType: z.enum(["webhook", "schedule", "manual", "input_trigger"]).optional(),
+	triggerType: z
+		.enum(["webhook", "schedule", "manual", "input_trigger"])
+		.optional(),
 	integrationsUsed: z.array(z.string()).optional(),
 	difficulty: z.string().optional(),
 	tags: z.array(z.string()).optional(),

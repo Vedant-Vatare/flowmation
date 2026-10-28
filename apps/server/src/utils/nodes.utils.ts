@@ -4,6 +4,7 @@ import {
 	workflowNodeSchema,
 } from "@nodebase/shared";
 import type { NextFunction, Request, Response } from "express";
+import createHttpError from "http-errors";
 import { flattenError } from "zod";
 
 type NodeValidationResult =
@@ -25,19 +26,21 @@ export const validateNodeSchema = (
 	options: NodeValidationOptions = {},
 ): NodeValidationResult => {
 	if (!node || typeof node !== "object") {
-		throw new Error("Node data must be an object");
+		throw createHttpError.BadRequest("Node data must be an object");
 	}
 
 	const nodeData = node as { task?: string };
 
 	if (!nodeData.task) {
-		throw new Error("Missing 'task' field in node data");
+		throw createHttpError.BadRequest("Missing 'task' field in node data");
 	}
 
 	const schema = nodeSchemaRegistry.get(nodeData.task);
 
 	if (!schema) {
-		throw new Error(`No schema found for task: ${nodeData.task}`);
+		throw createHttpError.BadRequest(
+			`No schema found for task: ${nodeData.task}`,
+		);
 	}
 
 	const fullNodeSchema = workflowNodeSchema.extend(schema.shape);

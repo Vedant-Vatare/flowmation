@@ -4,6 +4,7 @@ import {
 	eq,
 	userWorkflowsTable,
 	workflowConnectionsTable,
+	workflowNodesTable,
 } from "@nodebase/db";
 import type {
 	partialWorkflowConnection,
@@ -31,6 +32,7 @@ export const addWorkflowConnection = async (req: Request, res: Response) => {
 
 	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
+	await validateEndpoints(workflowConnection);
 	const [newWorkflowConnection] = await db
 		.insert(workflowConnectionsTable)
 		.values(workflowConnection)
@@ -95,9 +97,32 @@ export const updateNodeConnection = async (req: Request, res: Response) => {
 
 	if (!userWorkflow) throw createHttpError.NotFound("workflow not found");
 
+	const [existingConnection] = await db
+		.select()
+		.from(workflowConnectionsTable)
+		.where(
+			and(
+				eq(workflowConnectionsTable.id, workflowConnection.id),
+				eq(workflowConnectionsTable.workflowId, workflowConnection.workflowId),
+			),
+		);
+	if (!existingConnection)
+		throw createHttpError.NotFound("node connection not found");
+	const updates = {
+		sourceId: workflowConnection.sourceId,
+		targetId: workflowConnection.targetId,
+		sourcePort: workflowConnection.sourcePort,
+		targetPort: workflowConnection.targetPort,
+	};
+	await validateEndpoints({
+		...existingConnection,
+		...Object.fromEntries(
+			Object.entries(updates).filter(([, value]) => value !== undefined),
+		),
+	});
 	const [updatedConnection] = await db
 		.update(workflowConnectionsTable)
-		.set(workflowConnection)
+		.set(updates)
 		.where(
 			and(
 				eq(workflowConnectionsTable.id, workflowConnection.id),
@@ -148,4 +173,21 @@ export const removeNodeConnection = async (req: Request, res: Response) => {
 	}
 
 	return res.status(200).json({ message: "node connection deleted" });
+};
+
+const validateEndpoints = async (connection: WorkflowConnection) => {
+	const nodes = await db
+		.select()
+		.from(workflowNodesTable)
+		.where(eq(workflowNodesTable.workflowId, connection.workflowId));
+	const source = nodes.find((node) => node.id === connection.sourceId);
+	const target = nodes.find((node) => node.id === connection.targetId);
+	if (
+		!source ||
+		!target ||
+		!source.outputPorts.some((port) => port.name === connection.sourcePort) ||
+		!target.inputPorts.some((port) => port.name === connection.targetPort)
+	) {
+		throw createHttpError.BadRequest("invalid connection endpoints or ports");
+	}
 };
