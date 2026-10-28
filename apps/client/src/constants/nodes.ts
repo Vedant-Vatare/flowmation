@@ -59,6 +59,7 @@ export type NodeUI = {
 	fill?: string;
 	branded?: boolean;
 	triggerTestMode?: "manual" | "webhook" | "external";
+	triggerTestMessage?: string;
 	credentialDependsOn?: { parameter: string; values: unknown[] }[];
 };
 
@@ -296,11 +297,24 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	},
 	"trigger.gmail": {
 		triggerTestMode: "external",
+		triggerTestMessage:
+			"Publish this workflow, then send a new email to the connected Gmail account.",
 		name: "Gmail Trigger",
 		icon: GmailIcon,
 		background: "#f8f9fa",
 		iconBackground: "transparent",
 		color: "#EA4335",
+		branded: true,
+	},
+	"trigger.google_calendar": {
+		name: "Google Calendar Trigger",
+		icon: GoogleCalendarIcon,
+		triggerTestMode: "external",
+		triggerTestMessage:
+			"Publish this workflow, then create, update, or cancel an event in the selected calendar that matches your trigger settings. View the run in Executions.",
+		background: "#f8f9fa",
+		iconBackground: "transparent",
+		color: "#1a73e8",
 		branded: true,
 	},
 	"action.gmail": {

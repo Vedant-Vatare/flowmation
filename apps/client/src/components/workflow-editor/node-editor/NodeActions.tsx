@@ -22,7 +22,49 @@ export const nodesWithActions = [
 	"trigger.discord",
 	"trigger.github",
 	"trigger.gmail",
+	"trigger.google_calendar",
 ] as const;
+
+const CalendarTriggerAction = ({
+	nodeData,
+}: {
+	nodeData: WorkflowNodeData;
+}) => {
+	const {
+		data: publishStatus,
+		isLoading,
+		isError,
+	} = usePublishStatus(nodeData.workflowId);
+
+	return (
+		<div className="flex items-center gap-1.5 px-3 py-3 border-b border-border/50">
+			<output className="text-xs text-muted-foreground" aria-live="polite">
+				{isLoading
+					? "Checking status…"
+					: isError
+						? "Could not check status. Try refreshing."
+						: publishStatus?.isPublished
+							? "Published"
+							: "Publish to enable this trigger."}
+			</output>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<button
+						type="button"
+						aria-label="Calendar trigger help"
+						className="shrink-0 rounded-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					>
+						<HugeiconsIcon icon={HelpCircleIcon} size={16} />
+					</button>
+				</TooltipTrigger>
+				<TooltipContent className="max-w-64 text-xs">
+					Find another Calendar ID in Google Calendar settings under Integrate
+					calendar. Existing events do not trigger runs when you first publish.
+				</TooltipContent>
+			</Tooltip>
+		</div>
+	);
+};
 const ExecuteWorkflowOnPublishAction = ({
 	nodeData,
 }: {
@@ -107,6 +149,8 @@ const WebhookNodeAction = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 
 export const NodeActions = ({ nodeData }: { nodeData: WorkflowNodeData }) => {
 	switch (nodeData.task) {
+		case "trigger.google_calendar":
+			return <CalendarTriggerAction nodeData={nodeData} />;
 		case "trigger.discord":
 		case "trigger.github":
 			return <HttpTriggerAction nodeData={nodeData} />;

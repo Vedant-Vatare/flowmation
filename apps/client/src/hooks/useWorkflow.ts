@@ -9,11 +9,13 @@ export const useTestWorkflowExecution = () => {
 	const { mutate: registerTestWebhook } = useRegisterTestWebhook();
 
 	const executeTriggerNode = (nodeData: WorkflowNode) => {
-		const mode = NODE_UI_REGISTRY[nodeData.task]?.triggerTestMode;
+		const ui = NODE_UI_REGISTRY[nodeData.task];
+		const mode = ui?.triggerTestMode;
 		if (nodeData.type !== "trigger" || !mode) return;
 		if (mode === "external") {
 			toast.info(
-				"Publish this workflow, then send a new email to the connected Gmail account.",
+				ui.triggerTestMessage ??
+					"Publish this workflow, then send an event that matches your trigger settings.",
 			);
 			return;
 		}
