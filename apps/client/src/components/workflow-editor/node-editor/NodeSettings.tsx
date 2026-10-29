@@ -24,7 +24,12 @@ type SettingField = {
 
 const DEFAULT_SETTINGS: Record<string, SettingField> = {
 	retryCount: { label: "Retry Count", type: "number", min: 0, max: 3 },
-	timeout: { label: "Timeout (s)", type: "number", min: 0 },
+	timeout: {
+		label: "Execution Timeout (ms, 0 = unlimited)",
+		type: "number",
+		min: 0,
+		max: 30000,
+	},
 	continueOnFail: { label: "Continue on Fail", type: "boolean" },
 	alwaysOutputData: { label: "Always Output Data", type: "boolean" },
 	fallbackOutputData: { label: "Fallback Output", type: "textarea" },
@@ -33,7 +38,12 @@ const DEFAULT_SETTINGS: Record<string, SettingField> = {
 
 const NODE_SPECIFIC_SETTINGS: Record<string, Record<string, SettingField>> = {
 	"action.http": {
-		timeout: { label: "Request Timeout (s)", type: "number", min: 1, max: 300 },
+		timeout: {
+			label: "Execution Timeout (ms, 0 = unlimited)",
+			type: "number",
+			min: 0,
+			max: 30000,
+		},
 	},
 };
 
