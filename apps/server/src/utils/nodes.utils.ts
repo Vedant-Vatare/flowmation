@@ -58,12 +58,37 @@ export const validateNodeSchema = (
 	return { success: true, data: zodResult.data };
 };
 
+const validateNodeRequest = (
+	node: unknown,
+	options: NodeValidationOptions = {},
+): NodeValidationResult => {
+	const result = validateNodeSchema(node, options);
+	if (!result.success) return result;
+	const parameters = result.data.parameters;
+
+	if (
+		Array.isArray(parameters) &&
+		new Set(parameters.map((parameter) => parameter.name)).size !==
+			parameters.length
+	) {
+		return {
+			success: false,
+			error: {
+				fieldErrors: { parameters: ["Parameter names must be unique"] },
+				formErrors: [],
+			},
+		};
+	}
+
+	return result;
+};
+
 export const validateNodeMiddleware = (
 	req: Request,
 	res: Response,
 	next: NextFunction,
 ) => {
-	const validationResult = validateNodeSchema(req.body.node);
+	const validationResult = validateNodeRequest(req.body.node);
 
 	if (validationResult.success) {
 		req.body.node = validationResult.data;
@@ -81,7 +106,9 @@ export const validatePartialNodeMiddleware = (
 	res: Response,
 	next: NextFunction,
 ) => {
-	const validationResult = validateNodeSchema(req.body.node, { partial: true });
+	const validationResult = validateNodeRequest(req.body.node, {
+		partial: true,
+	});
 	if (validationResult.success) {
 		req.body.validatedNode = validationResult.data as PartialWorkflowNode;
 		next();

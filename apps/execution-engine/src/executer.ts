@@ -176,6 +176,7 @@ const credentialNodeExecutors: Record<
 
 export const executeNode = async ({
 	userId,
+	workflowId,
 	executionId,
 	node,
 	nodeData,
@@ -223,8 +224,16 @@ export const executeNode = async ({
 		if (!node.credentialId)
 			return { success: false, message: "Select a credential for this node" };
 
-		if (!userId)
+		if (node.workflowId !== workflowId) {
+			return {
+				success: false,
+				message: "Node does not belong to this workflow",
+			};
+		}
+
+		if (!userId) {
 			return { success: false, message: "Workflow execution owner is missing" };
+		}
 
 		let credential: DecryptedCredential;
 
