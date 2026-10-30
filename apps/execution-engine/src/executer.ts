@@ -187,6 +187,7 @@ export const executeNode = async ({
 		return {
 			success: false,
 			message: `Missing required parameters: ${missing.join(", ")}`,
+			retryable: false,
 		};
 	}
 
@@ -217,22 +218,32 @@ export const executeNode = async ({
 				return {
 					success: false,
 					message: "Could not resolve Discord parameters",
+					retryable: false,
 				};
 			}
 		}
 
 		if (!node.credentialId)
-			return { success: false, message: "Select a credential for this node" };
+			return {
+				success: false,
+				retryable: false,
+				message: "Select a credential for this node",
+			};
 
 		if (node.workflowId !== workflowId) {
 			return {
 				success: false,
 				message: "Node does not belong to this workflow",
+				retryable: false,
 			};
 		}
 
 		if (!userId) {
-			return { success: false, message: "Workflow execution owner is missing" };
+			return {
+				success: false,
+				retryable: false,
+				message: "Workflow execution owner is missing",
+			};
 		}
 
 		let credential: DecryptedCredential;
@@ -244,6 +255,7 @@ export const executeNode = async ({
 				success: false,
 				message:
 					"Could not load the selected credential. Check the connection and try again.",
+				retryable: false,
 			};
 		}
 
@@ -294,6 +306,7 @@ export const executeNode = async ({
 			return {
 				success: false,
 				message: `node with given task does not exist: ${node.task}`,
+				retryable: false,
 			};
 	}
 };

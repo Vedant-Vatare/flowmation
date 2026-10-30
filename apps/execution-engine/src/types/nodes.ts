@@ -5,6 +5,7 @@ export type DecryptedCredential = Awaited<
 >;
 
 export type NodeExecutorOutput = {
+	retryable?: boolean;
 	success?: boolean;
 	message?: string;
 	output?: unknown;

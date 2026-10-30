@@ -42,6 +42,10 @@ export const httpNodeExecutor = async (
 
 		return {
 			success: response.ok,
+			retryable:
+				response.status === 408 ||
+				response.status === 429 ||
+				response.status >= 500,
 			message: `HTTP ${response.status} ${response.statusText}`,
 			output: data,
 		};

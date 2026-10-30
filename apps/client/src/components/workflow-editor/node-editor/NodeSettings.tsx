@@ -23,7 +23,7 @@ type SettingField = {
 };
 
 const DEFAULT_SETTINGS: Record<string, SettingField> = {
-	retryCount: { label: "Retry Count", type: "number", min: 0, max: 3 },
+	retryCount: { label: "Additional Retry Attempts", type: "number", min: 0, max: 3 },
 	timeout: {
 		label: "Execution Timeout (ms, 0 = unlimited)",
 		type: "number",

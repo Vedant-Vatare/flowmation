@@ -10,10 +10,11 @@ import { UnrecoverableError } from "bullmq";
 export const updateWorkflowStatusQuery = async (
 	id: string,
 	status: ExecutionStatus,
+	error?: string,
 ) => {
 	return await db
 		.update(workflowExecutionTable)
-		.set({ status, completedAt: new Date() })
+		.set({ status, completedAt: new Date(), result: error ?? null })
 		.where(eq(workflowExecutionTable.id, id))
 		.returning();
 };

@@ -58,10 +58,12 @@ export const recordNodeCompletion = async (
 export const recordNodeExecutionFailed = async (
 	jobData: NodeJobPayload,
 	error: unknown,
+	finalAttempt = true,
 ) => {
-	const nodeOutput = jobData.node.settings?.alwaysOutputData
-		? jobData.node.settings?.fallbackOutputData
-		: error;
+	const nodeOutput =
+		finalAttempt && jobData.node.settings?.alwaysOutputData
+			? jobData.node.settings?.fallbackOutputData
+			: error;
 	if (!jobData.nodeExecutionId)
 		throw new Error("node execution cannot be undefined");
 
@@ -69,6 +71,10 @@ export const recordNodeExecutionFailed = async (
 		jobData.nodeExecutionId,
 		nodeOutput,
 	);
+	if (!finalAttempt) {
+		await nodeDbUpdate;
+		return;
+	}
 
 	const saveToStore = storeNodeOutput(
 		jobData.executionId,

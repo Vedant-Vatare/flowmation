@@ -9,6 +9,7 @@ import { executeNode } from "@/executer.js";
 import { storeNodeOutput } from "@/services/executionStore.js";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { handlePreviousNodeExecution } from "@/utils/node.executor.utils.js";
+import { isFinalNodeFailure, nodeFailure } from "@/utils/node-retry.js";
 import {
 	DEFAULT_NODE_TIMEOUT_MS,
 	runWithNodeTimeout,
@@ -28,7 +29,7 @@ export const workflowNodesWorker = new Worker(
 	): Promise<WorkflowNodesWorker> => {
 		console.log("picked up node:", job.data.node.name);
 
-		await handlePreviousNodeExecution(job.data);
+		if (job.attemptsMade === 0) await handlePreviousNodeExecution(job.data);
 
 		const nodeExecutionId = crypto.randomUUID();
 		await job.updateData({ ...job.data, nodeExecutionId });
@@ -36,6 +37,7 @@ export const workflowNodesWorker = new Worker(
 		await recordNodeStart(job.data);
 
 		let executionResponse: NodeExecutorOutput;
+		let executorSucceeded = false;
 		try {
 			const jobId = job.id;
 
@@ -54,10 +56,9 @@ export const workflowNodesWorker = new Worker(
 			});
 
 			if (!executionResponse?.success) {
-				throw new UnrecoverableError(
-					executionResponse?.message || "failed to execute node",
-				);
+				throw nodeFailure(executionResponse);
 			}
+			executorSucceeded = true;
 			const allowedNodePorts = getNodeOutputPorts(executionResponse);
 
 			console.log(
@@ -82,11 +83,23 @@ export const workflowNodesWorker = new Worker(
 				status: executionResponse.status ?? "completed",
 			};
 		} catch (error) {
-			await recordNodeExecutionFailed(
-				job.data,
-				error instanceof Error ? error.message : "failed to execute node",
-			);
-			throw error;
+			const failure = executorSucceeded
+				? new UnrecoverableError(
+						"Node completed but its result could not be recorded",
+					)
+				: error instanceof Error
+					? error
+					: new Error("Failed to execute node");
+			try {
+				await recordNodeExecutionFailed(
+					job.data,
+					failure.message,
+					isFinalNodeFailure(failure, job.attemptsMade, job.opts.attempts),
+				);
+			} catch {
+				throw new UnrecoverableError("Failed to record node attempt");
+			}
+			throw failure;
 		}
 	},
 	{ connection, concurrency: 10 },

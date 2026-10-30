@@ -29,6 +29,7 @@ import {
 	handlePreviousNodeExecution,
 	nodeExecutionConfig,
 } from "@/utils/node.executor.utils.js";
+import { nodeRetryOptions } from "@/utils/node-retry.js";
 import { broadcastExecutionUpdate } from "@/utils/sse.utils.js";
 import {
 	recordNodeCompletion,
@@ -46,13 +47,6 @@ export const workflowWorker = new Worker(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
 		);
 
-		await validateWorkflowExecution(
-			job.data.workflowId,
-			job.data.userId,
-			job.data.nodes,
-			job.data.triggerNodeId,
-		);
-
 		if (job.data.triggerType === "schedule")
 			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
 
@@ -60,6 +54,12 @@ export const workflowWorker = new Worker(
 			job.data.executionId,
 			job.data.userId,
 			job.data.workflowId,
+		);
+		await validateWorkflowExecution(
+			job.data.workflowId,
+			job.data.userId,
+			job.data.nodes,
+			job.data.triggerNodeId,
 		);
 		const globalPendingBranches: WorkflowNode[] = [];
 		const triggerResult = await handleWorkflowTrigger(job);
@@ -94,7 +94,12 @@ workflowWorker.on(
 	"completed",
 	async (
 		job: Job<WorkflowJobPayload>,
-		result: { removeRecord?: boolean; success?: boolean; nodeFailed?: boolean },
+		result: {
+			removeRecord?: boolean;
+			success?: boolean;
+			nodeFailed?: boolean;
+			error?: string;
+		},
 	) => {
 		if (!job) return;
 		if (result?.removeRecord) {
@@ -111,11 +116,16 @@ workflowWorker.on(
 			"status:",
 			status,
 		);
-		await updateWorkflowStatusQuery(job.data.executionId, status);
-		broadcastExecutionUpdate(job.data, {
-			type: "workflow:completed",
-			completedAt: new Date(),
-		});
+		await updateWorkflowStatusQuery(job.data.executionId, status, result.error);
+		broadcastExecutionUpdate(
+			job.data,
+			result.nodeFailed
+				? {
+						type: "workflow:failed",
+						error: result.error || "A workflow node failed",
+					}
+				: { type: "workflow:completed", completedAt: new Date() },
+		);
 	},
 );
 
@@ -125,7 +135,15 @@ workflowWorker.on(
 		if (!job) return;
 		console.error(err);
 
-		await updateWorkflowStatusQuery(job.data.executionId, "failed");
+		await updateWorkflowStatusQuery(
+			job.data.executionId,
+			"failed",
+			err.message,
+		);
+		broadcastExecutionUpdate(job.data, {
+			type: "workflow:failed",
+			error: err.message,
+		});
 	},
 );
 
@@ -218,7 +236,7 @@ const handleSequentialNodeExecution = async (
 	job: Job<WorkflowJobPayload>,
 	startNode: WorkflowNode,
 	globalPendingBranches: WorkflowNode[],
-): Promise<{ success: boolean; nodeFailed?: boolean }> => {
+): Promise<{ success: boolean; nodeFailed?: boolean; error?: string }> => {
 	const { nodes, connections, executionId, workflowId, userId } = job.data;
 
 	let currentNode: WorkflowNode | undefined = startNode;
@@ -227,6 +245,7 @@ const handleSequentialNodeExecution = async (
 	/* nodeconfigs is populated when current node is executed and its configs can be passed for the next node execution which is used by worker job configs. */
 	let nodeConfigs: NodeExecutionConfig = {};
 	let nodeFailed = false;
+	let lastError: string | undefined;
 
 	while (currentNode) {
 		const node = currentNode;
@@ -252,7 +271,7 @@ const handleSequentialNodeExecution = async (
 				nodeData: preExecutionResult?.data,
 				previousNodeExecution: previousExecution,
 			},
-			nodeConfigs,
+			{ ...nodeConfigs, ...nodeRetryOptions(node.settings.retryCount) },
 		);
 
 		let nodeExecution: WorkflowNodesWorker;
@@ -260,7 +279,9 @@ const handleSequentialNodeExecution = async (
 			nodeExecution = (await nodeJob.waitUntilFinished(
 				nodeQueueEvents,
 			)) as WorkflowNodesWorker;
-		} catch {
+		} catch (error) {
+			lastError =
+				error instanceof Error ? error.message : "Failed to execute node";
 			if (node.settings?.continueOnFail) {
 				nodeFailed = true;
 				currentNode = getNextNode(
@@ -274,7 +295,7 @@ const handleSequentialNodeExecution = async (
 				previousExecution = null;
 				continue;
 			}
-			return { success: false, nodeFailed: true };
+			return { success: false, nodeFailed: true, error: lastError };
 		}
 
 		nodeConfigs = nodeExecutionConfig(node, nodeExecution.output);
@@ -312,7 +333,7 @@ const handleSequentialNodeExecution = async (
 		}
 	}
 
-	return { success: !nodeFailed, nodeFailed };
+	return { success: !nodeFailed, nodeFailed, error: lastError };
 };
 
 const getNextNode = (
