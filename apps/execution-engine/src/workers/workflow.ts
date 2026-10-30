@@ -11,6 +11,7 @@ import {
 	type WorkflowNodesWorker,
 } from "@nodebase/queue";
 import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
+import { getNodeErrorSetting, validateErrorConnections } from "@nodebase/shared";
 import { type Job, QueueEvents, UnrecoverableError, Worker } from "bullmq";
 import { executeTriggerNode } from "@/executer.js";
 import {
@@ -18,11 +19,7 @@ import {
 	deleteWorkflowExecutionQuery,
 	updateWorkflowStatusQuery,
 } from "@/queries/workflow.executions.js";
-import {
-	getNodeOutput,
-	getNodesOutputsByName,
-	storeNodeOutput,
-} from "@/services/executionStore.js";
+import { getNodeOutput, storeNodeOutput } from "@/services/executionStore.js";
 import type { TriggerNodeExecutorOutput } from "@/types/nodes.js";
 import {
 	getResolvedParams,
@@ -62,6 +59,7 @@ export const workflowWorker = new Worker(
 			job.data.triggerNodeId,
 		);
 		const globalPendingBranches: WorkflowNode[] = [];
+		validateErrorConnections(job.data.nodes, job.data.connections);
 		const triggerResult = await handleWorkflowTrigger(job);
 
 		if (!triggerResult?.node || triggerResult?.skipCurrentExecution) {
@@ -246,6 +244,9 @@ const handleSequentialNodeExecution = async (
 	let nodeConfigs: NodeExecutionConfig = {};
 	let nodeFailed = false;
 	let lastError: string | undefined;
+	const selectedPorts = new Map<string, string[]>([
+		[job.data.triggerNodeId, ["default"]],
+	]);
 
 	while (currentNode) {
 		const node = currentNode;
@@ -254,6 +255,7 @@ const handleSequentialNodeExecution = async (
 			jobData: job.data,
 			node: currentNode,
 			globalPendingBranches,
+			selectedPorts,
 		});
 
 		if (preExecutionResult?.skipCurrent) {
@@ -282,15 +284,19 @@ const handleSequentialNodeExecution = async (
 		} catch (error) {
 			lastError =
 				error instanceof Error ? error.message : "Failed to execute node";
-			if (node.settings?.continueOnFail) {
+			if (
+				getNodeErrorSetting(node.task, node.settings) === "continueRegularOutput"
+			) {
+				selectedPorts.set(node.id, ["default"]);
 				nodeFailed = true;
-				currentNode = getNextNode(
-					connections,
-					node,
-					nodes,
-					["default"],
-					globalPendingBranches,
-				);
+				currentNode =
+					getNextNode(
+						connections,
+						node,
+						nodes,
+						["default"],
+						globalPendingBranches,
+					) ?? globalPendingBranches.pop();
 				nodeConfigs = {};
 				previousExecution = null;
 				continue;
@@ -298,7 +304,16 @@ const handleSequentialNodeExecution = async (
 			return { success: false, nodeFailed: true, error: lastError };
 		}
 
-		nodeConfigs = nodeExecutionConfig(node, nodeExecution.output);
+		if (nodeExecution.status === "failed") {
+			nodeFailed = true;
+			lastError = (nodeExecution.output as { error: { message: string } }).error
+				.message;
+		}
+		selectedPorts.set(node.id, nodeExecution.allowedNodePorts);
+		nodeConfigs =
+			nodeExecution.status === "failed"
+				? {}
+				: nodeExecutionConfig(node, nodeExecution.output);
 		previousExecution = {
 			id: nodeExecution.id,
 			node: node,
@@ -367,6 +382,7 @@ const getNextNode = (
 };
 
 type CurrentNodePreExecution = {
+	selectedPorts: Map<string, string[]>;
 	jobData: WorkflowJobPayload;
 	node: WorkflowNode | undefined;
 	globalPendingBranches: WorkflowNode[];
@@ -386,14 +402,31 @@ const currentNodePreExecution = async ({
 	jobData,
 	node,
 	globalPendingBranches,
+	selectedPorts,
 }: CurrentNodePreExecution): Promise<
 	CurrentNodePreExecutionResult | undefined
 > => {
 	if (!node) return undefined;
 
 	if (node.task === "action.merge") {
+		const reachable = (id: string, visited = new Set<string>()): boolean => {
+			if (id === jobData.triggerNodeId) return true;
+			if (visited.has(id)) return false;
+			const nextVisited = new Set(visited).add(id);
+			return jobData.connections.some(
+				(edge) =>
+					edge.targetId === id &&
+					(!selectedPorts.has(edge.sourceId) ||
+						selectedPorts.get(edge.sourceId)!.includes(edge.sourcePort)) &&
+					reachable(edge.sourceId, nextVisited),
+			);
+		};
 		const incomingConnections = jobData.connections.filter(
-			(c) => c.targetId === node.id,
+			(c) =>
+				c.targetId === node.id &&
+				reachable(c.sourceId) &&
+				(!selectedPorts.has(c.sourceId) ||
+					selectedPorts.get(c.sourceId)!.includes(c.sourcePort)),
 		);
 
 		const inputNodes = jobData.nodes.filter((n) =>
@@ -402,12 +435,9 @@ const currentNodePreExecution = async ({
 
 		const inputNodeNames = inputNodes.map((n) => n.name);
 
-		const inputNodeOutputs = await getNodesOutputsByName(
-			jobData.executionId,
-			inputNodeNames,
-		);
-
-		const allInputsExist = inputNodeOutputs.every((output) => output !== null);
+		const allInputsExist =
+			inputNodes.length > 0 &&
+			inputNodes.every((input) => selectedPorts.has(input.id));
 
 		if (!allInputsExist) {
 			return {

@@ -5,6 +5,7 @@ import {
 	type WorkflowNodesWorker,
 } from "@nodebase/queue";
 import { type Job, UnrecoverableError, Worker } from "bullmq";
+import { getNodeErrorSetting } from "@nodebase/shared";
 import { executeNode } from "@/executer.js";
 import { storeNodeOutput } from "@/services/executionStore.js";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
@@ -90,14 +91,57 @@ export const workflowNodesWorker = new Worker(
 				: error instanceof Error
 					? error
 					: new Error("Failed to execute node");
+			const finalAttempt = isFinalNodeFailure(
+				failure,
+				job.attemptsMade,
+				job.opts.attempts,
+			);
+			let errorOutput:
+				| {
+						error: {
+							message: string;
+							nodeName: string;
+							nodeId: string;
+							attempts: number;
+						};
+					}
+				| undefined;
+
+			if (!executorSucceeded) {
+				if (finalAttempt) {
+					const errorSetting = getNodeErrorSetting(
+						job.data.node.task,
+						job.data.node.settings,
+					);
+					if (errorSetting === "continueErrorOutput") {
+						errorOutput = {
+							error: {
+								message: failure.message,
+								nodeName: job.data.node.name,
+								nodeId: job.data.node.id,
+								attempts: job.attemptsMade + 1,
+							},
+						};
+					}
+				}
+			}
 			try {
 				await recordNodeExecutionFailed(
 					job.data,
 					failure.message,
-					isFinalNodeFailure(failure, job.attemptsMade, job.opts.attempts),
+					finalAttempt,
+					errorOutput,
 				);
 			} catch {
 				throw new UnrecoverableError("Failed to record node attempt");
+			}
+			if (errorOutput) {
+				return {
+					id: nodeExecutionId,
+					status: "failed",
+					output: errorOutput,
+					allowedNodePorts: ["error"],
+				};
 			}
 			throw failure;
 		}
@@ -121,5 +165,7 @@ export const getNodeOutputPorts = (
 	executionResult: NodeExecutorOutput,
 ): string[] => {
 	const outputPorts = executionResult?.allowedOutputPorts;
-	return outputPorts?.length ? outputPorts : ["default"];
+	return outputPorts?.length
+		? outputPorts.filter((port) => port !== "error")
+		: ["default"];
 };

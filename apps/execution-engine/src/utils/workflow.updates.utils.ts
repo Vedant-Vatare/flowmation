@@ -59,11 +59,13 @@ export const recordNodeExecutionFailed = async (
 	jobData: NodeJobPayload,
 	error: unknown,
 	finalAttempt = true,
+	errorOutput?: unknown,
 ) => {
 	const nodeOutput =
-		finalAttempt && jobData.node.settings?.alwaysOutputData
+		errorOutput ??
+		(finalAttempt && jobData.node.settings?.alwaysOutputData
 			? jobData.node.settings?.fallbackOutputData
-			: error;
+			: error);
 	if (!jobData.nodeExecutionId)
 		throw new Error("node execution cannot be undefined");
 

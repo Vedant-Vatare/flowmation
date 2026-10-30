@@ -1,5 +1,6 @@
 import {
 	credentialRegistry,
+	validateErrorConnections,
 	type WorkflowConnection,
 	type WorkflowNode,
 } from "@nodebase/shared";
@@ -183,6 +184,7 @@ export const validateWorkflowGraph = async (
 	nodes: WorkflowNode[],
 	connections: WorkflowConnection[],
 ) => {
+	validateErrorConnections(nodes, connections);
 	const nodesById = new Map(nodes.map((node) => [node.id, node]));
 
 	for (const connection of connections) {

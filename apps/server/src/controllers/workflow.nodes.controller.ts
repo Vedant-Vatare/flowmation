@@ -9,12 +9,14 @@ import {
 	userWorkflowsTable,
 	validateNodeCredential,
 	workflowNodesTable,
+	workflowConnectionsTable,
 } from "@nodebase/db";
 import type {
 	NodeIdsWithPosition,
 	PartialWorkflowNode,
 	WorkflowNode,
 } from "@nodebase/shared";
+import { getNodeOutputPorts, supportsErrorOutput } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
@@ -25,6 +27,10 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 	try {
 		const userId = res.locals.userId as string;
 		const node = req.body.node as WorkflowNode;
+		if (node.settings.onError && !supportsErrorOutput(node.task))
+			throw createHttpError.BadRequest(
+				"On Error is not supported for this node",
+			);
 		const workflow = await db.query.userWorkflowsTable.findFirst({
 			where: and(
 				eq(userWorkflowsTable.id, node.workflowId),
@@ -51,7 +57,7 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 				settings: node.settings,
 				positionX: node.positionX ?? null,
 				positionY: node.positionY ?? null,
-				outputPorts: node.outputPorts ?? null,
+				outputPorts: getNodeOutputPorts(node),
 				inputPorts: node.inputPorts ?? null,
 			})
 			.returning();
@@ -154,6 +160,29 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 			Object.entries(updates).filter(([, value]) => value !== undefined),
 		),
 	};
+	if (
+		effectiveNode.settings.onError &&
+		!supportsErrorOutput(effectiveNode.task)
+	)
+		throw createHttpError.BadRequest("On Error is not supported for this node");
+	const outputPorts = getNodeOutputPorts(effectiveNode);
+	if (!outputPorts.some((port) => port.name === "error")) {
+		const [connection] = await db
+			.select({ id: workflowConnectionsTable.id })
+			.from(workflowConnectionsTable)
+			.where(
+				and(
+					eq(workflowConnectionsTable.workflowId, workflowId),
+					eq(workflowConnectionsTable.sourceId, existingNode.id),
+					eq(workflowConnectionsTable.sourcePort, "error"),
+				),
+			)
+			.limit(1);
+		if (connection)
+			throw createHttpError.BadRequest(
+				"Remove the Error connection before changing On Error",
+			);
+	}
 	const validation = validateNodeSchema(effectiveNode);
 
 	if (!validation.success)
@@ -163,7 +192,7 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 
 	const [updatedNode] = await db
 		.update(workflowNodesTable)
-		.set(updates)
+		.set({ ...updates, outputPorts })
 		.where(
 			and(
 				eq(workflowNodesTable.id, node.id),

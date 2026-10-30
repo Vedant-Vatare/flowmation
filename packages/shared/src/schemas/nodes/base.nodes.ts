@@ -69,6 +69,9 @@ export const NodeSettingsSchema = z.object({
 	retryCount: z.number().int().min(0).max(3).optional(),
 	timeout: z.number().int().min(0).max(30000).optional(),
 	continueOnFail: z.boolean().optional(),
+	onError: z
+		.enum(["stopWorkflow", "continueRegularOutput", "continueErrorOutput"])
+		.optional(),
 	alwaysOutputData: z.boolean().optional(),
 	fallbackOutputData: z.unknown().optional(),
 	disabled: z.boolean().optional(),
