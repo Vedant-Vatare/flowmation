@@ -1,7 +1,13 @@
 import { Zap } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { NodeExecutionUpdate } from "@nodebase/shared";
-import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
+import {
+	Handle,
+	type Node,
+	type NodeProps,
+	Position,
+	useUpdateNodeInternals,
+} from "@xyflow/react";
 import { memo, useEffect, useState } from "react";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
@@ -30,6 +36,10 @@ const TRIGGER_VARS = {
 export const WorkflowNode = memo(
 	({ data, selected }: NodeProps<Node<WorkflowNodeData>>) => {
 		const { ui, name, inputPorts, outputPorts } = data;
+		const updateNodeInternals = useUpdateNodeInternals();
+		useEffect(() => {
+			updateNodeInternals(data.id);
+		}, [data.id, outputPorts, updateNodeInternals]);
 		const Icon = ui.icon;
 		const nodeColor = ui.background ?? "#6366f1";
 
@@ -180,21 +190,6 @@ export const WorkflowNode = memo(
 						}}
 					/>
 				))}
-
-				{outputPorts?.length > 1 &&
-					outputPorts.map((port, i) => (
-						<div
-							key={port.name}
-							style={{
-								top: getHandleTop(i, outputPorts.length),
-								left: "calc(100% + 6px)",
-								transform: "translateY(-50%)",
-							}}
-							className="absolute text-[9px] font-semibold px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap"
-						>
-							{port.label}
-						</div>
-					))}
 			</div>
 		);
 	},

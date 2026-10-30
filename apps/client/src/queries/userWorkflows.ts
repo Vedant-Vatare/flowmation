@@ -182,7 +182,7 @@ export const useDeleteWorkflowNode = () => {
 	});
 };
 
-export const useUpdateWorkflowNode = () => {
+export const useUpdateWorkflowNode = (nodeId: string) => {
 	const { setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const queryClient = useQueryClient();
 	const checkForStatusChanges = usePublishStatusStore(
@@ -196,13 +196,29 @@ export const useUpdateWorkflowNode = () => {
 	);
 
 	return useMutation({
+		scope: { id: `node-update-${nodeId}` },
 		mutationFn: ({
 			workflowId,
 			node,
+			errorSettingChange,
 		}: {
 			workflowId: string;
 			node: PartialWorkflowNode;
-		}) => updateWorkflowNodeApi({ node, workflowId }),
+			errorSettingChange?: boolean;
+		}) => {
+			const saved = queryClient
+				.getQueryData<WorkflowNode[]>(workflowNodesOptions(workflowId).queryKey)
+				?.find((item) => item.id === node.id);
+			// Debounced parameter saves must not overwrite an immediate policy change.
+			const update =
+				node.settings && saved && !errorSettingChange
+					? {
+							...node,
+							settings: { ...node.settings, onError: saved.settings.onError },
+						}
+					: node;
+			return updateWorkflowNodeApi({ node: update, workflowId });
+		},
 		onSuccess: (data, variables) => {
 			if (!variables.node.id) return;
 

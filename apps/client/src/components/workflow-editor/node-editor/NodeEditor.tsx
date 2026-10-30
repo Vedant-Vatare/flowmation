@@ -5,6 +5,8 @@ import { CheckmarkSquare02Icon, Edit04Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
 	extractFormSchema,
+	getNodeErrorSetting,
+	supportsErrorOutput,
 	type NodePropertyType,
 	type NodeSettings,
 	nodeParamValueRegistry,
@@ -12,6 +14,7 @@ import {
 import { useReactFlow } from "@xyflow/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { getEditableNodeSettings } from "./nodeSettings.utils";
 import { toast } from "sonner";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
@@ -109,7 +112,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 	const [errorInNodeName, setErrorInNodeName] = useState<null | string>(null);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
 	const nodeNameRef = useRef<HTMLElement | null>(null);
-	const { mutate: updateNode } = useUpdateWorkflowNode();
+	const { mutate: updateNode } = useUpdateWorkflowNode(node.id);
 
 	const editNodeName = () => {
 		if (!nodeNameRef.current) return;
@@ -211,7 +214,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 };
 
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
-	const { mutateAsync: updateNode } = useUpdateWorkflowNode();
+	const { mutateAsync: updateNode } = useUpdateWorkflowNode(node.id);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
 	const mountedRef = useRef(false);
 	const { workflowId } = Route.useParams();
@@ -231,13 +234,20 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		}
 		values.credentialId = node.data.credentialId ?? "";
 		if (node.data.settings) {
-			for (const [key, value] of Object.entries(node.data.settings)) {
+			for (const [key, value] of Object.entries(
+				getEditableNodeSettings(node.data.task, node.data.settings),
+			)) {
 				if (key !== "hasExpressions" && value !== undefined && value !== null) {
 					values[key] = value;
 				}
 			}
 		}
-		return getNodeDraft() ?? values;
+		if (supportsErrorOutput(node.data.task))
+			values.onError = getNodeErrorSetting(
+				node.data.task,
+				node.data.settings ?? {},
+			);
+		return { ...values, ...getNodeDraft() };
 	}, [
 		getNodeDraft,
 		node.data.parameters,
@@ -295,7 +305,49 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 
 	const doSave = useCallback(
 		async (values: Record<string, unknown>) => {
-			const invalid = () => {
+			let updatedSettings: NodeSettings = {
+				...getEditableNodeSettings(node.data.task, node.data.settings),
+				hasExpressions: node.data.settings.hasExpressions,
+			};
+			if (supportsErrorOutput(node.data.task))
+				updatedSettings.onError = values.onError as NodeSettings["onError"];
+
+			for (const [key, _v] of Object.entries(updatedSettings)) {
+				if (key === "hasExpressions") continue;
+				const formValue = values[key];
+				if (formValue !== undefined) {
+					updatedSettings = { ...updatedSettings, [key]: formValue };
+				}
+			}
+
+			const invalid = async () => {
+				const currentSettings = getEditableNodeSettings(
+					node.data.task,
+					node.data.settings,
+				);
+				if (
+					JSON.stringify(updatedSettings) !== JSON.stringify(currentSettings)
+				) {
+					try {
+						await updateNode({
+							node: {
+								id: node.id,
+								task: node.data.task,
+								settings: {
+									...updatedSettings,
+									hasExpressions: node.data.settings.hasExpressions,
+								},
+							},
+							workflowId,
+						});
+					} catch (error) {
+						toast.error(
+							error instanceof Error
+								? error.message
+								: "Could not save node settings",
+						);
+					}
+				}
 				if (mountedRef.current) setEditorStatus("missing");
 				else {
 					toast.warning(
@@ -308,12 +360,12 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 				getCredentialProvider(node.data.task, values) &&
 				!values.credentialId
 			) {
-				invalid();
+				await invalid();
 				return;
 			}
 			const result = formSchema?.safeParse(values);
 			if (!result?.success) {
-				invalid();
+				await invalid();
 				return;
 			}
 
@@ -325,21 +377,9 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 			const containsExpressions = updatedParams.some((p) => {
 				return hasExpressionsInParams(p.value);
 			});
+			updatedSettings.hasExpressions = containsExpressions;
 
 			if (mountedRef.current) setEditorStatus("saving");
-
-			let updatedSettings: NodeSettings = {
-				...node.data.settings,
-				hasExpressions: containsExpressions,
-			};
-
-			for (const [key, _v] of Object.entries(updatedSettings)) {
-				if (key === "hasExpressions") continue;
-				const formValue = values[key];
-				if (formValue !== undefined) {
-					updatedSettings = { ...updatedSettings, [key]: formValue };
-				}
-			}
 
 			try {
 				await updateNode({

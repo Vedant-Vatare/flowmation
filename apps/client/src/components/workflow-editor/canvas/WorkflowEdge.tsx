@@ -144,6 +144,12 @@ export function WorkflowEdge({
 				<EdgeLabelRenderer>
 					<div
 						style={{
+							...(sourceHandleId === "error"
+								? {
+										background:
+											"oklch(0.72 0.12 10 / 0.07)",
+									}
+								: {}),
 							position: "absolute",
 							transform: `translate(0, -50%) translate(${pointX}px, ${pointY}px)`,
 							pointerEvents: "all",

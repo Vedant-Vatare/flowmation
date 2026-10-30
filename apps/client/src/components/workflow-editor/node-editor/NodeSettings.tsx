@@ -1,4 +1,14 @@
 import { ChevronRight } from "lucide-react";
+import {
+	getNodeErrorSetting,
+	getNodeOutputPorts,
+	supportsErrorOutput,
+	type NodeSettings as NodeSettingsValue,
+} from "@nodebase/shared";
+import { useReactFlow, useStore as useReactFlowStore } from "@xyflow/react";
+import { toast } from "sonner";
+import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
+import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { memo, useCallback, useState } from "react";
 import {
 	type Control,
@@ -11,7 +21,15 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
+import { getEditableNodeSettings } from "./nodeSettings.utils";
 
 let settingsOpen = true;
 
@@ -23,7 +41,12 @@ type SettingField = {
 };
 
 const DEFAULT_SETTINGS: Record<string, SettingField> = {
-	retryCount: { label: "Additional Retry Attempts", type: "number", min: 0, max: 3 },
+	retryCount: {
+		label: "Additional Retry Attempts",
+		type: "number",
+		min: 0,
+		max: 3,
+	},
 	timeout: {
 		label: "Execution Timeout (ms, 0 = unlimited)",
 		type: "number",
@@ -157,23 +180,84 @@ type Props = {
 
 export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 	const [open, setOpen] = useState(settingsOpen);
+	const [pendingSetting, setPendingSetting] = useState<string | null>(null);
+	const { getNodes, setNodes } = useReactFlow<WorkflowCanvasNode>();
+	const { mutateAsync: updateNode } = useUpdateWorkflowNode(nodeData.id);
+	const hasErrorConnection = useReactFlowStore((state) =>
+		state.edges.some(
+			(edge) => edge.source === nodeData.id && edge.sourceHandle === "error",
+		),
+	);
+	const changeErrorSetting = async (
+		value: string,
+		onChange: (value: string) => void,
+	) => {
+		if (pendingSetting !== null) return;
+		if (hasErrorConnection && value !== "continueErrorOutput") {
+			toast.error("Remove the Error connection before changing On Error");
+			return;
+		}
+		const previous = getNodes().find((node) => node.id === nodeData.id)?.data
+			.outputPorts;
+		const settings = {
+			...nodeData.settings,
+			onError: value as NodeSettingsValue["onError"],
+		};
+		const outputPorts = getNodeOutputPorts({ ...nodeData, settings });
+		setPendingSetting(value);
+		setNodes((nodes) =>
+			nodes.map((node) =>
+				node.id === nodeData.id
+					? { ...node, data: { ...node.data, outputPorts } }
+					: node,
+			),
+		);
+		try {
+			await updateNode({
+				errorSettingChange: true,
+				workflowId: nodeData.workflowId,
+				node: { id: nodeData.id, task: nodeData.task, settings },
+			});
+			onChange(value);
+		} catch {
+			setNodes((nodes) =>
+				nodes.map((node) =>
+					node.id === nodeData.id
+						? {
+								...node,
+								data: {
+									...node.data,
+									outputPorts: previous ?? nodeData.outputPorts,
+								},
+							}
+						: node,
+				),
+			);
+			toast.error(
+				"Could not save On Error. Your previous setting has been restored.",
+			);
+		} finally {
+			setPendingSetting(null);
+		}
+	};
 
 	const toggle = useCallback(() => {
 		settingsOpen = !settingsOpen;
 		setOpen(settingsOpen);
 	}, []);
 
-	const settings = nodeData.settings;
+	const settings = getEditableNodeSettings(nodeData.task, nodeData.settings);
 	if (!settings) return null;
 
 	const keys = ORDER.filter(
 		(k) =>
+			!(k === "continueOnFail" && supportsErrorOutput(nodeData.task)) &&
 			k in settings &&
 			settings[k as keyof typeof settings] !== undefined &&
 			settings[k as keyof typeof settings] !== null,
 	);
 
-	if (keys.length === 0) return null;
+	if (keys.length === 0 && !supportsErrorOutput(nodeData.task)) return null;
 
 	return (
 		<Collapsible
@@ -193,6 +277,67 @@ export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 				</button>
 			</CollapsibleTrigger>
 			<CollapsibleContent>
+				{supportsErrorOutput(nodeData.task) && (
+					<Controller
+						name="onError"
+						control={control}
+						defaultValue={getNodeErrorSetting(nodeData.task, settings)}
+						render={({ field }) => (
+							<div className="flex flex-col gap-2 px-3 py-3">
+								<label
+									htmlFor="onError"
+									className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70"
+								>
+									On Error
+								</label>
+								<Select
+									name={field.name}
+									value={pendingSetting ?? String(field.value)}
+									disabled={pendingSetting !== null}
+									onValueChange={(value) =>
+										void changeErrorSetting(value, field.onChange)
+									}
+								>
+									<SelectTrigger
+										id="onError"
+										ref={field.ref}
+										onBlur={field.onBlur}
+										className="w-full bg-muted/50"
+									>
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent position="popper">
+										<SelectItem
+											value="stopWorkflow"
+											disabled={hasErrorConnection}
+										>
+											Stop Workflow
+										</SelectItem>
+										<SelectItem
+											value="continueRegularOutput"
+											disabled={hasErrorConnection}
+										>
+											Continue
+										</SelectItem>
+										<SelectItem value="continueErrorOutput">
+											Continue (using error output)
+										</SelectItem>
+									</SelectContent>
+								</Select>
+								{hasErrorConnection && (
+									<p className="text-xs text-muted-foreground">
+										Remove the connection from the Error port before choosing
+										Stop Workflow or Continue.
+									</p>
+								)}
+								<p className="text-xs text-muted-foreground">
+									Applies after retries finish. Error output adds a separate
+									port for a recovery path.
+								</p>
+							</div>
+						)}
+					/>
+				)}
 				{keys.map((key) => {
 					const field = getField(key, nodeData.task);
 					if (!field) return null;
