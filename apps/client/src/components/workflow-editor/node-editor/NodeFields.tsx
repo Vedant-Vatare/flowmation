@@ -40,12 +40,21 @@ const FieldWrapper = ({
 	field,
 	children,
 	error,
+	onBlur,
 }: {
 	field: NodeParameters;
 	children: React.ReactNode;
 	error?: string;
+	onBlur?: () => void;
 }) => (
-	<div className="flex flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0">
+	<fieldset
+		aria-label={field.label}
+		id={`${field.name}-field`}
+		onBlur={(event) => {
+			if (!event.currentTarget.contains(event.relatedTarget)) onBlur?.();
+		}}
+		className="flex min-w-0 flex-col gap-2 px-3 py-3 border-b border-border/50 last:border-b-0"
+	>
 		<div className="flex items-center gap-1">
 			<label
 				htmlFor={field.name}
@@ -62,7 +71,11 @@ const FieldWrapper = ({
 		{children}
 		<div className="min-h-5">
 			{error && (
-				<p className="text-destructive text-[11px] leading-snug" role="alert">
+				<p
+					id={`${field.name}-error`}
+					className="text-destructive text-[11px] leading-snug"
+					role="alert"
+				>
 					{error}
 				</p>
 			)}
@@ -72,7 +85,7 @@ const FieldWrapper = ({
 				</p>
 			)}
 		</div>
-	</div>
+	</fieldset>
 );
 
 const ExpressionController = ({
@@ -92,9 +105,11 @@ const ExpressionController = ({
 				<FieldWrapper
 					field={field}
 					error={isEditingExpr ? undefined : error?.message}
+					onBlur={f.onBlur}
 				>
 					<ExpressionInput
 						id={field.name}
+						invalid={!!error && !isEditingExpr}
 						value={String(f.value ?? "")}
 						onChange={f.onChange}
 						currentNodeId={currentNodeId}
@@ -154,7 +169,7 @@ export const BooleanField = ({
 		name={field.name}
 		control={control}
 		render={({ field: f, fieldState: { error } }) => (
-			<FieldWrapper field={field} error={error?.message}>
+			<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 				<label
 					htmlFor={field.name}
 					className="flex items-center gap-2.5 cursor-pointer w-fit"
@@ -203,7 +218,7 @@ export const CheckboxField = ({
 							: [...selected, opt],
 					);
 				return (
-					<FieldWrapper field={field} error={error?.message}>
+					<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 						<div className="flex flex-col gap-2">
 							{options.map((opt: string) => (
 								<label
@@ -248,7 +263,7 @@ export const RadioField = ({
 			name={field.name}
 			control={control}
 			render={({ field: f, fieldState: { error } }) => (
-				<FieldWrapper field={field} error={error?.message}>
+				<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 					<RadioGroup
 						value={f.value as string}
 						onValueChange={f.onChange}
@@ -305,7 +320,7 @@ export const DropdownField = ({
 			name={field.name}
 			control={control}
 			render={({ field: f, fieldState: { error } }) => (
-				<FieldWrapper field={field} error={error?.message}>
+				<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 					<Select value={(f.value as string) ?? ""} onValueChange={f.onChange}>
 						<SelectTrigger
 							id={field.name}
@@ -418,7 +433,7 @@ export const ArrayField = ({
 			const add = () => f.onChange([...items, ""]);
 
 			return (
-				<FieldWrapper field={field} error={error?.message}>
+				<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 					<div className="flex flex-col gap-1.5">
 						{items.map((item, idx) => (
 							<div key={idx} className="flex items-center gap-1.5">
@@ -567,7 +582,7 @@ export const KeyValueField = ({
 		control={control}
 		defaultValue={{}}
 		render={({ field: f, fieldState: { error } }) => (
-			<FieldWrapper field={field} error={error?.message}>
+			<FieldWrapper field={field} error={error?.message} onBlur={f.onBlur}>
 				<KeyValueEditor
 					value={(f.value as Record<string, string>) ?? {}}
 					onChange={f.onChange}

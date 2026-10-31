@@ -2,7 +2,7 @@ import { Loading03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 
-export type EditorStatus = "idle" | "unsaved" | "saving" | "saved" | "missing";
+export type EditorStatus = "idle" | "unsaved" | "saving" | "saved";
 
 export const EditorStatusBar = ({ status }: { status: EditorStatus }) => (
 	<div className="pl-2.5 pr-2 h-6.5 overflow-hidden">
@@ -35,11 +35,6 @@ export const EditorStatusBar = ({ status }: { status: EditorStatus }) => (
 					)}
 					{status === "saved" && (
 						<span className="text-foreground/75">Saved</span>
-					)}
-					{status === "missing" && (
-						<span className="text-destructive truncate flex items-center gap-1.5">
-							Required fields are missing
-						</span>
 					)}
 				</motion.div>
 			)}

@@ -6,11 +6,16 @@ import type {
 import { create } from "zustand";
 
 type WorkflowStore = {
+	nodeConfigurationIssues: Record<string, string[]>;
+	setNodeConfigurationIssues: (nodeId: string, issues: string[]) => void;
 	selectedNodeId: string | null;
 	setSelectedNodeId: (nodeId: string | null) => void;
 	nodeDrafts: Record<string, Record<string, unknown>>;
 	setNodeDraft: (nodeId: string, values: Record<string, unknown>) => void;
-	clearNodeDraft: (nodeId: string, savedValues?: Record<string, unknown>) => void;
+	clearNodeDraft: (
+		nodeId: string,
+		savedValues?: Record<string, unknown>,
+	) => void;
 };
 
 type TestWebhookData = { isActive: boolean; webhookId: string | null };
@@ -62,6 +67,21 @@ type WorkflowExecutionStore = {
 };
 
 export const useWorkflowStore = create<WorkflowStore>((set) => ({
+	nodeConfigurationIssues: {},
+	setNodeConfigurationIssues: (nodeId, issues) =>
+		set((state) => {
+			if (
+				JSON.stringify(state.nodeConfigurationIssues[nodeId] ?? []) ===
+				JSON.stringify(issues)
+			)
+				return state;
+			return {
+				nodeConfigurationIssues: {
+					...state.nodeConfigurationIssues,
+					[nodeId]: issues,
+				},
+			};
+		}),
 	selectedNodeId: null,
 	setSelectedNodeId: (nodeId) => set({ selectedNodeId: nodeId }),
 	nodeDrafts: {},
@@ -185,7 +205,7 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 	snapshotNodes: null,
 	snapshotConnections: null,
 	hasDraftChanges: false,
-			snapshotDataId: null,
+	snapshotDataId: null,
 
 	setSnapshot: (nodes, connections) =>
 		set((state) => {
@@ -235,6 +255,6 @@ export const usePublishStatusStore = create<PublishStatusStore>((set) => ({
 			snapshotNodes: null,
 			snapshotConnections: null,
 			hasDraftChanges: false,
-	snapshotDataId: null,
+			snapshotDataId: null,
 		}),
 }));

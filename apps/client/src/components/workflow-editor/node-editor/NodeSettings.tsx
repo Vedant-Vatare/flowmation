@@ -1,26 +1,24 @@
-import { ChevronRight } from "lucide-react";
 import {
 	getNodeErrorSetting,
 	getNodeOutputPorts,
-	supportsErrorOutput,
 	type NodeSettings as NodeSettingsValue,
+	supportsErrorOutput,
 } from "@nodebase/shared";
 import { useReactFlow, useStore as useReactFlowStore } from "@xyflow/react";
-import { toast } from "sonner";
-import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
-import type { WorkflowCanvasNode } from "@/constants/nodes";
+import { ChevronRight } from "lucide-react";
 import { memo, useCallback, useState } from "react";
 import {
 	type Control,
 	Controller,
 	type UseFormRegister,
+	useFormState,
 } from "react-hook-form";
+import { toast } from "sonner";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { Switch } from "@/components/ui/switch";
 import {
 	Select,
 	SelectContent,
@@ -28,7 +26,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { WorkflowNodeData } from "@/constants/nodes";
+import { Switch } from "@/components/ui/switch";
+import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
+import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
 import { getEditableNodeSettings } from "./nodeSettings.utils";
 
 let settingsOpen = true;
@@ -90,12 +90,14 @@ const NumberSetting = memo(
 		min,
 		max,
 		register,
+		error,
 	}: {
 		name: string;
 		label: string;
 		min?: number;
 		max?: number;
 		register: UseFormRegister<Record<string, unknown>>;
+		error?: string;
 	}) => (
 		<div className="flex flex-col gap-2 px-3 py-3 ">
 			<label
@@ -106,12 +108,23 @@ const NumberSetting = memo(
 			</label>
 			<input
 				id={name}
+				aria-invalid={!!error}
+				aria-describedby={error ? `${name}-error` : undefined}
 				type="number"
 				min={min}
 				max={max}
 				className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring h-auto"
 				{...register(name, { valueAsNumber: true })}
 			/>
+			{error && (
+				<p
+					id={`${name}-error`}
+					className="text-[11px] text-destructive"
+					role="alert"
+				>
+					{error}
+				</p>
+			)}
 		</div>
 	),
 );
@@ -180,6 +193,7 @@ type Props = {
 
 export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 	const [open, setOpen] = useState(settingsOpen);
+	const { errors } = useFormState({ control });
 	const [pendingSetting, setPendingSetting] = useState<string | null>(null);
 	const { getNodes, setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const { mutateAsync: updateNode } = useUpdateWorkflowNode(nodeData.id);
@@ -267,6 +281,7 @@ export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 		>
 			<CollapsibleTrigger asChild>
 				<button
+					id="node-settings-toggle"
 					type="button"
 					className="flex items-center gap-2 w-full px-3 py-2.5 hover:bg-muted/30 transition-colors"
 				>
@@ -348,6 +363,11 @@ export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 								<NumberSetting
 									key={key}
 									name={key}
+									error={
+										typeof errors[key]?.message === "string"
+											? errors[key]?.message
+											: undefined
+									}
 									label={field.label}
 									min={field.min}
 									max={field.max}

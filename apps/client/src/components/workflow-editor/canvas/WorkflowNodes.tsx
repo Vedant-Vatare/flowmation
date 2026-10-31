@@ -8,12 +8,14 @@ import {
 	Position,
 	useUpdateNodeInternals,
 } from "@xyflow/react";
+import { AlertCircle } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
 import {
 	useWorkflowExecutionStore,
+	useWorkflowStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 
@@ -36,10 +38,13 @@ const TRIGGER_VARS = {
 export const WorkflowNode = memo(
 	({ data, selected }: NodeProps<Node<WorkflowNodeData>>) => {
 		const { ui, name, inputPorts, outputPorts } = data;
+		const configurationIssues = useWorkflowStore(
+			(state) => state.nodeConfigurationIssues[data.id],
+		);
 		const updateNodeInternals = useUpdateNodeInternals();
 		useEffect(() => {
 			updateNodeInternals(data.id);
-		}, [data.id, outputPorts, updateNodeInternals]);
+		}, [data.id, updateNodeInternals]);
 		const Icon = ui.icon;
 		const nodeColor = ui.background ?? "#6366f1";
 
@@ -159,6 +164,16 @@ export const WorkflowNode = memo(
 						style={ui.branded ? {} : { color: ui.color ?? "#ffffff" }}
 						className="w-5.5 h-5.5 transition-transform duration-200 group-hover:scale-110"
 					/>
+					{!!configurationIssues?.length && (
+						<span
+							role="img"
+							title={configurationIssues.join("\n")}
+							aria-label={`${name}: ${configurationIssues.length} configuration ${configurationIssues.length === 1 ? "issue" : "issues"}. Open the node to fix them.`}
+							className="absolute -right-1.5 -top-1.5 rounded-full border border-border bg-background p-0.5 text-destructive"
+						>
+							<AlertCircle className="size-3.5" />
+						</span>
+					)}
 				</div>
 
 				<span

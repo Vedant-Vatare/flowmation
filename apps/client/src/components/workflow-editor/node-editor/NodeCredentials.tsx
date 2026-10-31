@@ -1,6 +1,15 @@
+import type {
+	ApiKeyCredentialDef,
+	DatabaseCredentialDef,
+} from "@nodebase/shared";
+import {
+	API_KEY_PROVIDERS,
+	credentialRegistry,
+	DATABASE_PROVIDERS,
+} from "@nodebase/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { memo, useCallback, useEffect, useState } from "react";
-import { type Control, Controller } from "react-hook-form";
+import { type Control, Controller, useFormState } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,8 +20,6 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import type { WorkflowNodeData } from "@/constants/nodes";
-import { API_KEY_PROVIDERS, DATABASE_PROVIDERS, credentialRegistry } from "@nodebase/shared";
-import type { ApiKeyCredentialDef, DatabaseCredentialDef } from "@nodebase/shared";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { useGetCredentials, useSaveApiKey } from "@/queries/credentials";
 
@@ -36,6 +43,7 @@ export const NodeCredentials = memo(
 		control: Control<Record<string, unknown>>;
 	}) => {
 		const { icon: Icon } = nodeData.ui;
+		const { errors } = useFormState({ control, name: "credentialId" });
 		const getCredentialProvider = useNodeCredentialProvider();
 		const provider = getCredentialProvider(nodeData.task);
 		const {
@@ -69,12 +77,17 @@ export const NodeCredentials = memo(
 			: false;
 
 		const credentialDef = provider
-			? (credentialRegistry[provider] as ApiKeyCredentialDef | DatabaseCredentialDef | undefined)
+			? (credentialRegistry[provider] as
+					| ApiKeyCredentialDef
+					| DatabaseCredentialDef
+					| undefined)
 			: undefined;
 
 		const handleSaveApiKey = useCallback(async () => {
 			if (!provider) return;
-			const allFilled = credentialDef?.fields.every((f) => fieldValues[f.key]?.trim());
+			const allFilled = credentialDef?.fields.every((f) =>
+				fieldValues[f.key]?.trim(),
+			);
 			if (!allFilled) return;
 			saveApiKeyMutation.mutate(
 				{
@@ -123,7 +136,10 @@ export const NodeCredentials = memo(
 		if (isLoading || isFetching) return null;
 
 		return (
-			<div className="flex flex-col gap-2 px-3 py-3 border-b border-border/50">
+			<div
+				id="credentialId-field"
+				className="flex flex-col gap-2 px-3 py-3 border-b border-border/50"
+			>
 				<div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none">
 					Credentials
 				</div>
@@ -137,7 +153,15 @@ export const NodeCredentials = memo(
 								value={(field.value as string) || ""}
 								onValueChange={field.onChange}
 							>
-								<SelectTrigger className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
+								<SelectTrigger
+									id="credentialId"
+									onBlur={field.onBlur}
+									aria-invalid={!!errors.credentialId}
+									aria-describedby={
+										errors.credentialId ? "credentialId-error" : undefined
+									}
+									className="w-full rounded-md border border-input bg-muted/50 px-3 py-1.5 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+								>
 									<SelectValue
 										placeholder={`Select a ${provider} account...`}
 									/>
@@ -154,6 +178,17 @@ export const NodeCredentials = memo(
 							</Select>
 						)}
 					/>
+				)}
+				{errors.credentialId && (
+					<p
+						id="credentialId-error"
+						className="text-[11px] leading-relaxed text-destructive"
+						role="alert"
+					>
+						{String(
+							errors.credentialId.message ?? "Select a connected account.",
+						)}
+					</p>
 				)}
 
 				{isApiKeyProvider || isDatabaseProvider ? (
@@ -182,7 +217,9 @@ export const NodeCredentials = memo(
 									onClick={handleSaveApiKey}
 									disabled={
 										saveApiKeyMutation.isPending ||
-										!credentialDef?.fields.every((f) => fieldValues[f.key]?.trim())
+										!credentialDef?.fields.every((f) =>
+											fieldValues[f.key]?.trim(),
+										)
 									}
 									type="button"
 								>

@@ -35,6 +35,7 @@ interface ExpressionInputProps {
 	className?: string;
 	id?: string;
 	setIsEditingExpr?: (active: boolean) => void;
+	invalid?: boolean;
 }
 
 export const ExpressionInput = ({
@@ -46,6 +47,7 @@ export const ExpressionInput = ({
 	className = "",
 	id,
 	setIsEditingExpr,
+	invalid = false,
 }: ExpressionInputProps) => {
 	const allNodes = useNodes();
 	const otherNodes = allNodes.filter((n) => n.id !== currentNodeId);
@@ -205,6 +207,8 @@ export const ExpressionInput = ({
 					<Comp
 						ref={inputRef as never}
 						id={id}
+						aria-invalid={invalid}
+						aria-describedby={invalid ? `${id}-error` : undefined}
 						value={value}
 						placeholder={placeholder}
 						onChange={handleChange}
@@ -227,6 +231,7 @@ export const ExpressionInput = ({
 							"placeholder:text-muted-foreground",
 							"disabled:cursor-not-allowed disabled:opacity-50",
 							"bg-muted/50",
+							invalid ? "border-destructive/40" : "",
 							className,
 						].join(" ")}
 					/>
