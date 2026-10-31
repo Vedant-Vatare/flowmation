@@ -15,7 +15,12 @@ import {
 	publishWorkflowWithTriggers,
 	unpublishWorkflowWithTriggers,
 } from "@nodebase/integrations";
-import { removeScheduledWorkflow, scheduleWorkflow } from "@nodebase/queue";
+import {
+	connection as queueConnection,
+	removeScheduledWorkflow,
+	removeWorkflowJobs,
+	scheduleWorkflow,
+} from "@nodebase/queue";
 import {
 	type CreateWorkflow,
 	getNodeOutputPorts,
@@ -277,6 +282,59 @@ async function requireOwnedWorkflow(req: Request, res: Response) {
 	if (!workflow) throw createHttpError.NotFound("Workflow not found");
 	return workflow;
 }
+
+export const deleteWorkflow = async (req: Request, res: Response) => {
+	const workflow = await requireOwnedWorkflow(req, res);
+	await unpublishWorkflowWithTriggers(workflow.id, workflow.userId);
+	await removeScheduledWorkflow(workflow.id);
+	await db.transaction(async (tx) => {
+		// Block new execution records and publication while checking the queue.
+		const [current] = await tx
+			.select()
+			.from(userWorkflowsTable)
+			.where(eq(userWorkflowsTable.id, workflow.id))
+			.for("update");
+		if (!current) throw createHttpError.NotFound("Workflow not found");
+		const [snapshot] = await tx
+			.select()
+			.from(workflowSnapshotsTable)
+			.where(eq(workflowSnapshotsTable.workflowId, workflow.id));
+		if (snapshot)
+			throw createHttpError.Conflict(
+				"Workflow was published again. Retry deletion.",
+			);
+		const jobs = await removeWorkflowJobs(workflow.id);
+		if (!jobs.removed)
+			throw createHttpError.Conflict(
+				"Workflow unpublished. Wait for the current execution to finish, then delete it again.",
+			);
+		const executions = await tx
+			.select({ id: workflowExecutionTable.id })
+			.from(workflowExecutionTable)
+			.where(eq(workflowExecutionTable.workflowId, workflow.id));
+		const executionIds = [
+			...new Set([
+				...executions.map((execution) => execution.id),
+				...jobs.executionIds,
+			]),
+		];
+		const nodes = await tx
+			.select({ id: workflowNodesTable.id })
+			.from(workflowNodesTable)
+			.where(eq(workflowNodesTable.workflowId, workflow.id));
+		const cacheKeys = [
+			...executionIds.map((id) => `exec:${id}`),
+			...nodes.map((node) => `webhook:${node.id}`),
+		];
+		for (let index = 0; index < cacheKeys.length; index += 500) {
+			await queueConnection.unlink(...cacheKeys.slice(index, index + 500));
+		}
+		await tx
+			.delete(userWorkflowsTable)
+			.where(eq(userWorkflowsTable.id, workflow.id));
+	});
+	return res.status(200).json({ message: "Workflow deleted" });
+};
 
 export const exportWorkflow = async (req: Request, res: Response) => {
 	const workflow = await requireOwnedWorkflow(req, res);

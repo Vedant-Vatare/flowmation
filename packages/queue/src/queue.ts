@@ -60,6 +60,44 @@ export const removeScheduledWorkflow = async (workflowId: string) => {
 	await workflowQueue.removeJobScheduler(`scheduler:${workflowId}`);
 };
 
+export async function removeWorkflowJobs(workflowId: string) {
+	const states = [
+		"active",
+		"waiting",
+		"delayed",
+		"prioritized",
+		"waiting-children",
+		"paused",
+		"completed",
+		"failed",
+	] as const;
+	const [workflowJobs, nodeJobs] = await Promise.all([
+		workflowQueue.getJobs([...states]),
+		nodeQueue.getJobs([...states]),
+	]);
+	const matching = [...nodeJobs, ...workflowJobs].filter(
+		(job) => job.data.workflowId === workflowId,
+	);
+	for (const job of matching) {
+		if (await job.isActive()) return { removed: false, executionIds: [] };
+	}
+	for (const job of matching) {
+		// A worker may claim a waiting job between the state check and removal.
+		try {
+			await job.remove();
+		} catch (error) {
+			if (await job.isActive()) return { removed: false, executionIds: [] };
+			throw error;
+		}
+	}
+	return {
+		removed: true,
+		executionIds: [
+			...new Set(matching.map((job) => job.data.executionId).filter(Boolean)),
+		],
+	};
+}
+
 export const scheduleWorkflow = async (
 	workflowId: string,
 	userId: string,

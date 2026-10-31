@@ -8,6 +8,7 @@ import { Router, type Router as RouterType } from "express";
 import { executeWorkflow } from "@/controllers/worflow.executions.js";
 import {
 	createWorkflow,
+	deleteWorkflow,
 	exportWorkflow,
 	getAllUserWorkflow,
 	getDashboardWorkflows,
@@ -51,6 +52,7 @@ router.post(
 	asyncHandler(importWorkflow),
 );
 router.get("/:id/export", asyncHandler(exportWorkflow));
+router.delete("/:id", asyncHandler(deleteWorkflow));
 router.get("/:id", asyncHandler(getUserWorkflow));
 router.post("/:id/publish", asyncHandler(publishWorkflow));
 router.post("/:id/unpublish", asyncHandler(unpublishWorkflow));
