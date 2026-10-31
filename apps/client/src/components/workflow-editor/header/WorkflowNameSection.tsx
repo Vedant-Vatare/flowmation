@@ -65,8 +65,8 @@ export const WorkflowNameSection = memo(() => {
 	}
 
 	return (
-		<div className="flex items-center gap-1.5">
-			<div className="relative max-w-[100ch]">
+		<div className="flex min-w-0 items-center gap-1.5">
+			<div className="relative min-w-0 max-w-[100ch]">
 				{isEditing ? (
 					<>
 						<input

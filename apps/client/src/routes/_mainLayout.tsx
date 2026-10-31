@@ -269,7 +269,7 @@ function Layout() {
 			<AppSidebar />
 			<main className="flex flex-col flex-1 h-svh overflow-hidden">
 				<header className="flex h-(--main-header-height) shrink-0 items-center justify-between gap-2 border-b px-4">
-					<div className="flex gap-3 items-center ">
+					<div className="flex min-w-0 gap-3 items-center">
 						<SidebarTrigger className="-ml-1 text-muted-foreground" />
 						<WorkflowNameSection />
 					</div>

@@ -8,9 +8,29 @@ import type {
 	UserWorkflow,
 	WorkflowConnection,
 	WorkflowExecution,
+	WorkflowFile,
 	WorkflowNode,
 } from "@nodebase/shared";
 import api from "./axios";
+
+export const deleteUserWorkflowApi = async (workflowId: string) => {
+	await api.delete(`/workflows/${workflowId}`);
+};
+
+export const exportUserWorkflowApi = async (workflowId: string) => {
+	const response = await api.get<WorkflowFile>(
+		`/workflows/${workflowId}/export`,
+	);
+	return response.data;
+};
+
+export const importUserWorkflowApi = async (file: WorkflowFile) => {
+	const response = await api.post<{ workflow: UserWorkflow }>(
+		"/workflows/import",
+		file,
+	);
+	return response.data.workflow;
+};
 
 export const createUserWorkflowApi = async (name: string) => {
 	const response = await api.post<{ userWorkflow: UserWorkflow }>(

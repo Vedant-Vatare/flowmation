@@ -27,6 +27,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { WorkflowImportButton } from "@/components/workflow-editor/WorkflowImportButton";
 import {
 	useCreateUserWorkflowQuery,
 	useDashboardWorkflowsQuery,
@@ -151,21 +152,24 @@ export const Dashboard = () => {
 		<div className="flex h-full flex-col gap-6 overflow-y-auto p-6">
 			<div className="flex flex-wrap items-center justify-between gap-3">
 				<h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-				<Button
-					onClick={handleCreateWorkflow}
-					disabled={!userWorkflows || isCreating}
-					aria-busy={isCreating}
-				>
-					{isCreating ? (
-						<Loader2
-							className="size-4 motion-safe:animate-spin"
-							aria-hidden="true"
-						/>
-					) : (
-						<Plus className="size-4" aria-hidden="true" />
-					)}
-					{isCreating ? "Creating…" : "New Workflow"}
-				</Button>
+				<div className="flex flex-wrap items-center gap-2">
+					<WorkflowImportButton />
+					<Button
+						onClick={handleCreateWorkflow}
+						disabled={!userWorkflows || isCreating}
+						aria-busy={isCreating}
+					>
+						{isCreating ? (
+							<Loader2
+								className="size-4 motion-safe:animate-spin"
+								aria-hidden="true"
+							/>
+						) : (
+							<Plus className="size-4" aria-hidden="true" />
+						)}
+						{isCreating ? "Creating…" : "New Workflow"}
+					</Button>
+				</div>
 			</div>
 			<Separator />
 			{createError && (
