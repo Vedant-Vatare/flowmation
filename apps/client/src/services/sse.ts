@@ -1,5 +1,6 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import type { ExecutionUpdate, NodeExecutionUpdate } from "@nodebase/shared";
+import { toast } from "sonner";
 import {
 	useWebhookStore,
 	useWorkflowExecutionStore,
@@ -68,6 +69,12 @@ export const initiateSSEConnection = (
 				console.error("Failed to parse SSE message:", error, msg.data);
 			}
 		},
+	}).catch((error: unknown) => {
+		console.error("Could not connect to workflow updates:", error);
+		cleanupTestWebhookStatus();
+		toast.error(
+			"Could not connect to live workflow updates. Check Runs for the execution result.",
+		);
 	});
 
 	return controller;

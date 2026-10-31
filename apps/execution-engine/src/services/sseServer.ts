@@ -50,6 +50,21 @@ export const sseClients = new Map<
 >();
 export const eventBuffers = new Map<string, string[]>();
 
+const corsHeaders = {
+	"Access-Control-Allow-Origin": process.env.CLIENT_URL ?? "",
+	"Access-Control-Allow-Credentials": "true",
+	"Access-Control-Allow-Methods": "GET, OPTIONS",
+	"Access-Control-Allow-Headers": "Accept, Last-Event-ID, Cache-Control",
+	Vary: "Origin",
+};
+
+const withCors = (response: Response) => {
+	for (const [name, value] of Object.entries(corsHeaders)) {
+		response.headers.set(name, value);
+	}
+	return response;
+};
+
 Bun.serve({
 	port: process.env.SSE_SERVER_PORT,
 
@@ -62,7 +77,7 @@ Bun.serve({
 					return new Response("Forbidden", { status: 403 });
 				}
 
-				return new Response(null, { status: 204 });
+				return new Response(null, { status: 204, headers: corsHeaders });
 			},
 
 			GET: async (req, server) => {
@@ -78,14 +93,15 @@ Bun.serve({
 					req,
 					executionId,
 				});
-				if (authResult instanceof Response) return authResult;
+				if (authResult instanceof Response) return withCors(authResult);
 
 				const workflowResponse = await checkWorkflowStatus(
 					executionId,
 					authResult,
 				);
 
-				if (workflowResponse instanceof Response) return workflowResponse;
+				if (workflowResponse instanceof Response)
+					return withCors(workflowResponse);
 
 				const stream = new ReadableStream({
 					start(controller) {
@@ -112,6 +128,7 @@ Bun.serve({
 
 				return new Response(stream, {
 					headers: {
+						...corsHeaders,
 						"Content-Type": "text/event-stream; charset=utf-8",
 						"Cache-Control": "no-cache, no-transform",
 						Connection: "keep-alive",
