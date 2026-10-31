@@ -47,7 +47,7 @@ export type NodeExectionWithTime =
 			type: "node:failed";
 			workflowNodeId: string;
 			task: string;
-			error: string;
+			error: unknown;
 			startedAt: Date;
 	  };
 

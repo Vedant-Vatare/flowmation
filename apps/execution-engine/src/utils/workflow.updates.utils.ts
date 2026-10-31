@@ -88,7 +88,7 @@ export const recordNodeExecutionFailed = async (
 		type: "node:failed",
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
-		error: nodeOutput,
+		error,
 		completedAt: new Date(),
 	});
 

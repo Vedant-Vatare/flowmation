@@ -34,6 +34,7 @@ import {
 	useWorkflowExecutionStore,
 } from "@/store/workflow/useWorkflowStore";
 import { formatTime, getDurationDiff } from "@/utils/datetime";
+import { formatNodeError } from "@/utils/error";
 
 const MIN_HEIGHT = 120;
 const MAX_HEIGHT = 600;
@@ -156,6 +157,8 @@ const LogRow = memo(
 				? (log.completedAt as Date | undefined)
 				: undefined;
 		const duration = getDurationDiff(startedAt, completedAt);
+		const errorMessage =
+			log.type === "node:failed" ? formatNodeError(log.error) : undefined;
 
 		const { icon: Icon, color, background } = node.data.ui;
 
@@ -194,9 +197,9 @@ const LogRow = memo(
 					{log.type === "node:failed" ? (
 						<span
 							className="text-red-500 truncate block max-w-65"
-							title={log.error}
+							title={errorMessage}
 						>
-							{log.error ?? "Unknown error"}
+							{errorMessage}
 						</span>
 					) : log.type === "node:completed" ? (
 						log.output != null ? (
