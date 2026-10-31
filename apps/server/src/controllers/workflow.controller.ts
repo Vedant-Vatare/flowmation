@@ -2,6 +2,8 @@ import {
 	and,
 	db,
 	eq,
+	inArray,
+	nodesTable,
 	sql,
 	userWorkflowsTable,
 	workflowConnectionsTable,
@@ -14,10 +16,17 @@ import {
 	unpublishWorkflowWithTriggers,
 } from "@nodebase/integrations";
 import { removeScheduledWorkflow, scheduleWorkflow } from "@nodebase/queue";
-import type { CreateWorkflow, UpdateUserWorkflow } from "@nodebase/shared";
+import {
+	type CreateWorkflow,
+	getNodeOutputPorts,
+	type UpdateUserWorkflow,
+	type WorkflowFile,
+	workflowFileSchema,
+} from "@nodebase/shared";
 import { parseScheduleParams } from "@nodebase/shared/utils";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
+import { z } from "zod";
 import { isDBQueryError } from "@/utils/api.utils.js";
 
 export const createWorkflow = async (req: Request, res: Response) => {
@@ -250,4 +259,112 @@ export const getPublishStatus = async (req: Request, res: Response) => {
 		snapshotNodes: snapshot?.nodes ?? null,
 		snapshotConnections: snapshot?.connections ?? null,
 	});
+};
+
+async function requireOwnedWorkflow(req: Request, res: Response) {
+	const workflowId = req.params.id as string;
+	if (!z.uuid().safeParse(workflowId).success)
+		throw createHttpError.BadRequest("Invalid workflow ID");
+	const [workflow] = await db
+		.select()
+		.from(userWorkflowsTable)
+		.where(
+			and(
+				eq(userWorkflowsTable.id, workflowId),
+				eq(userWorkflowsTable.userId, res.locals.userId as string),
+			),
+		);
+	if (!workflow) throw createHttpError.NotFound("Workflow not found");
+	return workflow;
+}
+
+export const exportWorkflow = async (req: Request, res: Response) => {
+	const workflow = await requireOwnedWorkflow(req, res);
+	const file = await db.transaction(
+		async (tx) => {
+			const nodes = await tx
+				.select()
+				.from(workflowNodesTable)
+				.where(eq(workflowNodesTable.workflowId, workflow.id));
+			const connections = await tx
+				.select()
+				.from(workflowConnectionsTable)
+				.where(eq(workflowConnectionsTable.workflowId, workflow.id));
+			// The portable schema strips catalog IDs, credential references, and ownership data.
+			return workflowFileSchema.parse({
+				format: "flowmation",
+				version: 1,
+				name: workflow.name || "Untitled Workflow",
+				description: workflow.description ?? "",
+				nodes,
+				connections,
+			});
+		},
+		{ isolationLevel: "repeatable read" },
+	);
+	return res.status(200).json(file);
+};
+
+export const importWorkflow = async (req: Request, res: Response) => {
+	const file = req.body as WorkflowFile;
+	const tasks = [...new Set(file.nodes.map((node) => node.task))];
+	const catalog = tasks.length
+		? await db.select().from(nodesTable).where(inArray(nodesTable.task, tasks))
+		: [];
+	const catalogByTask = new Map(catalog.map((node) => [node.task, node]));
+	for (const node of file.nodes) {
+		const definition = catalogByTask.get(node.task);
+		if (!definition || definition.type !== node.type)
+			throw createHttpError.BadRequest(`Unsupported node: ${node.task}`);
+	}
+	const workflow = await db.transaction(async (tx) => {
+		let created: typeof userWorkflowsTable.$inferSelect | undefined;
+		for (let copy = 1; !created; copy++) {
+			const name = `Imported Workflow #${copy}`;
+			[created] = await tx
+				.insert(userWorkflowsTable)
+				.values({
+					userId: res.locals.userId as string,
+					name,
+					description: file.description,
+					status: "inactive",
+				})
+				.onConflictDoNothing({
+					target: [userWorkflowsTable.userId, userWorkflowsTable.name],
+				})
+				.returning();
+		}
+		const idMap = new Map(
+			file.nodes.map((node) => [node.id, crypto.randomUUID()]),
+		);
+		const mappedId = (id: string) => {
+			const value = idMap.get(id);
+			if (!value) throw createHttpError.BadRequest("Unknown node reference");
+			return value;
+		};
+		if (file.nodes.length)
+			await tx.insert(workflowNodesTable).values(
+				file.nodes.map((node) => ({
+					...node,
+					id: mappedId(node.id),
+					workflowId: created.id,
+					nodeId: catalog.find((definition) => definition.task === node.task)
+						?.id as string,
+					credentialId: null,
+					outputPorts: getNodeOutputPorts(node),
+				})),
+			);
+		if (file.connections.length)
+			await tx.insert(workflowConnectionsTable).values(
+				file.connections.map((connection) => ({
+					...connection,
+					id: crypto.randomUUID(),
+					workflowId: created.id,
+					sourceId: mappedId(connection.sourceId),
+					targetId: mappedId(connection.targetId),
+				})),
+			);
+		return created;
+	});
+	return res.status(201).json({ workflow });
 };

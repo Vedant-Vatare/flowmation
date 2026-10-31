@@ -129,6 +129,55 @@ export const templateConnectionSchema = z.object({
 	targetPort: z.string().default("default"),
 });
 
+export const workflowFileSchema = z
+	.object({
+		format: z.literal("flowmation"),
+		version: z.literal(1),
+		name: z.string().trim().min(1).max(255),
+		description: z.string().max(10000).default(""),
+		nodes: z
+			.array(
+				templateNodeSchema.extend({
+					id: z.uuid(),
+					name: z.string().min(1).max(255),
+					positionX: z.number().int().min(-2147483648).max(2147483647),
+					positionY: z.number().int().min(-2147483648).max(2147483647),
+				}),
+			)
+			.max(1000),
+		connections: z.array(templateConnectionSchema).max(5000),
+	})
+	.superRefine((file, ctx) => {
+		const ids = new Set(file.nodes.map((node) => node.id));
+		const names = new Set(file.nodes.map((node) => node.name));
+		if (ids.size !== file.nodes.length || names.size !== file.nodes.length) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Node IDs and names must be unique",
+			});
+		}
+		const connections = new Set<string>();
+		for (const connection of file.connections) {
+			if (!ids.has(connection.sourceId) || !ids.has(connection.targetId)) {
+				ctx.addIssue({
+					code: "custom",
+					message: "Connections must reference nodes in this workflow",
+				});
+			}
+			const key = JSON.stringify([
+				connection.sourceId,
+				connection.sourcePort,
+				connection.targetId,
+				connection.targetPort,
+			]);
+			if (connections.has(key))
+				ctx.addIssue({ code: "custom", message: "Duplicate connection" });
+			connections.add(key);
+		}
+	});
+
+export type WorkflowFile = z.infer<typeof workflowFileSchema>;
+
 export const templateDataSchema = z.object({
 	templateId: z.uuid(),
 	nodes: z.array(templateNodeSchema),

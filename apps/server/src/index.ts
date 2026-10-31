@@ -20,7 +20,7 @@ app.use(RequestTimeOutHandler);
 app.use("/api/v1/triggers", triggerRouter);
 
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
 
 app.use("/api/v1", APIRouterV1);
 

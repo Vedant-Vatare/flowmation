@@ -2,15 +2,18 @@ import {
 	createWorkflowSchema,
 	executeWorkflowSchema,
 	updateWorkflowSchema,
+	workflowFileSchema,
 } from "@nodebase/shared";
 import { Router, type Router as RouterType } from "express";
 import { executeWorkflow } from "@/controllers/worflow.executions.js";
 import {
 	createWorkflow,
+	exportWorkflow,
 	getAllUserWorkflow,
 	getDashboardWorkflows,
 	getPublishStatus,
 	getUserWorkflow,
+	importWorkflow,
 	publishWorkflow,
 	unpublishWorkflow,
 	updateUserWorkflow,
@@ -42,6 +45,12 @@ router.patch(
 );
 router.get("/all", asyncHandler(getAllUserWorkflow));
 router.get("/dashboard", asyncHandler(getDashboardWorkflows));
+router.post(
+	"/import",
+	validateRequest(workflowFileSchema, "body"),
+	asyncHandler(importWorkflow),
+);
+router.get("/:id/export", asyncHandler(exportWorkflow));
 router.get("/:id", asyncHandler(getUserWorkflow));
 router.post("/:id/publish", asyncHandler(publishWorkflow));
 router.post("/:id/unpublish", asyncHandler(unpublishWorkflow));
