@@ -8,7 +8,6 @@ import {
 	Workflow,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
-import { startRegistration } from "@simplewebauthn/browser";
 import {
 	createFileRoute,
 	Link,
@@ -16,16 +15,34 @@ import {
 	redirect,
 	useRouterState,
 } from "@tanstack/react-router";
-import { ChevronRight, ChevronsUpDown, KeyRound, LogOut } from "lucide-react";
+import {
+	ChevronRight,
+	ChevronUp,
+	KeyRound,
+	LogOut,
+	Shield,
+	Sun,
+	UserRound,
+} from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { logOutUserApi } from "@/apis/auth";
 import BrandIcon from "@/assets/icons/flowmation_temp.svg";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -50,10 +67,11 @@ import {
 	SidebarProvider,
 	SidebarRail,
 	SidebarTrigger,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { WorkflowHeaderActions } from "@/components/workflow-editor/header/WorkflowHeaderActions";
 import { WorkflowNameSection } from "@/components/workflow-editor/header/WorkflowNameSection";
-import { useCurrentUserQuery, usePasskeyRegistration } from "@/queries/auth";
+import { useCurrentUserQuery } from "@/queries/auth";
 import { useUserWorkflowQuery } from "@/queries/userWorkflows";
 import { clearAuthCookie, isUserAuthenticated } from "@/utils/auth";
 
@@ -79,7 +97,11 @@ function NavItem({
 	badge?: number;
 }) {
 	const { location } = useRouterState();
-	const active = location.pathname.startsWith(to);
+	const active =
+		to === "/settings"
+			? location.pathname.startsWith("/settings") &&
+				!location.pathname.startsWith("/settings/credentials")
+			: location.pathname.startsWith(to);
 
 	return (
 		<SidebarMenuItem>
@@ -98,26 +120,26 @@ function NavItem({
 function AppSidebar() {
 	const { data: userWorkflows } = useUserWorkflowQuery();
 	const { data: user } = useCurrentUserQuery();
-	const { generate, verify } = usePasskeyRegistration();
-
-	const handleRegisterPasskey = async () => {
+	const { isMobile, state: sidebarState } = useSidebar();
+	const [signOutOpen, setSignOutOpen] = useState(false);
+	const [signingOut, setSigningOut] = useState(false);
+	const accountButton = useRef<HTMLButtonElement>(null);
+	async function signOut() {
+		if (signingOut) return;
+		setSigningOut(true);
 		try {
-			const options = await generate.mutateAsync();
-			const attResp = await startRegistration({ optionsJSON: options });
-			const verified = await verify.mutateAsync(attResp);
-			if (verified) {
-				toast.success("Passkey registered successfully!");
-			}
-		} catch (error) {
-			console.error(error);
-			toast.error(
-				error instanceof Error ? error.message : "Passkey registration failed",
-			);
+			await logOutUserApi();
+			await clearAuthCookie();
+			window.location.href = "/auth/login";
+		} catch {
+			toast.error("Could not sign out. Try again.");
+			setSigningOut(false);
 		}
-	};
+	}
 
 	const userInitials = user?.name
-		.split(" ")
+		.trim()
+		.split(/\s+/)
 		.map((n) => n[0])
 		.join("")
 		.toUpperCase()
@@ -206,44 +228,76 @@ function AppSidebar() {
 							<DropdownMenuTrigger asChild>
 								<SidebarMenuButton
 									size="lg"
-									className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+									ref={accountButton}
+									tooltip={user?.name || "Account"}
+									aria-label="Account menu"
+									className="min-w-0 gap-2.5 border-t border-sidebar-border rounded-none pt-3 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 								>
 									<Avatar className="size-7 rounded-lg">
-										<AvatarFallback className="rounded-lg bg-violet-100 text-indigo-500 text-xs font-semibold">
-											{userInitials ?? (
+										<AvatarFallback className="rounded-lg border border-sidebar-border bg-sidebar-accent text-sidebar-foreground text-xs font-medium">
+											{userInitials || (
 												<HugeiconsIcon icon={User03Icon} className="size-3.5" />
 											)}
 										</AvatarFallback>
 									</Avatar>
-									<div className="flex flex-col gap-0.5 leading-none text-left">
-										<span className="font-medium text-sm">
-											{user?.name || "Loading..."}
-										</span>
-										<span className="text-xs text-muted-foreground">
-											{user?.email || ""}
-										</span>
-									</div>
-									<ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
+									<span className="min-w-0 flex-1 truncate text-left text-sm font-medium group-data-[collapsible=icon]:hidden">
+										{user?.name || "Account"}
+									</span>
+									<ChevronUp className="ml-auto size-4 shrink-0 text-muted-foreground group-data-[collapsible=icon]:hidden" />
 								</SidebarMenuButton>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent side="top" className="w-56" align="start">
-								<DropdownMenuItem onClick={handleRegisterPasskey}>
-									<KeyRound className="mr-2 size-4" />
-									Register Passkey
+							<DropdownMenuContent
+								side={
+									isMobile
+										? "bottom"
+										: sidebarState === "collapsed"
+											? "right"
+											: "top"
+								}
+								sideOffset={8}
+								className="w-64 max-w-[calc(100vw-2rem)] [&_[data-slot=dropdown-menu-item]]:focus:bg-muted [&_[data-slot=dropdown-menu-item]]:focus:text-foreground"
+								align="start"
+							>
+								<div className="px-2 py-2">
+									<p className="truncate text-sm font-medium">
+										{user?.name || "Account"}
+									</p>
+									<p
+										className="mt-1 truncate text-xs text-muted-foreground"
+										title={user?.email}
+									>
+										{user?.email}
+									</p>
+								</div>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem asChild>
+									<Link to="/settings">
+										<UserRound />
+										Account
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link to="/settings/appearance">
+										<Sun />
+										Appearance
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link to="/settings/security">
+										<Shield />
+										Security
+									</Link>
+								</DropdownMenuItem>
+								<DropdownMenuItem asChild>
+									<Link to="/settings/credentials">
+										<KeyRound />
+										Credentials
+									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuSeparator />
 								<DropdownMenuItem
 									className="text-destructive focus:text-destructive"
-									onClick={async () => {
-										try {
-											await logOutUserApi();
-										} catch (e: unknown) {
-											console.log("failed to log out", e);
-											toast.error("fail to logout user");
-										}
-										await clearAuthCookie();
-										window.location.href = "/auth/login";
-									}}
+									onSelect={() => setSignOutOpen(true)}
 								>
 									<LogOut className="mr-2 size-4" />
 									Sign out
@@ -252,6 +306,48 @@ function AppSidebar() {
 						</DropdownMenu>
 					</SidebarMenuItem>
 				</SidebarMenu>
+				<Dialog
+					open={signOutOpen}
+					onOpenChange={(open) => {
+						if (!signingOut) setSignOutOpen(open);
+					}}
+				>
+					<DialogContent
+						showCloseButton={false}
+						onCloseAutoFocus={(event) => {
+							event.preventDefault();
+							accountButton.current?.focus();
+						}}
+					>
+						<DialogHeader>
+							<DialogTitle>Sign out?</DialogTitle>
+							<DialogDescription className="wrap-break-word">
+								Signed in as{" "}
+								<span className="font-medium text-foreground">
+									{user?.name || "your account"}
+								</span>
+								.
+							</DialogDescription>
+						</DialogHeader>
+						<DialogFooter>
+							<Button
+								variant="outline"
+								disabled={signingOut}
+								onClick={() => setSignOutOpen(false)}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="secondary"
+								className="bg-foreground text-background hover:bg-foreground/90 focus-visible:ring-foreground/30"
+								disabled={signingOut}
+								onClick={() => void signOut()}
+							>
+								{signingOut ? "Signing out…" : "Sign out"}
+							</Button>
+						</DialogFooter>
+					</DialogContent>
+				</Dialog>
 			</SidebarFooter>
 		</Sidebar>
 	);
