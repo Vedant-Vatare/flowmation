@@ -1,4 +1,5 @@
 import { Router } from "express";
+import accountRouter from "@/routes/account.routes.js";
 import authRouter from "@/routes/auth.routes.js";
 import credentialsRouter from "@/routes/credentials.routes.js";
 import nodeRouter from "@/routes/node.routes.js";
@@ -12,6 +13,7 @@ import workflowRouter from "@/routes/workflow.routes.js";
 const router = Router() as Router;
 
 router.use("/auth", authRouter);
+router.use("/account", accountRouter);
 router.use("/credentials", credentialsRouter);
 router.use("/nodes", nodeRouter);
 router.use("/workflows", workflowRouter);

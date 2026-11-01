@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
-import { db, eq, passkeysTable, usersTable } from "@nodebase/db";
-import { createJWT } from "@nodebase/shared/utils";
+import { db, eq, or, passkeysTable, usersTable } from "@nodebase/db";
+import { redis } from "@nodebase/redis";
+import { createJWT, verifyJWT } from "@nodebase/shared/utils";
 import {
 	type AuthenticationResponseJSON,
 	type AuthenticatorTransport,
@@ -13,15 +14,10 @@ import {
 	verifyRegistrationResponse,
 } from "@simplewebauthn/server";
 import type { Request, Response } from "express";
+import { OAuth2Client } from "google-auth-library";
 import createHttpError from "http-errors";
-import jwt from "jsonwebtoken";
+import { z } from "zod";
 import { getCookieDomain } from "@/utils/auth.utils.js";
-
-type GoogleIdTokenPayload = {
-	sub: string;
-	email: string;
-	name?: string;
-};
 
 const getAuthConfig = () => {
 	const RP_NAME = process.env.RP_NAME;
@@ -120,17 +116,12 @@ const setAuthCookies = (res: Response, token: string) => {
 	});
 };
 
-export const googleLogin = async (_req: Request, res: Response) => {
+async function googleAuthorization(res: Response, state: string) {
 	const clientId = process.env.GOOGLE_CLIENT_ID;
-
-	if (!clientId) {
-		throw createHttpError.InternalServerError("Missing GOOGLE_CLIENT_ID");
-	}
-
-	const redirectUri = `${process.env.API_SERVER_URL}/api/v1/auth/google/callback`;
-	const stateObj = { nonce: crypto.randomBytes(16).toString("hex") };
-	const state = Buffer.from(JSON.stringify(stateObj)).toString("base64url");
-
+	if (!clientId)
+		throw createHttpError.InternalServerError(
+			"Google sign-in is not configured",
+		);
 	res.cookie("oauth_google_login_state", state, {
 		httpOnly: true,
 		secure: true,
@@ -138,19 +129,47 @@ export const googleLogin = async (_req: Request, res: Response) => {
 		domain: COOKIE_DOMAIN,
 		maxAge: 10 * 60 * 1000,
 	});
-
 	const params = new URLSearchParams({
 		client_id: clientId,
-		redirect_uri: redirectUri,
+		redirect_uri: `${process.env.API_SERVER_URL}/api/v1/auth/google/callback`,
 		response_type: "code",
 		scope: "openid email profile",
 		prompt: "select_account",
-		state: state,
+		state,
 	});
+	return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
 
-	return res.redirect(
-		`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+export const googleLogin = async (_req: Request, res: Response) =>
+	res.redirect(
+		await googleAuthorization(res, crypto.randomBytes(32).toString("hex")),
 	);
+
+export const connectAccountGoogle = async (req: Request, res: Response) => {
+	const parsed = z
+		.object({ email: z.email().trim().toLowerCase().optional() })
+		.safeParse(req.body);
+	if (!parsed.success)
+		throw createHttpError.BadRequest("Enter a valid email address");
+	const [user] = await db
+		.select()
+		.from(usersTable)
+		.where(eq(usersTable.id, res.locals.userId));
+	if (!user) throw createHttpError.NotFound("Account not found");
+	const state = `account:${crypto.randomBytes(32).toString("hex")}`;
+	const url = await googleAuthorization(res, state);
+	await redis.set(
+		`google-account:${state}`,
+		JSON.stringify({
+			userId: user.id,
+			email: parsed.data.email ?? user.email.toLowerCase(),
+			previousEmail: user.email,
+			previousGoogleId: user.googleOauthId,
+		}),
+		"EX",
+		600,
+	);
+	return res.json({ url });
 };
 
 export const logout = async (_req: Request, res: Response) => {
@@ -183,7 +202,7 @@ export const getCurrentUser = async (_req: Request, res: Response) => {
 	return res.status(200).json({ user });
 };
 
-export const googleCallback = async (req: Request, res: Response) => {
+const finishGoogleCallback = async (req: Request, res: Response) => {
 	const { code, state } = req.query;
 	const savedState = req.cookies.oauth_google_login_state;
 
@@ -251,19 +270,75 @@ export const googleCallback = async (req: Request, res: Response) => {
 		throw createHttpError.BadRequest("No id_token received from Google");
 	}
 
-	const payload = jwt.decode(idToken) as GoogleIdTokenPayload;
-	if (
-		!payload ||
-		typeof payload === "string" ||
-		!payload.sub ||
-		!payload.email
-	) {
-		throw createHttpError.BadRequest("Invalid id_token payload");
-	}
+	const ticket = await new OAuth2Client(clientId).verifyIdToken({
+		idToken,
+		audience: clientId,
+	});
+	const payload = ticket.getPayload();
+	if (!payload?.sub || !payload.email || !payload.email_verified)
+		throw createHttpError.BadRequest("Google email could not be verified");
 
 	const googleOauthId = String(payload.sub);
 	const email = String(payload.email);
 	const name = String(payload.name ?? email.split("@")[0]);
+
+	if (state.startsWith("account:")) {
+		const raw = await redis.getdel(`google-account:${state}`);
+		if (!raw || !req.cookies.auth_token)
+			throw createHttpError.Unauthorized("Account verification expired");
+		const link = JSON.parse(raw) as {
+			userId: string;
+			email: string;
+			previousEmail: string;
+			previousGoogleId: string | null;
+		};
+		const session = await verifyJWT(req.cookies.auth_token);
+		if (session.userId !== link.userId)
+			throw createHttpError.Unauthorized("Sign in to the original account");
+		if (email.toLowerCase() !== link.email)
+			return res.redirect(
+				`${process.env.CLIENT_URL}/settings?google=email_mismatch`,
+			);
+		if (
+			email.toLowerCase() !== link.previousEmail.toLowerCase() &&
+			!email.toLowerCase().endsWith("@gmail.com") &&
+			!payload.hd
+		)
+			return res.redirect(
+				`${process.env.CLIENT_URL}/settings?google=unsupported_email`,
+			);
+		await db.transaction(async (tx) => {
+			const [current] = await tx
+				.select()
+				.from(usersTable)
+				.where(eq(usersTable.id, link.userId))
+				.for("update");
+			if (
+				!current ||
+				current.email !== link.previousEmail ||
+				current.googleOauthId !== link.previousGoogleId
+			)
+				throw createHttpError.Conflict("Account changed during verification");
+			const owners = await tx
+				.select({ id: usersTable.id })
+				.from(usersTable)
+				.where(
+					or(
+						eq(usersTable.email, email.toLowerCase()),
+						eq(usersTable.googleOauthId, googleOauthId),
+					),
+				);
+			if (owners.some((owner) => owner.id !== link.userId))
+				throw createHttpError.Conflict(
+					"Google account or email already in use",
+				);
+			await tx
+				.update(usersTable)
+				.set({ email: email.toLowerCase(), googleOauthId })
+				.where(eq(usersTable.id, link.userId));
+		});
+		return res.redirect(`${process.env.CLIENT_URL}/settings?google=connected`);
+	}
 
 	let [user] = await db
 		.select()
@@ -307,6 +382,21 @@ export const googleCallback = async (req: Request, res: Response) => {
 	return res.redirect(`${process.env.CLIENT_URL}/dashboard`);
 };
 
+export const googleCallback = async (req: Request, res: Response) => {
+	try {
+		return await finishGoogleCallback(req, res);
+	} catch (error) {
+		if (
+			typeof req.query.state === "string" &&
+			req.query.state.startsWith("account:")
+		) {
+			await redis.del(`google-account:${req.query.state}`);
+			return res.redirect(`${process.env.CLIENT_URL}/settings?google=failed`);
+		}
+		throw error;
+	}
+};
+
 export const passkeyInitiate = async (req: Request, res: Response) => {
 	const { email } = req.body;
 	if (!email) throw createHttpError.BadRequest("Email is required");
@@ -326,15 +416,20 @@ export const passkeyInitiate = async (req: Request, res: Response) => {
 				.where(eq(passkeysTable.userId, existingUser.id))
 		: [];
 
-	const needsRegistration = !existingUser || userPasskeys.length === 0;
+	if (existingUser && userPasskeys.length === 0)
+		throw createHttpError.Conflict(
+			"Sign in with Google, then add a passkey in Settings",
+		);
+
+	const needsRegistration = !existingUser;
 
 	if (needsRegistration) {
 		const options = await generateRegistrationOptions({
 			rpName: RP_NAME,
 			rpID: RP_ID,
-			userID: Buffer.from(existingUser?.id ?? email, "utf-8"),
+			userID: Buffer.from(email, "utf-8"),
 			userName: email,
-			userDisplayName: existingUser?.name || email,
+			userDisplayName: email,
 			attestationType: "none",
 			excludeCredentials: buildExcludeCredentials(userPasskeys),
 			authenticatorSelection: {
@@ -433,17 +528,16 @@ const handlePasskeySignup = async (
 		.where(eq(usersTable.email, email))
 		.limit(1);
 
-	let user = existingUser;
-	if (!user) {
-		const name = email.split("@")[0] || "User";
-		[user] = await db
-			.insert(usersTable)
-			.values({ email: email as string, name })
-			.returning();
-		if (!user) {
-			throw createHttpError.InternalServerError("Failed to create user");
-		}
-	}
+	if (existingUser)
+		throw createHttpError.Conflict(
+			"Account already exists. Sign in before adding a passkey",
+		);
+	const name = email.split("@")[0] || "User";
+	const [user] = await db
+		.insert(usersTable)
+		.values({ email: email as string, name })
+		.returning();
+	if (!user) throw createHttpError.InternalServerError("Failed to create user");
 
 	const { credential } = registrationInfo;
 	const publicKey = Buffer.from(new Uint8Array(credential.publicKey)).toString(
