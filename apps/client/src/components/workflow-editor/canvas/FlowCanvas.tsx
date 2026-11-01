@@ -138,18 +138,18 @@ export const FlowCanvas = ({
 			defaultEdgeOptions={defaultEdgeOptions}
 			{...interactionOptions}
 			className={className}
-			style={style}
+			style={{ background: "var(--background)", ...style }}
 		>
 			{showMiniMap ? (
 				<MiniMap
 					style={{
-						background: "hsl(var(--card))",
-						border: "1px solid hsl(var(--border))",
+						background: "var(--card)",
+						border: "1px solid var(--border)",
 						borderRadius: "12px",
 						bottom: "1rem",
 						right: "0.75rem",
 					}}
-					maskColor="hsl(var(--background) / 0.6)"
+					maskColor="color-mix(in oklch, var(--background) 60%, transparent)"
 					nodeColor={(n) =>
 						getNodeColorByTask((n.data as WorkflowNodeData).task)
 					}

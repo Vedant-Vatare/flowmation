@@ -19,14 +19,14 @@
 	--main-content-level-height: calc(100svh - var(--main-header-height));
 	--radius: 0.625rem;
 
-	--background: oklch(0.99 0 0);
-	--foreground: oklch(0.25 0 0);
+	--background: oklch(0.962 0.004 285);
+	--foreground: oklch(0.27 0.01 285);
 
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.25 0 0);
+	--card: oklch(0.985 0.002 285);
+	--card-foreground: oklch(0.27 0.01 285);
 
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.25 0 0);
+	--popover: oklch(0.985 0.002 285);
+	--popover-foreground: oklch(0.27 0.01 285);
 
 	--primary: oklch(0.5282 0.2628 262.87);
 	--primary-gradient: linear-gradient(
@@ -37,20 +37,21 @@
 
 	--primary-foreground: oklch(1 0 0);
 
-	--secondary: oklch(0.92 0 0);
-	--secondary-foreground: oklch(0.16 0 0);
+	--secondary: oklch(0.918 0.006 285);
+	--secondary-foreground: oklch(0.3 0.01 285);
 
-	--muted: oklch(0.96 0 0);
-	--muted-foreground: oklch(0.5 0 0);
+	--muted: oklch(0.932 0.005 285);
+	--muted-foreground: oklch(0.48 0.012 285);
 
-	--accent: oklch(56.545% 0.15993 275.557);
-	--accent-foreground: oklch(1 0 0);
+	--accent: oklch(0.918 0.01 285);
+	--accent-foreground: oklch(0.27 0.01 285);
 
 	--destructive: oklch(0.577 0.245 27.325);
 	--destructive-foreground: oklch(1 0 0);
 
-	--border: oklch(0.93 0 0);
-	--input: oklch(0.96 0 0);
+	--border: oklch(0.867 0.007 285);
+	--input: oklch(0.84 0.008 285);
+	--input-darker: oklch(0.918 0.006 285);
 	--ring: oklch(0.54 0.22 285);
 
 	--chart-1: oklch(0.54 0.22 285);
@@ -59,13 +60,13 @@
 	--chart-4: oklch(0.65 0.16 210);
 	--chart-5: oklch(0.58 0.24 285);
 
-	--sidebar: oklch(1 0 0);
-	--sidebar-foreground: oklch(0.25 0 0);
+	--sidebar: oklch(0.946 0.006 285);
+	--sidebar-foreground: oklch(0.3 0.01 285);
 	--sidebar-primary: oklch(0.54 0.22 285);
 	--sidebar-primary-foreground: oklch(1 0 0);
-	--sidebar-accent: oklch(0.96 0 0);
-	--sidebar-accent-foreground: oklch(0.25 0 0);
-	--sidebar-border: oklch(0.93 0 0);
+	--sidebar-accent: oklch(0.905 0.009 285);
+	--sidebar-accent-foreground: oklch(0.27 0.01 285);
+	--sidebar-border: oklch(0.867 0.007 285);
 	--sidebar-ring: oklch(0.54 0.22 285);
 
 	--color-success: oklch(63.098% 0.1509 150.371);
@@ -82,11 +83,9 @@ body {
 	font-family: "Lexend", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: light) {
-	:root {
-		color: #3a3a3a;
-		background-color: #fcfcfc;
-	}
+:root {
+	color: var(--foreground);
+	background-color: var(--background);
 }
 
 @theme inline {

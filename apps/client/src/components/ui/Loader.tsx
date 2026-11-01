@@ -15,7 +15,7 @@ const styles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #111111;
+    background: var(--background);
   }
   .loader-overlay.full-page {
     position: fixed;
@@ -26,7 +26,6 @@ const styles = `
     width: 100%;
     height: 100%;
     min-height: 200px;
-    border-radius: 12px;
   }
  
   .loader-inner {
@@ -48,7 +47,7 @@ const styles = `
     position: absolute;
     inset: 0;
     border-radius: 50%;
-    background-image: linear-gradient(0deg, #333333 0%, #eeeeee 100%);
+    background-image: linear-gradient(0deg, var(--border) 0%, var(--muted-foreground) 100%);
     animation: spin-mono 0.6s linear infinite;
   }
   .spinner-mono__hole {
@@ -56,7 +55,7 @@ const styles = `
     width: 85%;
     height: 85%;
     border-radius: 50%;
-    background-color: #111111;
+    background-color: var(--background);
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -68,12 +67,12 @@ const styles = `
     font-weight: 500;
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    color: #ffffff;
+    color: var(--muted-foreground);
     animation: loader-pulse 1.2s ease-in-out infinite;
   }
 `;
 
-function Loader({ fullPage = true, bg = "oklch(0.22 0.01 285)" }) {
+function Loader({ fullPage = true, bg = "var(--background)" }) {
 	return (
 		<>
 			<style>{styles}</style>
@@ -87,7 +86,7 @@ function Loader({ fullPage = true, bg = "oklch(0.22 0.01 285)" }) {
 							className="spinner-mono__ring"
 							style={{
 								backgroundImage:
-									"linear-gradient(0deg, #333333 0%, #eeeeee 100%)",
+									"linear-gradient(0deg, var(--border) 0%, var(--muted-foreground) 100%)",
 							}}
 						/>
 						<div

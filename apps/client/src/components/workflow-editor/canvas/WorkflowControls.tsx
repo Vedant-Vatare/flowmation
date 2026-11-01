@@ -8,7 +8,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ShineBorder } from "@/components/ui/shine-border";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
 import {
@@ -446,26 +445,19 @@ const TestWorkflowButton = () => {
 	};
 
 	return (
-		<ShineBorder
-			className="rounded-lg"
-			borderWidth={1.5}
-			duration={3.5}
-			color="hsl(var(--primary))"
-			disabled={isSelectingTrigger}
+		<Button
+			variant="outline"
+			size="sm"
+			className="gap-2 border-border bg-card text-card-foreground shadow-none hover:bg-muted hover:text-foreground dark:bg-card dark:hover:bg-muted"
+			aria-pressed={isSelectingTrigger}
+			onClick={handleExecute}
+			disabled={isPending}
+			title="Run this workflow once to test it"
+			type="button"
 		>
-			<Button
-				variant="secondary"
-				size="sm"
-				className="gap-2 rounded-[calc(0.5rem-1.5px)] border border-primary/20 bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:text-secondary-foreground"
-				onClick={handleExecute}
-				disabled={isPending}
-				title="Run this workflow once to test it"
-				type="button"
-			>
-				<Play className="size-3.5 text-primary" />
-				Test Workflow
-			</Button>
-		</ShineBorder>
+			<Play className="size-3.5 text-primary" />
+			{isPending ? "Running…" : "Test workflow"}
+		</Button>
 	);
 };
 
