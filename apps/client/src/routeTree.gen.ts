@@ -17,10 +17,14 @@ import { Route as TemplatesIndexRouteImport } from './routes/templates/index'
 import { Route as TemplatesTemplateIdRouteImport } from './routes/templates/$templateId'
 import { Route as AuthSignupRouteImport } from './routes/auth/signup'
 import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as MainLayoutSettingsRouteImport } from './routes/_mainLayout/settings'
 import { Route as MainLayoutLogsRouteImport } from './routes/_mainLayout/logs'
 import { Route as MainLayoutDashboardRouteImport } from './routes/_mainLayout/dashboard'
+import { Route as MainLayoutSettingsIndexRouteImport } from './routes/_mainLayout/settings/index'
 import { Route as MainLayoutWorkflowWorkflowIdRouteImport } from './routes/_mainLayout/workflow/$workflowId'
+import { Route as MainLayoutSettingsSecurityRouteImport } from './routes/_mainLayout/settings/security'
 import { Route as MainLayoutSettingsCredentialsRouteImport } from './routes/_mainLayout/settings/credentials'
+import { Route as MainLayoutSettingsAppearanceRouteImport } from './routes/_mainLayout/settings/appearance'
 
 const TemplatesRoute = TemplatesRouteImport.update({
   id: '/templates',
@@ -61,6 +65,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/auth/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MainLayoutSettingsRoute = MainLayoutSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => MainLayoutRoute,
+} as any)
 const MainLayoutLogsRoute = MainLayoutLogsRouteImport.update({
   id: '/logs',
   path: '/logs',
@@ -71,17 +80,34 @@ const MainLayoutDashboardRoute = MainLayoutDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => MainLayoutRoute,
 } as any)
+const MainLayoutSettingsIndexRoute = MainLayoutSettingsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MainLayoutSettingsRoute,
+} as any)
 const MainLayoutWorkflowWorkflowIdRoute =
   MainLayoutWorkflowWorkflowIdRouteImport.update({
     id: '/workflow/$workflowId',
     path: '/workflow/$workflowId',
     getParentRoute: () => MainLayoutRoute,
   } as any)
+const MainLayoutSettingsSecurityRoute =
+  MainLayoutSettingsSecurityRouteImport.update({
+    id: '/security',
+    path: '/security',
+    getParentRoute: () => MainLayoutSettingsRoute,
+  } as any)
 const MainLayoutSettingsCredentialsRoute =
   MainLayoutSettingsCredentialsRouteImport.update({
-    id: '/settings/credentials',
-    path: '/settings/credentials',
-    getParentRoute: () => MainLayoutRoute,
+    id: '/credentials',
+    path: '/credentials',
+    getParentRoute: () => MainLayoutSettingsRoute,
+  } as any)
+const MainLayoutSettingsAppearanceRoute =
+  MainLayoutSettingsAppearanceRouteImport.update({
+    id: '/appearance',
+    path: '/appearance',
+    getParentRoute: () => MainLayoutSettingsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -90,12 +116,16 @@ export interface FileRoutesByFullPath {
   '/templates': typeof TemplatesRouteWithChildren
   '/dashboard': typeof MainLayoutDashboardRoute
   '/logs': typeof MainLayoutLogsRoute
+  '/settings': typeof MainLayoutSettingsRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/settings/appearance': typeof MainLayoutSettingsAppearanceRoute
   '/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
+  '/settings/security': typeof MainLayoutSettingsSecurityRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
+  '/settings/': typeof MainLayoutSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -106,8 +136,11 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates': typeof TemplatesIndexRoute
+  '/settings/appearance': typeof MainLayoutSettingsAppearanceRoute
   '/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
+  '/settings/security': typeof MainLayoutSettingsSecurityRoute
   '/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
+  '/settings': typeof MainLayoutSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,12 +150,16 @@ export interface FileRoutesById {
   '/templates': typeof TemplatesRouteWithChildren
   '/_mainLayout/dashboard': typeof MainLayoutDashboardRoute
   '/_mainLayout/logs': typeof MainLayoutLogsRoute
+  '/_mainLayout/settings': typeof MainLayoutSettingsRouteWithChildren
   '/auth/login': typeof AuthLoginRoute
   '/auth/signup': typeof AuthSignupRoute
   '/templates/$templateId': typeof TemplatesTemplateIdRoute
   '/templates/': typeof TemplatesIndexRoute
+  '/_mainLayout/settings/appearance': typeof MainLayoutSettingsAppearanceRoute
   '/_mainLayout/settings/credentials': typeof MainLayoutSettingsCredentialsRoute
+  '/_mainLayout/settings/security': typeof MainLayoutSettingsSecurityRoute
   '/_mainLayout/workflow/$workflowId': typeof MainLayoutWorkflowWorkflowIdRoute
+  '/_mainLayout/settings/': typeof MainLayoutSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -132,12 +169,16 @@ export interface FileRouteTypes {
     | '/templates'
     | '/dashboard'
     | '/logs'
+    | '/settings'
     | '/auth/login'
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates/'
+    | '/settings/appearance'
     | '/settings/credentials'
+    | '/settings/security'
     | '/workflow/$workflowId'
+    | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -148,8 +189,11 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates'
+    | '/settings/appearance'
     | '/settings/credentials'
+    | '/settings/security'
     | '/workflow/$workflowId'
+    | '/settings'
   id:
     | '__root__'
     | '/'
@@ -158,12 +202,16 @@ export interface FileRouteTypes {
     | '/templates'
     | '/_mainLayout/dashboard'
     | '/_mainLayout/logs'
+    | '/_mainLayout/settings'
     | '/auth/login'
     | '/auth/signup'
     | '/templates/$templateId'
     | '/templates/'
+    | '/_mainLayout/settings/appearance'
     | '/_mainLayout/settings/credentials'
+    | '/_mainLayout/settings/security'
     | '/_mainLayout/workflow/$workflowId'
+    | '/_mainLayout/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -233,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_mainLayout/settings': {
+      id: '/_mainLayout/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof MainLayoutSettingsRouteImport
+      parentRoute: typeof MainLayoutRoute
+    }
     '/_mainLayout/logs': {
       id: '/_mainLayout/logs'
       path: '/logs'
@@ -247,6 +302,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainLayoutDashboardRouteImport
       parentRoute: typeof MainLayoutRoute
     }
+    '/_mainLayout/settings/': {
+      id: '/_mainLayout/settings/'
+      path: '/'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof MainLayoutSettingsIndexRouteImport
+      parentRoute: typeof MainLayoutSettingsRoute
+    }
     '/_mainLayout/workflow/$workflowId': {
       id: '/_mainLayout/workflow/$workflowId'
       path: '/workflow/$workflowId'
@@ -254,27 +316,58 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainLayoutWorkflowWorkflowIdRouteImport
       parentRoute: typeof MainLayoutRoute
     }
+    '/_mainLayout/settings/security': {
+      id: '/_mainLayout/settings/security'
+      path: '/security'
+      fullPath: '/settings/security'
+      preLoaderRoute: typeof MainLayoutSettingsSecurityRouteImport
+      parentRoute: typeof MainLayoutSettingsRoute
+    }
     '/_mainLayout/settings/credentials': {
       id: '/_mainLayout/settings/credentials'
-      path: '/settings/credentials'
+      path: '/credentials'
       fullPath: '/settings/credentials'
       preLoaderRoute: typeof MainLayoutSettingsCredentialsRouteImport
-      parentRoute: typeof MainLayoutRoute
+      parentRoute: typeof MainLayoutSettingsRoute
+    }
+    '/_mainLayout/settings/appearance': {
+      id: '/_mainLayout/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof MainLayoutSettingsAppearanceRouteImport
+      parentRoute: typeof MainLayoutSettingsRoute
     }
   }
 }
 
+interface MainLayoutSettingsRouteChildren {
+  MainLayoutSettingsAppearanceRoute: typeof MainLayoutSettingsAppearanceRoute
+  MainLayoutSettingsCredentialsRoute: typeof MainLayoutSettingsCredentialsRoute
+  MainLayoutSettingsSecurityRoute: typeof MainLayoutSettingsSecurityRoute
+  MainLayoutSettingsIndexRoute: typeof MainLayoutSettingsIndexRoute
+}
+
+const MainLayoutSettingsRouteChildren: MainLayoutSettingsRouteChildren = {
+  MainLayoutSettingsAppearanceRoute: MainLayoutSettingsAppearanceRoute,
+  MainLayoutSettingsCredentialsRoute: MainLayoutSettingsCredentialsRoute,
+  MainLayoutSettingsSecurityRoute: MainLayoutSettingsSecurityRoute,
+  MainLayoutSettingsIndexRoute: MainLayoutSettingsIndexRoute,
+}
+
+const MainLayoutSettingsRouteWithChildren =
+  MainLayoutSettingsRoute._addFileChildren(MainLayoutSettingsRouteChildren)
+
 interface MainLayoutRouteChildren {
   MainLayoutDashboardRoute: typeof MainLayoutDashboardRoute
   MainLayoutLogsRoute: typeof MainLayoutLogsRoute
-  MainLayoutSettingsCredentialsRoute: typeof MainLayoutSettingsCredentialsRoute
+  MainLayoutSettingsRoute: typeof MainLayoutSettingsRouteWithChildren
   MainLayoutWorkflowWorkflowIdRoute: typeof MainLayoutWorkflowWorkflowIdRoute
 }
 
 const MainLayoutRouteChildren: MainLayoutRouteChildren = {
   MainLayoutDashboardRoute: MainLayoutDashboardRoute,
   MainLayoutLogsRoute: MainLayoutLogsRoute,
-  MainLayoutSettingsCredentialsRoute: MainLayoutSettingsCredentialsRoute,
+  MainLayoutSettingsRoute: MainLayoutSettingsRouteWithChildren,
   MainLayoutWorkflowWorkflowIdRoute: MainLayoutWorkflowWorkflowIdRoute,
 }
 

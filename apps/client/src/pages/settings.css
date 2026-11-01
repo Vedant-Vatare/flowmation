@@ -1,0 +1,117 @@
+.settings-page {
+	height: 100%;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	background: var(--background);
+}
+.settings-heading {
+	padding: 28px 32px 20px;
+}
+.settings-tabs {
+	display: flex;
+	flex-shrink: 0;
+	gap: 24px;
+	overflow-x: auto;
+	scrollbar-width: none;
+	margin: 0 32px;
+	border-bottom: 1px solid var(--border);
+}
+.settings-tabs::-webkit-scrollbar {
+	display: none;
+}
+.settings-tab {
+	white-space: nowrap;
+	padding: 12px 4px;
+	border-bottom: 2px solid transparent;
+	font-size: 0.875rem;
+	color: var(--muted-foreground);
+}
+.settings-tab:hover {
+	color: var(--foreground);
+}
+.settings-tab[aria-current="page"] {
+	color: var(--foreground);
+	border-bottom-color: var(--foreground);
+	font-weight: 500;
+}
+.settings-tab:focus-visible {
+	outline: 2px solid var(--foreground);
+	outline-offset: -2px;
+	border-radius: 4px;
+}
+.settings-content {
+	min-height: 0;
+	flex: 1;
+	overflow-y: auto;
+}
+.settings-form {
+	width: 100%;
+	max-width: 760px;
+	margin: 0 auto;
+	padding: 36px 32px;
+}
+.settings-row {
+	display: grid;
+	grid-template-columns: 160px minmax(0, 1fr);
+	align-items: start;
+	gap: 32px;
+	padding: 24px 0;
+	border-bottom: 1px solid var(--border);
+}
+.settings-row:first-child {
+	padding-top: 0;
+}
+.settings-row > label {
+	padding-top: 10px;
+}
+.settings-theme {
+	cursor: pointer;
+	min-width: 0;
+}
+.settings-form [data-slot="button"][data-variant="outline"],
+.settings-form [data-slot="button"][data-variant="ghost"] {
+	--accent: var(--muted);
+	--accent-foreground: var(--foreground);
+}
+.settings-form [data-slot="input"]:focus-visible {
+	border-color: var(--foreground);
+	--tw-ring-color: color-mix(in oklch, var(--foreground) 25%, transparent);
+}
+.settings-content > .credentials-page {
+	height: auto;
+	min-height: 100%;
+}
+@media (max-width: 640px) {
+	.settings-heading {
+		padding: 24px 20px 16px;
+	}
+	.settings-tabs {
+		margin-inline: 20px;
+		gap: 16px;
+	}
+	.settings-tab {
+		font-size: 0.8125rem;
+		padding-inline: 2px;
+	}
+	.settings-form {
+		padding: 28px 20px;
+	}
+	.settings-row {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 12px;
+	}
+	.settings-row > label {
+		padding-top: 0;
+	}
+}
+@media (pointer: coarse) {
+	.settings-tab,
+	.settings-page button {
+		min-height: 44px;
+	}
+}
+
+.settings-value-row {
+	align-items: center;
+}

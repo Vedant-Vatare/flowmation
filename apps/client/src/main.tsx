@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ThemeProvider } from "next-themes";
 import App from "./App";
 
 export const router = createRouter({ routeTree });
@@ -22,10 +23,18 @@ if (!rootElement.innerHTML) {
 	const root = ReactDOM.createRoot(rootElement);
 	root.render(
 		<StrictMode>
-			<QueryClientProvider client={queryClient}>
-				<RouterProvider router={router} />
-				<App />
-			</QueryClientProvider>
+			<ThemeProvider
+				attribute="class"
+				defaultTheme="system"
+				enableSystem
+				storageKey="flowmation-theme"
+				disableTransitionOnChange
+			>
+				<QueryClientProvider client={queryClient}>
+					<RouterProvider router={router} />
+					<App />
+				</QueryClientProvider>
+			</ThemeProvider>
 		</StrictMode>,
 	);
 }
