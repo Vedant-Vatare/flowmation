@@ -290,8 +290,10 @@ export const connectOAuth = async (req: Request, res: Response) => {
 		access_type: "offline",
 		prompt: "consent",
 		state: state,
-		code_challenge: codeChallenge,
-		code_challenge_method: "S256",
+		...(credentialDefinition.pkce && {
+			code_challenge: codeChallenge,
+			code_challenge_method: "S256",
+		}),
 		...credentialDefinition.customAuthParams,
 	});
 
@@ -415,7 +417,16 @@ export const oauthCallback = async (req: Request, res: Response) => {
 		};
 	};
 
-	if (!tokenResponse.ok || tokens.ok === false) {
+	if (!tokenResponse.ok || tokens.ok === false || tokens.error) {
+		console.error("OAuth token exchange failed", {
+			provider,
+			status: tokenResponse.status,
+			error:
+				typeof tokens.error === "string" &&
+				/^[a-zA-Z0-9_]{1,80}$/.test(tokens.error)
+					? tokens.error
+					: "unknown",
+		});
 		throw createHttpError.BadRequest(
 			"Authorization failed. Please try connecting the account again.",
 		);
@@ -490,8 +501,14 @@ export const oauthCallback = async (req: Request, res: Response) => {
 	}
 
 	if (isPopup) {
+		const nonce = crypto.randomBytes(16).toString("base64");
+		res.setHeader(
+			"Content-Security-Policy",
+			`default-src 'none'; script-src 'nonce-${nonce}'; base-uri 'none'; frame-ancestors 'none'`,
+		);
+		res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
 		return res.send(`
-			<script>
+			<script nonce="${nonce}">
 				if (window.opener) window.opener.postMessage(${JSON.stringify({ type: "OAUTH_SUCCESS", provider, credentialId }).replace(/</g, "\\u003c")}, ${JSON.stringify(new URL(clientUrl).origin)});
 				window.close();
 			</script>

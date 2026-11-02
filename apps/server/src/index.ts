@@ -1,11 +1,24 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 import APIRouterV1 from "@/routes/index.routes.js";
 import triggerRouter from "@/routes/trigger.routes.js";
 import { errorHandler, RequestTimeOutHandler } from "./utils/api.utils.js";
 
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+
+app.use(
+	helmet({
+		contentSecurityPolicy: {
+			directives: {
+				"upgrade-insecure-requests": isProduction ? [] : null,
+			},
+		},
+		strictTransportSecurity: isProduction ? undefined : false,
+	}),
+);
 
 app.use(
 	cors({
