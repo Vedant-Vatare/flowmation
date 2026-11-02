@@ -6,6 +6,7 @@ export const githubCredential: OAuth2CredentialDef = {
 	displayName: "GitHub",
 	icon: "github",
 	authMethod: "body",
+	pkce: true,
 	authUrl: "https://github.com/login/oauth/authorize",
 	tokenUrl: "https://github.com/login/oauth/access_token",
 	scopes: ["repo", "user"],
