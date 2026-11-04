@@ -50,6 +50,11 @@ export type FlowCanvasProps = {
 	showMiniMap?: boolean;
 	showBackground?: boolean;
 	onNodeClick?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
+	onNodeContextMenu?: (
+		event: React.MouseEvent,
+		node: WorkflowCanvasNode,
+	) => void;
+	onPaneContextMenu?: (event: React.MouseEvent | MouseEvent) => void;
 	onPaneClick?: (event: React.MouseEvent) => void;
 	onNodeDragStart?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
 	onNodeDragStop?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
@@ -73,6 +78,8 @@ export const FlowCanvas = ({
 	showBackground = true,
 	onNodeClick,
 	onPaneClick,
+	onNodeContextMenu,
+	onPaneContextMenu,
 	onNodeDragStart,
 	onNodeDragStop,
 	onNodesDelete,
@@ -126,6 +133,8 @@ export const FlowCanvas = ({
 			minZoom={0.5}
 			onNodeClick={onNodeClick}
 			onPaneClick={onPaneClick}
+			onNodeContextMenu={isReadOnly ? undefined : onNodeContextMenu}
+			onPaneContextMenu={isReadOnly ? undefined : onPaneContextMenu}
 			onNodeDragStart={isReadOnly ? undefined : onNodeDragStart}
 			onNodesDelete={isReadOnly ? undefined : onNodesDelete}
 			onNodeDragStop={isReadOnly ? undefined : onNodeDragStop}

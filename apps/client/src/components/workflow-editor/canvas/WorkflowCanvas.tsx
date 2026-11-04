@@ -2,15 +2,17 @@ import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Connection, Edge } from "@xyflow/react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
+import { toast } from "sonner";
 import Loader from "@/components/ui/Loader";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import {
 	useAddWorkflowConn,
+	useAddWorkflowNode,
 	useDeleteWorkflowConn,
 	useDeleteWorkflowNode,
 	useUpdateNodesPositions,
@@ -29,10 +31,15 @@ import {
 	useWorkflowStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
-import { toCanvasEdges, toCanvasNodes } from "@/utils/nodes/nodes.utils";
+import {
+	getUniqueNodeName,
+	toCanvasEdges,
+	toCanvasNodes,
+} from "@/utils/nodes/nodes.utils";
 import { resolveCollisions } from "@/utils/resolve-collisions";
 import { TestWebhook } from "../TestWebhook";
 import { FlowCanvas } from "./FlowCanvas";
+import { NodeContextMenu } from "./NodeContextMenu";
 import { WorkflowControls } from "./WorkflowControls";
 
 const WorkflowCanvas = () => {
@@ -47,12 +54,26 @@ const WorkflowCanvas = () => {
 	const { mutate: deleteConnection } = useDeleteWorkflowConn();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const queryClient = useQueryClient();
+	const { mutate: addNode, isPending: addingNode } = useAddWorkflowNode();
+	const [clipboard, setClipboard] = useState<WorkflowNodeRecord | null>(null);
+	const [menu, setMenu] = useState<{
+		x: number;
+		y: number;
+		nodeId?: string;
+	} | null>(null);
 
 	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
 	const clearHistory = useCanvasHistoryStore((s) => s.clear);
 
-	const { fitView, getNodes, getEdges, setNodes, setEdges } =
-		useReactFlow<WorkflowCanvasNode>();
+	const {
+		fitView,
+		getNodes,
+		getEdges,
+		setNodes,
+		setEdges,
+		deleteElements,
+		screenToFlowPosition,
+	} = useReactFlow<WorkflowCanvasNode>();
 	const nodes = useNodes();
 
 	const triggerFocusRequestKey = useWorkflowTriggerStore(
@@ -237,6 +258,34 @@ const WorkflowCanvas = () => {
 		[debouncedUpdatePositions, workflowId, setNodes, getNodes, queryClient],
 	);
 
+	const menuNode = menu?.nodeId
+		? getNodes().find((node) => node.id === menu.nodeId)
+		: undefined;
+	const savedNode = workflowNodes?.find((node) => node.id === menuNode?.id);
+	const copiedNode = clipboard?.workflowId === workflowId ? clipboard : null;
+
+	const insertCopy = (
+		source: WorkflowNodeRecord,
+		position: { x: number; y: number },
+	) => {
+		const currentNodes = getNodes();
+		const snapshot = captureSnapshot(currentNodes, getEdges());
+		addNode(
+			{
+				...source,
+				id: crypto.randomUUID(),
+				workflowId,
+				name: getUniqueNodeName(source.name, currentNodes),
+				positionX: Math.round(position.x),
+				positionY: Math.round(position.y),
+			},
+			{
+				onSuccess: () => pushSnapshot(snapshot),
+				onError: () => toast.error("Could not add node"),
+			},
+		);
+	};
+
 	if (nodesLoading || connectionsLoading) {
 		return <Loader fullPage={false} />;
 	}
@@ -246,6 +295,15 @@ const WorkflowCanvas = () => {
 			nodes={canvasNodes}
 			edges={canvasEdges}
 			onNodeClick={(_e, node) => handleNodeClick(node)}
+			onNodeContextMenu={(event, node) => {
+				event.preventDefault();
+				setMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
+			}}
+			onPaneContextMenu={(event) => {
+				if (!copiedNode) return;
+				event.preventDefault();
+				setMenu({ x: event.clientX, y: event.clientY });
+			}}
 			onNodeDragStart={onNodeDragStart}
 			onNodesDelete={onNodesDelete}
 			onNodeDragStop={onNodeDragStop}
@@ -254,6 +312,51 @@ const WorkflowCanvas = () => {
 			onReconnect={onReconnect}
 		>
 			<WorkflowControls />
+			{menu && (
+				<NodeContextMenu
+					position={menu}
+					nodeName={menuNode?.data.name}
+					addingNode={addingNode}
+					onClose={() => setMenu(null)}
+					onEdit={menuNode ? () => handleNodeClick(menuNode) : undefined}
+					onCopy={
+						savedNode
+							? () => {
+									setClipboard(structuredClone(savedNode));
+									toast.success("Node copied");
+								}
+							: undefined
+					}
+					onDuplicate={
+						savedNode && menuNode
+							? () =>
+									insertCopy(savedNode, {
+										x: menuNode.position.x + 180,
+										y: menuNode.position.y + 24,
+									})
+							: undefined
+					}
+					onPaste={
+						copiedNode
+							? () =>
+									insertCopy(
+										copiedNode,
+										menuNode
+											? {
+													x: menuNode.position.x + 180,
+													y: menuNode.position.y + 24,
+												}
+											: screenToFlowPosition({ x: menu.x, y: menu.y }),
+									)
+							: undefined
+					}
+					onDelete={
+						menuNode
+							? () => void deleteElements({ nodes: [{ id: menuNode.id }] })
+							: undefined
+					}
+				/>
+			)}
 		</FlowCanvas>
 	);
 };
