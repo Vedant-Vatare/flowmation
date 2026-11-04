@@ -1,29 +1,42 @@
 import { Redo03Icon, Undo03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useLayoutContext } from "@jalez/react-flow-automated-layout";
-import type { NodeIdsWithPosition } from "@nodebase/shared";
-import { type Edge, type Node, useReactFlow, useViewport } from "@xyflow/react";
+import type { NodeIdsWithPosition, WorkflowConnection } from "@nodebase/shared";
+import { useIsMutating, useQueryClient } from "@tanstack/react-query";
+import { useReactFlow, useViewport } from "@xyflow/react";
 import { Maximize2, Minus, Play, Plus, Waypoints } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+	addWorkflowNodeApi,
+	addWorkflowNodeConnApi,
+	deleteWorkflowConnApi,
+	deleteWorkflowNodeApi,
+	getWorkflowConnections,
+	getWorkflowNodes,
+	updateNodesPositionApi,
+} from "@/apis/userWorkflow";
 import { Button } from "@/components/ui/button";
+import type { WorkflowCanvasNode } from "@/constants/nodes";
+import { useDebounce } from "@/hooks/debounce";
+import { readCachedSnapshot } from "@/hooks/useCanvasHistoryRecorder";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
 import {
-	useAddWorkflowConn,
-	useDeleteWorkflowConn,
 	useUpdateNodesPositions,
 	useWorkflowNodesQuery,
+	workflowNodesOptions,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
 import {
 	type CanvasSnapshot,
-	captureSnapshot,
 	useCanvasHistoryStore,
 } from "@/store/workflow/useCanvasHistoryStore";
 import {
+	usePublishStatusStore,
 	useWorkflowExecutionStore,
+	useWorkflowStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
 
@@ -61,12 +74,11 @@ function ControlButton({
 
 const ZoomControls = () => {
 	const { workflowId } = Route.useParams();
-	const { zoomIn, zoomOut, fitView, setViewport, getNodes, getEdges } =
-		useReactFlow();
+	const { zoomIn, zoomOut, fitView, setViewport, getNodes } =
+		useReactFlow<WorkflowCanvasNode>();
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const { applyLayout } = useLayoutContext();
-	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
 	const [zoom, setZoom] = useState(100);
 	const [zoomInput, setZoomInput] = useState("100");
 	const [isEditing, setIsEditing] = useState(false);
@@ -125,8 +137,6 @@ const ZoomControls = () => {
 	);
 
 	const handleApplyLayout = useCallback(async () => {
-		pushSnapshot(captureSnapshot(getNodes(), getEdges()));
-
 		const nodesBefore = getNodes().reduce<
 			Record<string, { x: number; y: number }>
 		>((acc, n) => {
@@ -151,14 +161,7 @@ const ZoomControls = () => {
 
 		if (changed.length > 0)
 			updateNodesPositions({ workflowId, nodes: changed });
-	}, [
-		applyLayout,
-		getNodes,
-		getEdges,
-		pushSnapshot,
-		workflowId,
-		updateNodesPositions,
-	]);
+	}, [applyLayout, getNodes, workflowId, updateNodesPositions]);
 
 	useEffect(() => {
 		const current = Math.round((viewport.zoom || 1) * 100);
@@ -233,139 +236,195 @@ const ZoomControls = () => {
 	);
 };
 
+async function saveCanvasHistory(
+	workflowId: string,
+	before: CanvasSnapshot,
+	after: CanvasSnapshot,
+) {
+	const previousNodes = new Map(before.nodes.map((node) => [node.id, node]));
+	const nextNodes = new Map(after.nodes.map((node) => [node.id, node]));
+	const previousEdges = new Map(before.edges.map((edge) => [edge.id, edge]));
+	const nextEdges = new Map(after.edges.map((edge) => [edge.id, edge]));
+
+	for (const edge of before.edges) {
+		if (
+			nextNodes.has(edge.source) &&
+			nextNodes.has(edge.target) &&
+			JSON.stringify(edge) !== JSON.stringify(nextEdges.get(edge.id))
+		)
+			await deleteWorkflowConnApi({ id: edge.id, workflowId });
+	}
+	for (const node of before.nodes) {
+		if (!nextNodes.has(node.id))
+			await deleteWorkflowNodeApi(node.id, workflowId);
+	}
+	for (const node of after.nodes) {
+		if (!previousNodes.has(node.id)) await addWorkflowNodeApi(node);
+	}
+	for (const edge of after.edges) {
+		if (JSON.stringify(edge) !== JSON.stringify(previousEdges.get(edge.id))) {
+			await addWorkflowNodeConnApi({
+				id: edge.id,
+				workflowId,
+				sourceId: edge.source,
+				targetId: edge.target,
+				sourcePort: edge.sourceHandle,
+				targetPort: edge.targetHandle,
+			});
+		}
+	}
+	const moved = after.nodes
+		.filter((node) => {
+			const previous = previousNodes.get(node.id);
+			return (
+				previous &&
+				(previous.positionX !== node.positionX ||
+					previous.positionY !== node.positionY)
+			);
+		})
+		.map(({ id, positionX, positionY }) => ({ id, positionX, positionY }));
+	if (moved.length) await updateNodesPositionApi({ workflowId, nodes: moved });
+}
+
 const UndoRedoControls = () => {
 	const { workflowId } = Route.useParams();
-	const { getNodes, getEdges, setNodes, setEdges } = useReactFlow();
-	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
-	const { mutate: addConnection } = useAddWorkflowConn();
-	const { mutate: deleteConnection } = useDeleteWorkflowConn();
-	const undo = useCanvasHistoryStore((s) => s.undo);
-	const redo = useCanvasHistoryStore((s) => s.redo);
+	const queryClient = useQueryClient();
+	const saving = useIsMutating() > 0;
+	const restoring = useCanvasHistoryStore(
+		(s) => s.restoringWorkflowId !== null,
+	);
+	const checkingHistory = useCanvasHistoryStore((s) => s.historyCheckPending);
+	const [queuedDirection, setQueuedDirection] = useState<
+		"undo" | "redo" | null
+	>(null);
 	const canUndo = useCanvasHistoryStore((s) => s.undoStack.length > 0);
 	const canRedo = useCanvasHistoryStore((s) => s.redoStack.length > 0);
 
-	const pendingSyncRef = useRef<{
-		edgesToAdd: Array<{
-			id: string;
-			workflowId: string;
-			sourceId: string;
-			targetId: string;
-			sourcePort: string;
-			targetPort: string;
-		}>;
-		edgesToRemove: string[];
-		nodes: NodeIdsWithPosition;
+	const pending = useRef<{
+		workflowId: string;
+		before: CanvasSnapshot;
+		after: CanvasSnapshot;
 	} | null>(null);
-
-	const flushSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-	const flushSync = useCallback(() => {
-		if (flushSyncTimerRef.current) clearTimeout(flushSyncTimerRef.current);
-		flushSyncTimerRef.current = setTimeout(() => {
-			const pending = pendingSyncRef.current;
-			if (!pending) return;
-			pendingSyncRef.current = null;
-
-			if (pending.edgesToAdd.length > 0) {
-				for (const edge of pending.edgesToAdd) {
-					addConnection(edge);
-				}
+	const save = useDebounce(
+		async (
+			id: string,
+			before: CanvasSnapshot,
+			after: CanvasSnapshot,
+			appliedHistory: CanvasSnapshot[],
+		) => {
+			pending.current = null;
+			const history = useCanvasHistoryStore.getState();
+			const nodesKey = workflowNodesOptions(id).queryKey;
+			const edgesKey = ["workflow-connections", { workflowId: id }];
+			try {
+				await saveCanvasHistory(id, before, after);
+				const connections =
+					queryClient.getQueryData<WorkflowConnection[]>(edgesKey);
+				if (
+					connections &&
+					useCanvasHistoryStore.getState().undoStack === appliedHistory
+				)
+					usePublishStatusStore
+						.getState()
+						.checkForStatusChanges(after.nodes, connections);
+			} catch {
+				toast.error("Could not save the history change");
+				if (useCanvasHistoryStore.getState().undoStack === appliedHistory)
+					history.clear();
+				await Promise.allSettled([
+					getWorkflowNodes(id).then((nodes) =>
+						queryClient.setQueryData(nodesKey, nodes),
+					),
+					getWorkflowConnections(id).then((edges) =>
+						queryClient.setQueryData(edgesKey, edges),
+					),
+				]);
+			} finally {
+				history.setRestoringWorkflowId(null);
 			}
-
-			if (pending.edgesToRemove.length > 0) {
-				for (const id of pending.edgesToRemove) {
-					deleteConnection({ id, workflowId });
-				}
-			}
-
-			if (pending.nodes.length > 0) {
-				updateNodesPositions({ workflowId, nodes: pending.nodes });
-			}
-		}, 300);
-	}, [addConnection, deleteConnection, updateNodesPositions, workflowId]);
-
-	const restoreSnapshot = useCallback(
-		(snapshot: CanvasSnapshot) => {
-			const currentNodes = getNodes();
-			const currentEdges = getEdges();
-
-			const nodeMap = new Map(currentNodes.map((n) => [n.id, n]));
-			const restoredNodes: Node[] = snapshot.nodes
-				.map((sn) => {
-					const current = nodeMap.get(sn.id);
-					if (!current) return null;
-					return {
-						...current,
-						position: { x: sn.positionX, y: sn.positionY },
-					};
-				})
-				.filter((n): n is Node => n !== null);
-
-			setNodes(restoredNodes);
-
-			const currentEdgeIds = new Set(currentEdges.map((e) => e.id));
-			const snapshotEdgeIds = new Set(snapshot.edges.map((e) => e.id));
-
-			const edgesToAdd = snapshot.edges.filter(
-				(e) => !currentEdgeIds.has(e.id),
-			);
-			const edgesToRemove = currentEdges
-				.filter((e) => !snapshotEdgeIds.has(e.id))
-				.map((e) => e.id);
-
-			const restoredEdges: Edge[] = snapshot.edges.map((se) => ({
-				id: se.id,
-				source: se.source,
-				target: se.target,
-				sourceHandle: se.sourceHandle,
-				targetHandle: se.targetHandle,
-				type: "workflow",
-			}));
-			setEdges(restoredEdges);
-
-			const posUpdates = snapshot.nodes
-				.filter((sn) => {
-					const current = nodeMap.get(sn.id);
-					if (!current) return false;
-					return (
-						Math.round(current.position.x) !== sn.positionX ||
-						Math.round(current.position.y) !== sn.positionY
-					);
-				})
-				.map((sn) => ({
-					id: sn.id,
-					positionX: sn.positionX,
-					positionY: sn.positionY,
-				}));
-
-			pendingSyncRef.current = {
-				edgesToAdd: edgesToAdd.map((e) => ({
-					id: e.id,
-					workflowId,
-					sourceId: e.source,
-					targetId: e.target,
-					sourcePort: e.sourceHandle ?? "default",
-					targetPort: e.targetHandle ?? "default",
-				})),
-				edgesToRemove,
-				nodes: posUpdates,
-			};
-			flushSync();
 		},
-		[getNodes, getEdges, setNodes, setEdges, workflowId, flushSync],
+		undefined,
+		750,
 	);
 
-	const handleUndo = useCallback(() => {
-		const snapshot = undo(captureSnapshot(getNodes(), getEdges()));
-		if (snapshot) restoreSnapshot(snapshot);
-	}, [undo, restoreSnapshot, getNodes, getEdges]);
+	const restore = useCallback(
+		(direction: "undo" | "redo") => {
+			const history = useCanvasHistoryStore.getState();
+			const queued =
+				pending.current?.workflowId === workflowId ? pending.current : null;
+			if (
+				(!queued &&
+					(history.restoringWorkflowId || history.historyCheckPending)) ||
+				queryClient.isMutating()
+			) {
+				setQueuedDirection(direction);
+				return;
+			}
+			const current =
+				queued?.after ?? readCachedSnapshot(queryClient, workflowId);
+			if (!current) return;
+			const snapshot = history[direction](current);
+			if (!snapshot) return;
 
-	const handleRedo = useCallback(() => {
-		const snapshot = redo(captureSnapshot(getNodes(), getEdges()));
-		if (snapshot) restoreSnapshot(snapshot);
-	}, [redo, restoreSnapshot, getNodes, getEdges]);
+			history.setRestoringWorkflowId(workflowId);
+			const currentById = new Map(current.nodes.map((node) => [node.id, node]));
+			const next = {
+				edges: snapshot.edges,
+				nodes: snapshot.nodes.map((node) => ({
+					...(currentById.get(node.id) ?? node),
+					positionX: node.positionX,
+					positionY: node.positionY,
+				})),
+			};
+			queryClient.setQueryData(
+				workflowNodesOptions(workflowId).queryKey,
+				next.nodes,
+			);
+			queryClient.setQueryData(
+				["workflow-connections", { workflowId }],
+				next.edges.map((edge) => ({
+					id: edge.id,
+					workflowId,
+					sourceId: edge.source,
+					targetId: edge.target,
+					sourcePort: edge.sourceHandle,
+					targetPort: edge.targetHandle,
+				})),
+			);
+			const selection = useWorkflowStore.getState();
+			if (!next.nodes.some((node) => node.id === selection.selectedNodeId))
+				selection.setSelectedNodeId(null);
+
+			const before = queued?.before ?? current;
+			pending.current = { workflowId, before, after: next };
+			save(
+				workflowId,
+				before,
+				next,
+				useCanvasHistoryStore.getState().undoStack,
+			);
+		},
+		[queryClient, save, workflowId],
+	);
+
+	useEffect(() => {
+		if (!queuedDirection || saving || restoring || checkingHistory) return;
+		setQueuedDirection(null);
+		restore(queuedDirection);
+	}, [queuedDirection, saving, restoring, checkingHistory, restore]);
+
+	const handleUndo = useCallback(() => void restore("undo"), [restore]);
+	const handleRedo = useCallback(() => void restore("redo"), [restore]);
 
 	useEffect(() => {
 		const handler = (e: KeyboardEvent) => {
+			if (
+				e.target instanceof HTMLElement &&
+				e.target.closest(
+					"input, textarea, select, [contenteditable]:not([contenteditable=false])",
+				)
+			)
+				return;
 			const mod = e.metaKey || e.ctrlKey;
 			if (!mod) return;
 
@@ -389,14 +448,14 @@ const UndoRedoControls = () => {
 		<div className="flex h-9 items-center gap-1 rounded-lg border border-border bg-sidebar-accent px-1.5 py-1">
 			<ControlButton
 				onClick={handleUndo}
-				disabled={!canUndo}
+				disabled={!canUndo || saving || restoring || checkingHistory}
 				title="Undo (Ctrl+Z)"
 			>
 				<HugeiconsIcon icon={Undo03Icon} size={16} strokeWidth={1.75} />
 			</ControlButton>
 			<ControlButton
 				onClick={handleRedo}
-				disabled={!canRedo}
+				disabled={!canRedo || saving || restoring || checkingHistory}
 				title="Redo (Ctrl+Y)"
 			>
 				<HugeiconsIcon icon={Redo03Icon} size={16} strokeWidth={1.75} />

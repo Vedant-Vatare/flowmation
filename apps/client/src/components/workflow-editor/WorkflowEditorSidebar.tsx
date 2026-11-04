@@ -3,7 +3,7 @@ import type {
 	WorkflowConnection,
 	WorkflowNode,
 } from "@nodebase/shared";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNodes, useReactFlow } from "@xyflow/react";
 import { SearchIcon, XIcon } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
@@ -27,7 +27,6 @@ import {
 	workflowNodesOptions,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
-import { useCanvasHistoryStore } from "@/store/workflow/useCanvasHistoryStore";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
 import {
 	usePublishStatusStore,
@@ -147,6 +146,15 @@ const Nodes = memo(() => {
 	const { getNodes, fitView, setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const ALL_NODES = useSortedNodes();
 	const { mutate, mutateAsync: addNode } = useAddWorkflowNode();
+	const { mutateAsync: insertNode } = useMutation({
+		mutationFn: ({
+			node,
+			connectionId,
+		}: {
+			node: WorkflowNode;
+			connectionId: string;
+		}) => insertWorkflowNodeApi(node, connectionId),
+	});
 	const [query, setQuery] = useState("");
 	const [placing, setPlacing] = useState(false);
 	const pendingPlacement = useWorkflowSidbarTabsStore(
@@ -195,7 +203,7 @@ const Nodes = memo(() => {
 				try {
 					if (placement.connectionId) {
 						const connectionId = placement.connectionId;
-						const result = await insertWorkflowNodeApi(node, connectionId);
+						const result = await insertNode({ node, connectionId });
 						const nodesKey = workflowNodesOptions(workflowId).queryKey;
 						const edgesKey = ["workflow-connections", { workflowId }];
 						const nextNodes = queryClient.setQueryData<WorkflowNode[]>(
@@ -216,7 +224,6 @@ const Nodes = memo(() => {
 					} else {
 						await addNode(node);
 					}
-					useCanvasHistoryStore.getState().clear();
 					if (useWorkflowSidbarTabsStore.getState().placement === placement)
 						setPlacement(null);
 				} catch {
@@ -261,6 +268,7 @@ const Nodes = memo(() => {
 		[
 			workflowId,
 			getNodes,
+			insertNode,
 			fitView,
 			mutate,
 			setNodes,

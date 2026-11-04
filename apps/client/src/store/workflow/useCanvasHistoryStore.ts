@@ -1,11 +1,5 @@
-import type { Edge } from "@xyflow/react";
+import type { WorkflowNode } from "@nodebase/shared";
 import { create } from "zustand";
-
-type NodeSnapshot = {
-	id: string;
-	positionX: number;
-	positionY: number;
-};
 
 type EdgeSnapshot = {
 	id: string;
@@ -16,13 +10,17 @@ type EdgeSnapshot = {
 };
 
 export type CanvasSnapshot = {
-	nodes: NodeSnapshot[];
+	nodes: WorkflowNode[];
 	edges: EdgeSnapshot[];
 };
 
 const MAX_HISTORY = 50;
 
 type CanvasHistoryStore = {
+	historyCheckPending: boolean;
+	setHistoryCheckPending: (pending: boolean) => void;
+	restoringWorkflowId: string | null;
+	setRestoringWorkflowId: (workflowId: string | null) => void;
 	undoStack: CanvasSnapshot[];
 	redoStack: CanvasSnapshot[];
 	pushSnapshot: (snapshot: CanvasSnapshot) => void;
@@ -33,31 +31,11 @@ type CanvasHistoryStore = {
 	canRedo: () => boolean;
 };
 
-function edgeToSnapshot(e: Edge): EdgeSnapshot {
-	return {
-		id: e.id,
-		source: e.source,
-		target: e.target,
-		sourceHandle: e.sourceHandle ?? "default",
-		targetHandle: e.targetHandle ?? "default",
-	};
-}
-
-export function captureSnapshot(
-	nodes: Array<{ id: string; position: { x: number; y: number } }>,
-	edges: Edge[],
-): CanvasSnapshot {
-	return {
-		nodes: nodes.map((n) => ({
-			id: n.id,
-			positionX: Math.round(n.position.x),
-			positionY: Math.round(n.position.y),
-		})),
-		edges: edges.map(edgeToSnapshot),
-	};
-}
-
 export const useCanvasHistoryStore = create<CanvasHistoryStore>((set, get) => ({
+	historyCheckPending: false,
+	setHistoryCheckPending: (historyCheckPending) => set({ historyCheckPending }),
+	restoringWorkflowId: null,
+	setRestoringWorkflowId: (restoringWorkflowId) => set({ restoringWorkflowId }),
 	undoStack: [],
 	redoStack: [],
 

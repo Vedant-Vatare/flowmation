@@ -3,15 +3,25 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import WorkflowCanvas from "@/components/workflow-editor/canvas/WorkflowCanvas";
 import { LiveExecutionLogs } from "@/components/workflow-editor/LiveExecutionPanel";
 import { WorkflowEditorSidebar } from "@/components/workflow-editor/WorkflowEditorSidebar";
+import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import { useCanvasHistoryStore } from "@/store/workflow/useCanvasHistoryStore";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
 
 export const WorkflowEditorPage = () => {
+	const { workflowId } = Route.useParams();
+	const restoring = useCanvasHistoryStore(
+		(state) => state.restoringWorkflowId === workflowId,
+	);
 	const sidebarOpen = useWorkflowSidbarTabsStore((s) => s.sidebarOpen);
 	const setSidebarOpen = useWorkflowSidbarTabsStore((s) => s.setSidebarOpen);
 
 	return (
 		<ReactFlowProvider>
-			<div className="h-full w-full bg-card relative overflow-hidden">
+			<div
+				inert={restoring}
+				aria-busy={restoring}
+				className="h-full w-full bg-card relative overflow-hidden"
+			>
 				<SidebarProvider
 					sidebarId="workflow-editor"
 					defaultWidth={288}

@@ -9,7 +9,7 @@ import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import { toast } from "sonner";
 import Loader from "@/components/ui/Loader";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
-import { useDebounce } from "@/hooks/debounce";
+import { useCanvasHistoryRecorder } from "@/hooks/useCanvasHistoryRecorder";
 import {
 	useAddWorkflowConn,
 	useAddWorkflowNode,
@@ -22,10 +22,6 @@ import {
 	workflowNodesOptions,
 } from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
-import {
-	captureSnapshot,
-	useCanvasHistoryStore,
-} from "@/store/workflow/useCanvasHistoryStore";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
 import {
 	useWorkflowStore,
@@ -63,13 +59,11 @@ const WorkflowCanvas = () => {
 		connectionId?: string;
 	} | null>(null);
 
-	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
-	const clearHistory = useCanvasHistoryStore((s) => s.clear);
+	useCanvasHistoryRecorder(workflowId);
 
 	const {
 		fitView,
 		getNodes,
-		getEdges,
 		setNodes,
 		setEdges,
 		deleteElements,
@@ -90,10 +84,6 @@ const WorkflowCanvas = () => {
 		if (!workflowConnections) return;
 		setEdges(toCanvasEdges(workflowConnections));
 	}, [workflowConnections, setEdges]);
-
-	useEffect(() => {
-		clearHistory();
-	}, [clearHistory]);
 
 	const canvasNodes = workflowNodes ? toCanvasNodes(workflowNodes) : [];
 	const canvasEdges = workflowConnections
@@ -138,7 +128,6 @@ const WorkflowCanvas = () => {
 	const onConnect = useCallback(
 		(connection: Connection) => {
 			if (!connection.sourceHandle || !connection.targetHandle) return;
-			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			createNewConnection({
 				id: crypto.randomUUID(),
 				workflowId,
@@ -148,7 +137,7 @@ const WorkflowCanvas = () => {
 				targetPort: connection.targetHandle,
 			});
 		},
-		[createNewConnection, workflowId, pushSnapshot, getNodes, getEdges],
+		[createNewConnection, workflowId],
 	);
 
 	const onReconnect = useCallback(
@@ -160,7 +149,6 @@ const WorkflowCanvas = () => {
 			)
 				return;
 
-			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
 			updateConnection({
 				id: oldEdge.id,
 				workflowId,
@@ -170,14 +158,7 @@ const WorkflowCanvas = () => {
 				targetPort: newConnection.targetHandle,
 			});
 		},
-		[
-			isConnectionChanged,
-			workflowId,
-			updateConnection,
-			pushSnapshot,
-			getNodes,
-			getEdges,
-		],
+		[isConnectionChanged, workflowId, updateConnection],
 	);
 
 	const deleting = useRef(false);
@@ -192,12 +173,10 @@ const WorkflowCanvas = () => {
 			if (deleting.current) return false;
 			deleting.current = true;
 			try {
-				const snapshot = captureSnapshot(getNodes(), getEdges());
 				const nodeIds = new Set(deletedNodes.map((node) => node.id));
 				const results = await Promise.allSettled([
 					...deletedNodes.map(async ({ id }) => {
 						await deleteNode({ id, workflowId });
-						clearHistory();
 						const selection = useWorkflowStore.getState();
 						selection.clearNodeDraft(id);
 						if (selection.selectedNodeId === id)
@@ -209,11 +188,6 @@ const WorkflowCanvas = () => {
 						)
 						.map(({ id }) => deleteConnection({ id, workflowId })),
 				]);
-				if (
-					!deletedNodes.length &&
-					results.some((result) => result.status === "fulfilled")
-				)
-					pushSnapshot(snapshot);
 				if (results.some((result) => result.status === "rejected"))
 					toast.error("Some items could not be deleted");
 			} finally {
@@ -221,28 +195,7 @@ const WorkflowCanvas = () => {
 			}
 			return false;
 		},
-		[
-			clearHistory,
-			deleteConnection,
-			deleteNode,
-			getEdges,
-			getNodes,
-			pushSnapshot,
-			workflowId,
-		],
-	);
-
-	const debouncedUpdatePositions = useDebounce(
-		updateNodesPositions,
-		undefined,
-		500,
-	);
-
-	const onNodeDragStart = useCallback(
-		(_e: React.MouseEvent, _draggedNode: WorkflowCanvasNode) => {
-			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
-		},
-		[pushSnapshot, getNodes, getEdges],
+		[deleteConnection, deleteNode, workflowId],
 	);
 
 	const onNodeDragStop = useCallback(
@@ -280,10 +233,10 @@ const WorkflowCanvas = () => {
 				}));
 
 			if (nodesToUpdate.length > 0) {
-				debouncedUpdatePositions({ workflowId, nodes: nodesToUpdate });
+				updateNodesPositions({ workflowId, nodes: nodesToUpdate });
 			}
 		},
-		[debouncedUpdatePositions, workflowId, setNodes, getNodes, queryClient],
+		[updateNodesPositions, workflowId, setNodes, getNodes, queryClient],
 	);
 
 	const menuNode = menu?.nodeId
@@ -307,7 +260,6 @@ const WorkflowCanvas = () => {
 				positionY: Math.round(position.y),
 			},
 			{
-				onSuccess: clearHistory,
 				onError: () => toast.error("Could not add node"),
 			},
 		);
@@ -348,7 +300,6 @@ const WorkflowCanvas = () => {
 				event.preventDefault();
 				setMenu({ x: event.clientX, y: event.clientY });
 			}}
-			onNodeDragStart={onNodeDragStart}
 			onBeforeDelete={onBeforeDelete}
 			onNodeDragStop={onNodeDragStop}
 			onConnect={onConnect}
@@ -420,6 +371,7 @@ const WorkflowCanvas = () => {
 };
 
 const WorkflowCanvasLayout = () => {
+	const { workflowId } = Route.useParams();
 	return (
 		<div style={{ width: "100%", height: "100%" }}>
 			<LayoutProvider
@@ -428,7 +380,7 @@ const WorkflowCanvasLayout = () => {
 				initialNodeDimensions={{ width: 100, height: 76 }}
 			>
 				<TestWebhook />
-				<WorkflowCanvas />
+				<WorkflowCanvas key={workflowId} />
 			</LayoutProvider>
 		</div>
 	);
