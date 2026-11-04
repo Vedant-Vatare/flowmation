@@ -69,6 +69,17 @@ export const getWorkflowConnections = async (workflowId: string) => {
 	return response.data.workflowConnections;
 };
 
+export const insertWorkflowNodeApi = async (
+	node: WorkflowNode,
+	connectionId: string,
+) => {
+	const response = await api.post<{
+		node: WorkflowNode;
+		connections: WorkflowConnection[];
+	}>(`/workflow-nodes/insert/${connectionId}`, { node });
+	return response.data;
+};
+
 export const addWorkflowNodeApi = async (node: WorkflowNode) => {
 	const response = await api.post<{ userWorkflowNode: WorkflowNode }>(
 		"/workflow-nodes",

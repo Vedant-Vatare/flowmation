@@ -2,7 +2,7 @@ import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Connection, Edge } from "@xyflow/react";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@xyflow/react/dist/style.css";
 
 import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
@@ -48,10 +48,10 @@ const WorkflowCanvas = () => {
 		useWorkflowNodesQuery(workflowId);
 	const { data: workflowConnections, isLoading: connectionsLoading } =
 		useWorkflowConnectionsQuery(workflowId);
-	const { mutate: deleteNode } = useDeleteWorkflowNode();
+	const { mutateAsync: deleteNode } = useDeleteWorkflowNode();
 	const { mutate: createNewConnection } = useAddWorkflowConn();
 	const { mutate: updateConnection } = useUpdateWorkflowConn();
-	const { mutate: deleteConnection } = useDeleteWorkflowConn();
+	const { mutateAsync: deleteConnection } = useDeleteWorkflowConn();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
 	const queryClient = useQueryClient();
 	const { mutate: addNode, isPending: addingNode } = useAddWorkflowNode();
@@ -60,6 +60,7 @@ const WorkflowCanvas = () => {
 		x: number;
 		y: number;
 		nodeId?: string;
+		connectionId?: string;
 	} | null>(null);
 
 	const pushSnapshot = useCanvasHistoryStore((s) => s.pushSnapshot);
@@ -179,29 +180,56 @@ const WorkflowCanvas = () => {
 		],
 	);
 
-	const onEdgesDelete = useCallback(
-		(deletedEdges: Edge[]) => {
-			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
-			for (const edge of deletedEdges) {
-				deleteConnection({ id: edge.id, workflowId });
+	const deleting = useRef(false);
+	const onBeforeDelete = useCallback(
+		async ({
+			nodes: deletedNodes,
+			edges: deletedEdges,
+		}: {
+			nodes: WorkflowCanvasNode[];
+			edges: Edge[];
+		}) => {
+			if (deleting.current) return false;
+			deleting.current = true;
+			try {
+				const snapshot = captureSnapshot(getNodes(), getEdges());
+				const nodeIds = new Set(deletedNodes.map((node) => node.id));
+				const results = await Promise.allSettled([
+					...deletedNodes.map(async ({ id }) => {
+						await deleteNode({ id, workflowId });
+						clearHistory();
+						const selection = useWorkflowStore.getState();
+						selection.clearNodeDraft(id);
+						if (selection.selectedNodeId === id)
+							selection.setSelectedNodeId(null);
+					}),
+					...deletedEdges
+						.filter(
+							(edge) => !nodeIds.has(edge.source) && !nodeIds.has(edge.target),
+						)
+						.map(({ id }) => deleteConnection({ id, workflowId })),
+				]);
+				if (
+					!deletedNodes.length &&
+					results.some((result) => result.status === "fulfilled")
+				)
+					pushSnapshot(snapshot);
+				if (results.some((result) => result.status === "rejected"))
+					toast.error("Some items could not be deleted");
+			} finally {
+				deleting.current = false;
 			}
+			return false;
 		},
-		[deleteConnection, workflowId, pushSnapshot, getNodes, getEdges],
-	);
-
-	const onNodesDelete = useCallback(
-		(deletedNodes: WorkflowCanvasNode[]) => {
-			pushSnapshot(captureSnapshot(getNodes(), getEdges()));
-			for (const canvasNode of deletedNodes) {
-				deleteNode({ id: canvasNode.data.id, workflowId });
-				const selection = useWorkflowStore.getState();
-				selection.clearNodeDraft(canvasNode.id);
-				if (selection.selectedNodeId === canvasNode.id) {
-					selection.setSelectedNodeId(null);
-				}
-			}
-		},
-		[deleteNode, workflowId, pushSnapshot, getNodes, getEdges],
+		[
+			clearHistory,
+			deleteConnection,
+			deleteNode,
+			getEdges,
+			getNodes,
+			pushSnapshot,
+			workflowId,
+		],
 	);
 
 	const debouncedUpdatePositions = useDebounce(
@@ -269,7 +297,6 @@ const WorkflowCanvas = () => {
 		position: { x: number; y: number },
 	) => {
 		const currentNodes = getNodes();
-		const snapshot = captureSnapshot(currentNodes, getEdges());
 		addNode(
 			{
 				...source,
@@ -280,10 +307,24 @@ const WorkflowCanvas = () => {
 				positionY: Math.round(position.y),
 			},
 			{
-				onSuccess: () => pushSnapshot(snapshot),
+				onSuccess: clearHistory,
 				onError: () => toast.error("Could not add node"),
 			},
 		);
+	};
+
+	const placeNode = (
+		point: { x: number; y: number },
+		connectionId?: string,
+	) => {
+		const sidebar = useWorkflowSidbarTabsStore.getState();
+		sidebar.setPlacement({
+			workflowId,
+			position: screenToFlowPosition(point),
+			connectionId,
+		});
+		sidebar.setSidebarOpen(true);
+		sidebar.setTabOpen("nodes");
 	};
 
 	if (nodesLoading || connectionsLoading) {
@@ -299,15 +340,17 @@ const WorkflowCanvas = () => {
 				event.preventDefault();
 				setMenu({ x: event.clientX, y: event.clientY, nodeId: node.id });
 			}}
+			onEdgeContextMenu={(event, edge) => {
+				event.preventDefault();
+				setMenu({ x: event.clientX, y: event.clientY, connectionId: edge.id });
+			}}
 			onPaneContextMenu={(event) => {
-				if (!copiedNode) return;
 				event.preventDefault();
 				setMenu({ x: event.clientX, y: event.clientY });
 			}}
 			onNodeDragStart={onNodeDragStart}
-			onNodesDelete={onNodesDelete}
+			onBeforeDelete={onBeforeDelete}
 			onNodeDragStop={onNodeDragStop}
-			onEdgesDelete={onEdgesDelete}
 			onConnect={onConnect}
 			onReconnect={onReconnect}
 		>
@@ -315,6 +358,16 @@ const WorkflowCanvas = () => {
 			{menu && (
 				<NodeContextMenu
 					position={menu}
+					onAdd={
+						!menu.nodeId ? () => placeNode(menu, menu.connectionId) : undefined
+					}
+					addLabel={menu.connectionId ? "Insert node" : "Add node here"}
+					onFit={
+						!menu.nodeId && !menu.connectionId
+							? () => void fitView({ padding: 0.2, duration: 250 })
+							: undefined
+					}
+					deleteLabel={menu.connectionId ? "Delete connection" : "Delete node"}
 					nodeName={menuNode?.data.name}
 					addingNode={addingNode}
 					onClose={() => setMenu(null)}
@@ -337,7 +390,7 @@ const WorkflowCanvas = () => {
 							: undefined
 					}
 					onPaste={
-						copiedNode
+						copiedNode && !menu.connectionId
 							? () =>
 									insertCopy(
 										copiedNode,
@@ -353,7 +406,12 @@ const WorkflowCanvas = () => {
 					onDelete={
 						menuNode
 							? () => void deleteElements({ nodes: [{ id: menuNode.id }] })
-							: undefined
+							: menu.connectionId
+								? () =>
+										void deleteElements({
+											edges: [{ id: menu.connectionId as string }],
+										})
+								: undefined
 					}
 				/>
 			)}

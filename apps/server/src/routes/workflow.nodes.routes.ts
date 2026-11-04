@@ -4,6 +4,7 @@ import {
 	addNodeInWorkflow,
 	deleteNodeInWorkflow,
 	getNodesInWorkflow,
+	insertNodeOnConnection,
 	updateNodeInWorkflow,
 	updateNodesPositions,
 } from "@/controllers/workflow.nodes.controller.js";
@@ -19,6 +20,11 @@ const router = Router() as RouterType;
 router.use(authenticateUser);
 
 router.post("/", validateNodeMiddleware, asyncHandler(addNodeInWorkflow));
+router.post(
+	"/insert/:connectionId",
+	validateNodeMiddleware,
+	asyncHandler(insertNodeOnConnection),
+);
 router.get("/:workflowId", asyncHandler(getNodesInWorkflow));
 router.patch(
 	"/:workflowId",

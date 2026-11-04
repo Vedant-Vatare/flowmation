@@ -8,7 +8,7 @@ import {
 	MarkerType,
 	MiniMap,
 	type NodeTypes,
-	type OnEdgesDelete,
+	type OnBeforeDelete,
 	ReactFlow,
 } from "@xyflow/react";
 import type { CSSProperties, ReactNode } from "react";
@@ -54,12 +54,12 @@ export type FlowCanvasProps = {
 		event: React.MouseEvent,
 		node: WorkflowCanvasNode,
 	) => void;
+	onEdgeContextMenu?: (event: React.MouseEvent, edge: Edge) => void;
 	onPaneContextMenu?: (event: React.MouseEvent | MouseEvent) => void;
 	onPaneClick?: (event: React.MouseEvent) => void;
 	onNodeDragStart?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
 	onNodeDragStop?: (event: React.MouseEvent, node: WorkflowCanvasNode) => void;
-	onNodesDelete?: (nodes: WorkflowCanvasNode[]) => void;
-	onEdgesDelete?: OnEdgesDelete<Edge>;
+	onBeforeDelete?: OnBeforeDelete<WorkflowCanvasNode, Edge>;
 	onConnect?: (connection: Connection) => void;
 	onReconnect?: (oldEdge: Edge, newConnection: Connection) => void;
 	children?: ReactNode;
@@ -80,10 +80,10 @@ export const FlowCanvas = ({
 	onPaneClick,
 	onNodeContextMenu,
 	onPaneContextMenu,
+	onEdgeContextMenu,
 	onNodeDragStart,
 	onNodeDragStop,
-	onNodesDelete,
-	onEdgesDelete,
+	onBeforeDelete,
 	onConnect,
 	onReconnect,
 	children,
@@ -134,11 +134,11 @@ export const FlowCanvas = ({
 			onNodeClick={onNodeClick}
 			onPaneClick={onPaneClick}
 			onNodeContextMenu={isReadOnly ? undefined : onNodeContextMenu}
+			onEdgeContextMenu={isReadOnly ? undefined : onEdgeContextMenu}
 			onPaneContextMenu={isReadOnly ? undefined : onPaneContextMenu}
 			onNodeDragStart={isReadOnly ? undefined : onNodeDragStart}
-			onNodesDelete={isReadOnly ? undefined : onNodesDelete}
+			onBeforeDelete={isReadOnly ? undefined : onBeforeDelete}
 			onNodeDragStop={isReadOnly ? undefined : onNodeDragStop}
-			onEdgesDelete={isReadOnly ? undefined : onEdgesDelete}
 			onConnect={isReadOnly ? undefined : onConnect}
 			onReconnect={isReadOnly ? undefined : onReconnect}
 			connectionRadius={20}

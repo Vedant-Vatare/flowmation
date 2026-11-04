@@ -8,8 +8,8 @@ import {
 	sql,
 	userWorkflowsTable,
 	validateNodeCredential,
-	workflowNodesTable,
 	workflowConnectionsTable,
+	workflowNodesTable,
 } from "@nodebase/db";
 import type {
 	NodeIdsWithPosition,
@@ -76,6 +76,80 @@ export const addNodeInWorkflow = async (req: Request, res: Response) => {
 		}
 		throw e;
 	}
+};
+
+export const insertNodeOnConnection = async (req: Request, res: Response) => {
+	const connectionId = z.uuid().safeParse(req.params.connectionId);
+	if (!connectionId.success)
+		throw createHttpError.BadRequest("Invalid connection ID");
+
+	const node = req.body.node as WorkflowNode;
+	const outputPorts = getNodeOutputPorts(node);
+	const input =
+		node.inputPorts.find((port) => port.name === "default") ??
+		node.inputPorts[0];
+	const output =
+		outputPorts.find((port) => port.name === "default") ??
+		outputPorts.find((port) => port.name !== "error");
+	if (node.type !== "action" || !input || !output)
+		throw createHttpError.BadRequest(
+			"Choose an action with an input and output",
+		);
+	if (node.settings.onError && !supportsErrorOutput(node.task))
+		throw createHttpError.BadRequest("On Error is not supported for this node");
+	const userId = res.locals.userId as string;
+	await validateCredential(node, userId);
+
+	const result = await db.transaction(async (tx) => {
+		const [edge] = await tx
+			.select({ connection: workflowConnectionsTable })
+			.from(workflowConnectionsTable)
+			.innerJoin(
+				userWorkflowsTable,
+				eq(workflowConnectionsTable.workflowId, userWorkflowsTable.id),
+			)
+			.where(
+				and(
+					eq(workflowConnectionsTable.id, connectionId.data),
+					eq(workflowConnectionsTable.workflowId, node.workflowId),
+					eq(userWorkflowsTable.userId, userId),
+				),
+			)
+			.for("update", { of: workflowConnectionsTable });
+		if (!edge) throw createHttpError.NotFound("Connection not found");
+		const original = edge.connection;
+		const [created] = await tx
+			.insert(workflowNodesTable)
+			.values({ ...node, outputPorts })
+			.returning();
+		if (!created)
+			throw createHttpError.InternalServerError("Could not insert node");
+		await tx
+			.delete(workflowConnectionsTable)
+			.where(eq(workflowConnectionsTable.id, original.id));
+		const connections = await tx
+			.insert(workflowConnectionsTable)
+			.values([
+				{
+					workflowId: node.workflowId,
+					sourceId: original.sourceId,
+					sourcePort: original.sourcePort,
+					targetId: node.id,
+					targetPort: input.name,
+				},
+				{
+					workflowId: node.workflowId,
+					sourceId: node.id,
+					sourcePort: output.name,
+					targetId: original.targetId,
+					targetPort: original.targetPort,
+				},
+			])
+			.returning();
+		return { node: created, connections };
+	});
+
+	return res.status(201).json(result);
 };
 
 export const getNodesInWorkflow = async (req: Request, res: Response) => {

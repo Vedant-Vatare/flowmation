@@ -1,4 +1,12 @@
-import { ClipboardPaste, Copy, Files, Pencil, Trash2 } from "lucide-react";
+import {
+	ClipboardPaste,
+	Copy,
+	Files,
+	Maximize,
+	Pencil,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,6 +25,10 @@ type NodeContextMenuProps = {
 	onCopy?: () => void;
 	onDuplicate?: () => void;
 	onPaste?: () => void;
+	onAdd?: () => void;
+	onFit?: () => void;
+	deleteLabel?: string;
+	addLabel?: string;
 	onDelete?: () => void;
 };
 
@@ -29,6 +41,10 @@ export const NodeContextMenu = ({
 	onCopy,
 	onDuplicate,
 	onPaste,
+	onAdd,
+	onFit,
+	deleteLabel = "Delete node",
+	addLabel = "Add node here",
 	onDelete,
 }: NodeContextMenuProps) => {
 	return (
@@ -73,10 +89,22 @@ export const NodeContextMenu = ({
 						</DropdownMenuItem>
 					</>
 				)}
+				{onAdd && (
+					<DropdownMenuItem onSelect={onAdd}>
+						<Plus />
+						{addLabel}
+					</DropdownMenuItem>
+				)}
 				{onPaste && (
 					<DropdownMenuItem disabled={addingNode} onSelect={onPaste}>
 						<ClipboardPaste />
 						Paste node
+					</DropdownMenuItem>
+				)}
+				{onFit && (
+					<DropdownMenuItem onSelect={onFit}>
+						<Maximize />
+						Fit to view
 					</DropdownMenuItem>
 				)}
 				{onDelete && (
@@ -84,7 +112,7 @@ export const NodeContextMenu = ({
 						<DropdownMenuSeparator />
 						<DropdownMenuItem variant="destructive" onSelect={onDelete}>
 							<Trash2 />
-							Delete node
+							{deleteLabel}
 						</DropdownMenuItem>
 					</>
 				)}

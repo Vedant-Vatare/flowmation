@@ -1,7 +1,14 @@
-import type { BaseNode } from "@nodebase/shared";
+import type {
+	BaseNode,
+	WorkflowConnection,
+	WorkflowNode,
+} from "@nodebase/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNodes, useReactFlow } from "@xyflow/react";
 import { SearchIcon, XIcon } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { insertWorkflowNodeApi } from "@/apis/userWorkflow";
 import { Input } from "@/components/ui/input";
 import {
 	Sidebar,
@@ -15,10 +22,17 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NodeUI, WorkflowCanvasNode } from "@/constants/nodes";
 import { useSortedNodes } from "@/hooks/nodes";
-import { useAddWorkflowNode } from "@/queries/userWorkflows";
+import {
+	useAddWorkflowNode,
+	workflowNodesOptions,
+} from "@/queries/userWorkflows";
 import { Route } from "@/routes/_mainLayout/workflow/$workflowId";
+import { useCanvasHistoryStore } from "@/store/workflow/useCanvasHistoryStore";
 import { useWorkflowSidbarTabsStore } from "@/store/workflow/useWorkflowEditor";
-import { useWorkflowStore } from "@/store/workflow/useWorkflowStore";
+import {
+	usePublishStatusStore,
+	useWorkflowStore,
+} from "@/store/workflow/useWorkflowStore";
 import {
 	createCanvasNode,
 	createWorkflowNode,
@@ -132,8 +146,18 @@ const Nodes = memo(() => {
 	const { workflowId } = Route.useParams();
 	const { getNodes, fitView, setNodes } = useReactFlow<WorkflowCanvasNode>();
 	const ALL_NODES = useSortedNodes();
-	const { mutate } = useAddWorkflowNode();
+	const { mutate, mutateAsync: addNode } = useAddWorkflowNode();
 	const [query, setQuery] = useState("");
+	const [placing, setPlacing] = useState(false);
+	const pendingPlacement = useWorkflowSidbarTabsStore(
+		(state) => state.placement,
+	);
+	const placement =
+		pendingPlacement?.workflowId === workflowId ? pendingPlacement : null;
+	const setPlacement = useWorkflowSidbarTabsStore(
+		(state) => state.setPlacement,
+	);
+	const queryClient = useQueryClient();
 
 	const filteredNodes = useMemo(() => {
 		if (!ALL_NODES) return { triggers: [], actions: [] };
@@ -150,10 +174,62 @@ const Nodes = memo(() => {
 	}, [ALL_NODES, query]);
 
 	const hasResults =
-		filteredNodes.triggers.length > 0 || filteredNodes.actions.length > 0;
+		(!placement?.connectionId && filteredNodes.triggers.length > 0) ||
+		filteredNodes.actions.length > 0;
 
 	const handleAddNode = useCallback(
-		(apiNode: BaseNode) => {
+		async (apiNode: BaseNode) => {
+			if (placing) return;
+			if (placement) {
+				setPlacing(true);
+				const node = createWorkflowNode(
+					createCanvasNode({
+						apiNode: {
+							...apiNode,
+							name: getUniqueNodeName(apiNode.name, getNodes()),
+						},
+						workflowId,
+						position: placement.position,
+					}),
+				);
+				try {
+					if (placement.connectionId) {
+						const connectionId = placement.connectionId;
+						const result = await insertWorkflowNodeApi(node, connectionId);
+						const nodesKey = workflowNodesOptions(workflowId).queryKey;
+						const edgesKey = ["workflow-connections", { workflowId }];
+						const nextNodes = queryClient.setQueryData<WorkflowNode[]>(
+							nodesKey,
+							(old) => [...(old ?? []), result.node],
+						);
+						const nextEdges = queryClient.setQueryData<WorkflowConnection[]>(
+							edgesKey,
+							(old) => [
+								...(old ?? []).filter((edge) => edge.id !== connectionId),
+								...result.connections,
+							],
+						);
+						if (nextNodes && nextEdges)
+							usePublishStatusStore
+								.getState()
+								.checkForStatusChanges(nextNodes, nextEdges);
+					} else {
+						await addNode(node);
+					}
+					useCanvasHistoryStore.getState().clear();
+					if (useWorkflowSidbarTabsStore.getState().placement === placement)
+						setPlacement(null);
+				} catch {
+					toast.error(
+						placement.connectionId
+							? "Could not insert node"
+							: "Could not add node",
+					);
+				} finally {
+					setPlacing(false);
+				}
+				return;
+			}
 			const nodes = getNodes();
 			const last = nodes[nodes.length - 1];
 			const position = last
@@ -182,7 +258,18 @@ const Nodes = memo(() => {
 			const workflowNodeData = createWorkflowNode(resolvedCanvasNode);
 			mutate(workflowNodeData);
 		},
-		[workflowId, getNodes, fitView, mutate, setNodes],
+		[
+			workflowId,
+			getNodes,
+			fitView,
+			mutate,
+			setNodes,
+			placing,
+			placement,
+			addNode,
+			queryClient,
+			setPlacement,
+		],
 	);
 
 	if (!ALL_NODES) {
@@ -200,8 +287,27 @@ const Nodes = memo(() => {
 	return (
 		<>
 			<SearchNode onChange={setQuery} />
+			{placement && (
+				<div className="flex items-center justify-between gap-2 px-3 py-2 text-xs text-muted-foreground">
+					<span>
+						{placing
+							? "Adding node…"
+							: placement.connectionId
+								? "Choose an action to insert"
+								: "Choose a node to place"}
+					</span>
+					<button
+						type="button"
+						disabled={placing}
+						onClick={() => setPlacement(null)}
+						className="underline underline-offset-2"
+					>
+						Cancel
+					</button>
+				</div>
+			)}
 
-			{filteredNodes.triggers.length > 0 && (
+			{!placement?.connectionId && filteredNodes.triggers.length > 0 && (
 				<SidebarGroup>
 					<SidebarGroupLabel>Triggers</SidebarGroupLabel>
 					<SidebarMenu className="gap-1 text-sm tracking-tight [word-spacing:0.125rem]">
@@ -248,7 +354,9 @@ const NodeEditorTab = () => {
 	const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
 	if (!selectedNode) {
-		return <p className="text-sm text-muted-foreground">Select a node to edit</p>;
+		return (
+			<p className="text-sm text-muted-foreground">Select a node to edit</p>
+		);
 	}
 
 	return <NodeEditor key={selectedNode.id} node={selectedNode} />;

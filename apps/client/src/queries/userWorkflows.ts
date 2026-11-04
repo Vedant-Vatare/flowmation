@@ -170,6 +170,11 @@ export const useDeleteWorkflowNode = () => {
 				workflowNodesOptions(workflowId).queryKey,
 				(old) => old?.filter((n) => n.id !== id),
 			);
+			queryClient.setQueryData<WorkflowConnection[]>(
+				["workflow-connections", { workflowId }],
+				(old) =>
+					old?.filter((edge) => edge.sourceId !== id && edge.targetId !== id),
+			);
 			const nodes = queryClient.getQueryData<WorkflowNode[]>(
 				workflowNodesOptions(workflowId).queryKey,
 			);
