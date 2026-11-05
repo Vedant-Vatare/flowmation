@@ -27,6 +27,48 @@ export const loopNodeValueSchemas = {
 	field: withExpr(z.string()),
 } as const;
 
+export const switchNodeValueSchemas = {
+	input: withExpr(z.string()),
+	case_1: withExpr(z.string()),
+	case_2: withExpr(z.string()),
+	case_3: withExpr(z.string()),
+} as const;
+
+export const switchNodeSchema = baseNodeSchema.extend({
+	type: z.literal("action"),
+	task: z.literal("action.switch"),
+	parameters: z.array(
+		z.discriminatedUnion("name", [
+			nodeParameterSchema.extend({
+				name: z.literal("input"),
+				type: z.literal("input"),
+				value: switchNodeValueSchemas.input,
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("case_1"),
+				type: z.literal("input"),
+				value: switchNodeValueSchemas.case_1,
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("case_2"),
+				type: z.literal("input"),
+				value: switchNodeValueSchemas.case_2,
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("case_3"),
+				type: z.literal("input"),
+				value: switchNodeValueSchemas.case_3,
+			}),
+		]),
+	),
+	outputPorts: z.array(nodeOutputPortsSchema).default([
+		{ name: "case_1", label: "Case 1" },
+		{ name: "case_2", label: "Case 2" },
+		{ name: "case_3", label: "Case 3" },
+		{ name: "fallback", label: "Fallback" },
+	]),
+});
+
 export const loopNodeSchema = baseNodeSchema.extend({
 	type: z.literal("action"),
 	task: z.literal("action.loop"),

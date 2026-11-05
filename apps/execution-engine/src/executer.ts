@@ -38,6 +38,7 @@ import type {
 	SentryNode,
 	SlackNode,
 	SupabaseNode,
+	SwitchNode,
 	TelegramNode,
 	TextTransformNode,
 	TodoistNode,
@@ -81,6 +82,7 @@ import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js"
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
+import { switchNodeExecutor } from "./nodes/actions/switch.node.js";
 import { arrayTransformNodeExecutor } from "./nodes/actions/transform/array-transform.node.js";
 import { csvNodeExecutor } from "./nodes/actions/transform/csv.node.js";
 import { dateTimeNodeExecutor } from "./nodes/actions/transform/date-time.node.js";
@@ -274,6 +276,8 @@ export const executeNode = async ({
 			return waitNodeExecutor(node as WaitNode, executionId);
 		case "action.condition":
 			return conditionNodeExecutor(node as ConditionNode, executionId);
+		case "action.switch":
+			return switchNodeExecutor(node as SwitchNode, executionId);
 		case "action.loop":
 			return loopNodeExecutor(node as LoopNode, nodeData?.loopState);
 		case "action.merge":

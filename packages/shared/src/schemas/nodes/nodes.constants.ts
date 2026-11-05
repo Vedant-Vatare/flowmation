@@ -12,6 +12,8 @@ import {
 	conditionalNodeValueSchemas,
 	loopNodeSchema,
 	loopNodeValueSchemas,
+	switchNodeSchema,
+	switchNodeValueSchemas,
 } from "./control.nodes.js";
 import {
 	gmailTriggerNodeSchema,
@@ -181,6 +183,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.filter", filterNodeSchema],
 	["trigger.cron", cronJobNodeSchema],
 	["action.condition", conditionalNodeSchema],
+	["action.switch", switchNodeSchema],
 	["action.loop", loopNodeSchema],
 	["action.merge", mergeDataNodeSchema],
 	["trigger.webhook", webhookNodeSchema],
@@ -241,6 +244,7 @@ export const nodeParamValueRegistry = new Map<
 	["action.date_time", dateTimeNodeValueSchemas],
 	["action.filter", filterNodeValueSchemas],
 	["action.condition", conditionalNodeValueSchemas],
+	["action.switch", switchNodeValueSchemas],
 	["action.loop", loopNodeValueSchemas],
 	["action.merge", mergeDataNodeValueSchemas],
 	["action.airtable", airtableNodeValueSchemas],

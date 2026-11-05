@@ -5,11 +5,16 @@ import type {
 	mergeDataNodeSchema,
 	waitingNodeSchema,
 } from "@/schemas/nodes/action.nodes.js";
-import type { conditionalNodeSchema, loopNodeSchema } from "@/schemas/nodes/control.nodes.js";
+import type {
+	conditionalNodeSchema,
+	loopNodeSchema,
+	switchNodeSchema,
+} from "@/schemas/nodes/control.nodes.js";
 
 export type HttpNode = z.infer<typeof httpNodeSchema>;
 export type WaitNode = z.infer<typeof waitingNodeSchema>;
 export type CronNode = z.infer<typeof cronJobNodeSchema>;
 export type ConditionNode = z.infer<typeof conditionalNodeSchema>;
+export type SwitchNode = z.infer<typeof switchNodeSchema>;
 export type LoopNode = z.infer<typeof loopNodeSchema>;
 export type MergeNode = z.infer<typeof mergeDataNodeSchema>;

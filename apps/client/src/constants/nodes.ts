@@ -41,6 +41,7 @@ import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
 import SlackIcon from "@/assets/icons/nodes/slack.svg?react";
 import SupabaseIcon from "@/assets/icons/nodes/supabase.svg?react";
+import SwitchIcon from "@/assets/icons/nodes/switch.svg?react";
 import TelegramIcon from "@/assets/icons/nodes/telegram.svg?react";
 import TextIcon from "@/assets/icons/nodes/text.svg?react";
 import TodoistIcon from "@/assets/icons/nodes/todoist.svg?react";
@@ -194,6 +195,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	"action.condition": {
 		name: "Condition",
 		icon: ConditionalIcon,
+		background: "#8338EC",
+		color: "#ffffff",
+	},
+	"action.switch": {
+		name: "Switch",
+		icon: SwitchIcon,
 		background: "#8338EC",
 		color: "#ffffff",
 	},
