@@ -11,7 +11,10 @@ import {
 	type WorkflowNodesWorker,
 } from "@nodebase/queue";
 import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
-import { getNodeErrorSetting, validateErrorConnections } from "@nodebase/shared";
+import {
+	getNodeErrorSetting,
+	validateErrorConnections,
+} from "@nodebase/shared";
 import { type Job, QueueEvents, UnrecoverableError, Worker } from "bullmq";
 import { executeTriggerNode } from "@/executer.js";
 import {
@@ -272,6 +275,9 @@ const handleSequentialNodeExecution = async (
 				liveUpdates: job.data.liveUpdates,
 				nodeData: preExecutionResult?.data,
 				previousNodeExecution: previousExecution,
+				callerWorkflowIds: job.data.callerWorkflowIds,
+				childExecutionId:
+					node.task === "action.run_workflow" ? crypto.randomUUID() : undefined,
 			},
 			{ ...nodeConfigs, ...nodeRetryOptions(node.settings.retryCount) },
 		);
@@ -285,7 +291,8 @@ const handleSequentialNodeExecution = async (
 			lastError =
 				error instanceof Error ? error.message : "Failed to execute node";
 			if (
-				getNodeErrorSetting(node.task, node.settings) === "continueRegularOutput"
+				getNodeErrorSetting(node.task, node.settings) ===
+				"continueRegularOutput"
 			) {
 				selectedPorts.set(node.id, ["default"]);
 				nodeFailed = true;
@@ -417,7 +424,7 @@ const currentNodePreExecution = async ({
 				(edge) =>
 					edge.targetId === id &&
 					(!selectedPorts.has(edge.sourceId) ||
-						selectedPorts.get(edge.sourceId)!.includes(edge.sourcePort)) &&
+						selectedPorts.get(edge.sourceId)?.includes(edge.sourcePort)) &&
 					reachable(edge.sourceId, nextVisited),
 			);
 		};
@@ -426,7 +433,7 @@ const currentNodePreExecution = async ({
 				c.targetId === node.id &&
 				reachable(c.sourceId) &&
 				(!selectedPorts.has(c.sourceId) ||
-					selectedPorts.get(c.sourceId)!.includes(c.sourcePort)),
+					selectedPorts.get(c.sourceId)?.includes(c.sourcePort)),
 		);
 
 		const inputNodes = jobData.nodes.filter((n) =>

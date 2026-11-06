@@ -82,6 +82,7 @@ import { trelloNodeExecutor } from "./nodes/actions/integrations/trello.node.js"
 import { twilioNodeExecutor } from "./nodes/actions/integrations/twilio.node.js";
 import { loopNodeExecutor } from "./nodes/actions/loop.node.js";
 import { mergeNodeExecutor } from "./nodes/actions/merge.node.js";
+import { runWorkflowNodeExecutor } from "./nodes/actions/run-workflow.node.js";
 import { switchNodeExecutor } from "./nodes/actions/switch.node.js";
 import { arrayTransformNodeExecutor } from "./nodes/actions/transform/array-transform.node.js";
 import { csvNodeExecutor } from "./nodes/actions/transform/csv.node.js";
@@ -176,13 +177,10 @@ const credentialNodeExecutors: Record<
 		twilioNodeExecutor(node as TwilioNode, executionId, credential),
 };
 
-export const executeNode = async ({
-	userId,
-	workflowId,
-	executionId,
-	node,
-	nodeData,
-}: NodeJobPayload): Promise<NodeExecutorOutput> => {
+export const executeNode = async (
+	job: NodeJobPayload,
+): Promise<NodeExecutorOutput> => {
+	const { userId, workflowId, executionId, node, nodeData } = job;
 	const { valid, missing } = checkRequiredParameters(node.parameters);
 
 	if (!valid) {
@@ -278,6 +276,8 @@ export const executeNode = async ({
 			return conditionNodeExecutor(node as ConditionNode, executionId);
 		case "action.switch":
 			return switchNodeExecutor(node as SwitchNode, executionId);
+		case "action.run_workflow":
+			return runWorkflowNodeExecutor(job);
 		case "action.loop":
 			return loopNodeExecutor(node as LoopNode, nodeData?.loopState);
 		case "action.merge":
@@ -335,6 +335,10 @@ export const executeTriggerNode = async (
 			return { success: true };
 		case "trigger.input":
 			return inputNodeExecutor(triggerNode as InputNode);
+		case "trigger.called_by_workflow":
+			return job.data.triggerType === "workflow"
+				? { success: true, output: job.data.triggerData }
+				: { success: false, message: "This trigger requires a workflow call" };
 		case "trigger.webhook":
 		case "trigger.discord":
 		case "trigger.github":

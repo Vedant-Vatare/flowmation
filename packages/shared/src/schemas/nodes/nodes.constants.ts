@@ -7,11 +7,14 @@ import {
 	waitingNodeSchema,
 	waitingNodeValueSchemas,
 } from "./action.nodes.js";
+import { calledByWorkflowNodeSchema } from "./called-by-workflow.schema.js";
 import {
 	conditionalNodeSchema,
 	conditionalNodeValueSchemas,
 	loopNodeSchema,
 	loopNodeValueSchemas,
+	runWorkflowNodeSchema,
+	runWorkflowNodeValueSchemas,
 	switchNodeSchema,
 	switchNodeValueSchemas,
 } from "./control.nodes.js";
@@ -171,6 +174,8 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["action.xml", xmlNodeSchema],
 	["action.csv", csvNodeSchema],
 	["trigger.click", clickNodeSchema],
+	["trigger.called_by_workflow", calledByWorkflowNodeSchema],
+	["action.run_workflow", runWorkflowNodeSchema],
 	["trigger.input", inputNodeSchema],
 	["action.http", httpNodeSchema],
 	["action.wait", waitingNodeSchema],
@@ -226,6 +231,7 @@ export const nodeParamValueRegistry = new Map<
 	string,
 	Record<string, z.ZodType>
 >([
+	["action.run_workflow", runWorkflowNodeValueSchemas],
 	["action.xml", xmlNodeValueSchemas],
 	["action.csv", csvNodeValueSchemas],
 	["trigger.cron", cronJobNodeValueSchemas],

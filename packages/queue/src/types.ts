@@ -5,7 +5,11 @@ import type { JobsOptions } from "bullmq";
 export const WORKFLOW_QUEUE_NAME = "workflows" as const;
 export const NODE_QUEUE_NAME = "workflow-nodes" as const;
 
-export type WorkflowTriggerType = "trigger" | "webhook" | "schedule";
+export type WorkflowTriggerType =
+	| "trigger"
+	| "webhook"
+	| "schedule"
+	| "workflow";
 
 export type WorkflowJobPayload = {
 	executionId: string;
@@ -14,6 +18,7 @@ export type WorkflowJobPayload = {
 	triggerNodeId: string;
 	triggerType: WorkflowTriggerType;
 	triggerData?: unknown;
+	callerWorkflowIds?: string[];
 	nodes: WorkflowNode[];
 	connections: WorkflowConnection[];
 	liveUpdates?: boolean;
@@ -46,6 +51,8 @@ export type NodeJobPayload = {
 	executionId: string;
 	workflowId: string;
 	node: WorkflowNode;
+	callerWorkflowIds?: string[];
+	childExecutionId?: string;
 	nodeExecutionId?: string;
 	liveUpdates?: boolean;
 	previousNodeExecution?: PreviousExecution;

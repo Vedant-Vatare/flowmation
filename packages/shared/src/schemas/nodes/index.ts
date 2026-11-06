@@ -1,5 +1,6 @@
 export * from "./action.nodes.js";
 export * from "./base.nodes.js";
+export * from "./called-by-workflow.schema.js";
 export * from "./control.nodes.js";
 export * from "./gmail-trigger.schema.js";
 export * from "./google-calendar-trigger.schema.js";

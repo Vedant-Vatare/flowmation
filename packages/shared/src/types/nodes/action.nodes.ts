@@ -8,6 +8,7 @@ import type {
 import type {
 	conditionalNodeSchema,
 	loopNodeSchema,
+	runWorkflowNodeSchema,
 	switchNodeSchema,
 } from "@/schemas/nodes/control.nodes.js";
 
@@ -16,5 +17,6 @@ export type WaitNode = z.infer<typeof waitingNodeSchema>;
 export type CronNode = z.infer<typeof cronJobNodeSchema>;
 export type ConditionNode = z.infer<typeof conditionalNodeSchema>;
 export type SwitchNode = z.infer<typeof switchNodeSchema>;
+export type RunWorkflowNode = z.infer<typeof runWorkflowNodeSchema>;
 export type LoopNode = z.infer<typeof loopNodeSchema>;
 export type MergeNode = z.infer<typeof mergeDataNodeSchema>;

@@ -34,6 +34,36 @@ export const switchNodeValueSchemas = {
 	case_3: withExpr(z.string()),
 } as const;
 
+export const callableWorkflowTargetSchema = z.templateLiteral([
+	z.uuid(),
+	"/",
+	z.uuid(),
+]);
+
+export const runWorkflowNodeValueSchemas = {
+	target: z.union([z.literal(""), callableWorkflowTargetSchema]),
+	input: withExpr(z.string()),
+} as const;
+
+export const runWorkflowNodeSchema = baseNodeSchema.extend({
+	type: z.literal("action"),
+	task: z.literal("action.run_workflow"),
+	parameters: z.array(
+		z.discriminatedUnion("name", [
+			nodeParameterSchema.extend({
+				name: z.literal("target"),
+				type: z.literal("dropdown"),
+				value: runWorkflowNodeValueSchemas.target,
+			}),
+			nodeParameterSchema.extend({
+				name: z.literal("input"),
+				type: z.literal("textarea"),
+				value: runWorkflowNodeValueSchemas.input,
+			}),
+		]),
+	),
+});
+
 export const switchNodeSchema = baseNodeSchema.extend({
 	type: z.literal("action"),
 	task: z.literal("action.switch"),

@@ -1,4 +1,5 @@
 import type z from "zod";
+import type { calledByWorkflowNodeSchema } from "@/schemas/nodes/called-by-workflow.schema.js";
 import type { gmailTriggerNodeSchema } from "@/schemas/nodes/gmail-trigger.schema.js";
 import type { googleCalendarTriggerNodeSchema } from "@/schemas/nodes/google-calendar-trigger.schema.js";
 import type {
@@ -10,6 +11,7 @@ import type {
 } from "@/schemas/nodes/trigger.nodes.js";
 
 export type ClickNode = z.infer<typeof clickNodeSchema>;
+export type CalledByWorkflowNode = z.infer<typeof calledByWorkflowNodeSchema>;
 export type InputNode = z.infer<typeof inputNodeSchema>;
 export type WebhookNode = z.infer<typeof webhookNodeSchema>;
 export type DiscordTriggerNode = z.infer<typeof discordTriggerNodeSchema>;

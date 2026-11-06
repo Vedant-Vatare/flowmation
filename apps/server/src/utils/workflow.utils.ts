@@ -63,6 +63,16 @@ export const enqueueWorkflow = async (
 		);
 	}
 
+	if (
+		snapshot.nodes.some(
+			(node) =>
+				node.id === executionData.triggerNodeId &&
+				node.task === "trigger.called_by_workflow",
+		)
+	) {
+		throw createHttpError.BadRequest("This trigger requires a workflow call");
+	}
+
 	const [workflowExecution] = await db
 		.insert(workflowExecutionTable)
 		.values({
