@@ -6,6 +6,7 @@ import AirtableIcon from "@/assets/icons/nodes/airtable.svg?react";
 import ArrayIcon from "@/assets/icons/nodes/array.svg?react";
 import AsanaIcon from "@/assets/icons/nodes/asana.svg?react";
 import CalComIcon from "@/assets/icons/nodes/calcom.svg?react";
+import CalledByWorkflowIcon from "@/assets/icons/nodes/called-by-workflow.svg?react";
 import ClickIcon from "@/assets/icons/nodes/click.svg?react";
 import ClickUpIcon from "@/assets/icons/nodes/clickup.svg?react";
 import ConditionalIcon from "@/assets/icons/nodes/conditional.svg?react";
@@ -36,6 +37,7 @@ import PostgresIcon from "@/assets/icons/nodes/postgresql.svg?react";
 import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import RedisIcon from "@/assets/icons/nodes/redis.svg?react";
+import RunWorkflowIcon from "@/assets/icons/nodes/run-workflow.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
@@ -201,6 +203,21 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 	"action.switch": {
 		name: "Switch",
 		icon: SwitchIcon,
+		background: "#8338EC",
+		color: "#ffffff",
+	},
+	"action.run_workflow": {
+		name: "Run Workflow",
+		icon: RunWorkflowIcon,
+		background: "#8338EC",
+		color: "#ffffff",
+	},
+	"trigger.called_by_workflow": {
+		name: "Called by Workflow",
+		icon: CalledByWorkflowIcon,
+		triggerTestMode: "external",
+		triggerTestMessage:
+			"Publish this workflow, then select this trigger from a Run Workflow node in another workflow.",
 		background: "#8338EC",
 		color: "#ffffff",
 	},

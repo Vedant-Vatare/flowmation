@@ -11,6 +11,7 @@ import {
 	deleteWorkflow,
 	exportWorkflow,
 	getAllUserWorkflow,
+	getCallableWorkflowTriggers,
 	getDashboardWorkflows,
 	getPublishStatus,
 	getUserWorkflow,
@@ -45,6 +46,7 @@ router.patch(
 	asyncHandler(updateUserWorkflow),
 );
 router.get("/all", asyncHandler(getAllUserWorkflow));
+router.get("/callable-triggers", asyncHandler(getCallableWorkflowTriggers));
 router.get("/dashboard", asyncHandler(getDashboardWorkflows));
 router.post(
 	"/import",

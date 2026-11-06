@@ -1,4 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import { type Control, type UseFormRegister, useWatch } from "react-hook-form";
+import api from "@/apis/axios";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { NodeActions, nodesWithActions } from "./NodeActions";
@@ -13,10 +15,35 @@ type NodeConfig = {
 };
 
 const NodeParameters = ({ nodeData, register, control }: NodeConfig) => {
+	const callableTriggers = useQuery({
+		queryKey: ["callable-workflow-triggers"],
+		enabled: nodeData.task === "action.run_workflow",
+		queryFn: async () => {
+			const { data } = await api.get<{
+				targets: { workflowId: string; value: string; label: string }[];
+			}>("/workflows/callable-triggers");
+			return data.targets;
+		},
+	});
+
 	return nodeData.parameters.map((param) => (
 		<NodeField
 			key={param.name}
-			field={param}
+			field={
+				nodeData.task === "action.run_workflow" && param.name === "target"
+					? {
+							...param,
+							options: callableTriggers.data?.filter(
+								(target) => target.workflowId !== nodeData.workflowId,
+							),
+							placeholder: callableTriggers.isError
+								? "Could not load workflows"
+								: callableTriggers.isPending
+									? "Loading workflows"
+									: param.placeholder,
+						}
+					: param
+			}
 			register={register}
 			control={control}
 			currentNodeId={nodeData.id}

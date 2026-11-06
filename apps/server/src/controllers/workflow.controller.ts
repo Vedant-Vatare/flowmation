@@ -34,6 +34,42 @@ import createHttpError from "http-errors";
 import { z } from "zod";
 import { isDBQueryError } from "@/utils/api.utils.js";
 
+export const getCallableWorkflowTriggers = async (
+	_req: Request,
+	res: Response,
+) => {
+	const snapshots = await db
+		.select({
+			id: userWorkflowsTable.id,
+			name: userWorkflowsTable.name,
+			nodes: workflowSnapshotsTable.nodes,
+		})
+		.from(userWorkflowsTable)
+		.innerJoin(
+			workflowSnapshotsTable,
+			eq(workflowSnapshotsTable.workflowId, userWorkflowsTable.id),
+		)
+		.where(eq(userWorkflowsTable.userId, res.locals.userId))
+		.orderBy(userWorkflowsTable.name);
+
+	return res.json({
+		targets: snapshots.flatMap((workflow) =>
+			workflow.nodes
+				.filter(
+					(node) =>
+						node.type === "trigger" &&
+						node.task === "trigger.called_by_workflow" &&
+						!node.settings.disabled,
+				)
+				.map((node) => ({
+					workflowId: workflow.id,
+					value: `${workflow.id}/${node.id}`,
+					label: `${workflow.name ?? "Untitled workflow"} / ${node.name}`,
+				})),
+		),
+	});
+};
+
 export const createWorkflow = async (req: Request, res: Response) => {
 	try {
 		const userId = res.locals.userId as string;
