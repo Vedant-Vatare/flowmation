@@ -352,9 +352,9 @@ body {
 	content: "";
 	position: absolute;
 	top: -3px;
-	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
-	width: calc(var(--icon-size, 48px) + 6px);
-	height: calc(var(--icon-size, 48px) + 6px);
+	left: calc(50% - var(--node-box-width, 48px) / 2 - 3px);
+	width: calc(var(--node-box-width, 48px) + 6px);
+	height: calc(var(--node-box-height, 48px) + 6px);
 	border-radius: var(--trail-radius);
 	padding: 3px;
 	background: conic-gradient(
@@ -382,9 +382,9 @@ body {
 	content: "";
 	position: absolute;
 	top: -3px;
-	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
-	width: calc(var(--icon-size, 48px) + 6px);
-	height: calc(var(--icon-size, 48px) + 6px);
+	left: calc(50% - var(--node-box-width, 48px) / 2 - 3px);
+	width: calc(var(--node-box-width, 48px) + 6px);
+	height: calc(var(--node-box-height, 48px) + 6px);
 	border-radius: var(--trail-radius);
 	border: 2.5px solid #52b788;
 	pointer-events: none;
@@ -398,9 +398,9 @@ body {
 	content: "";
 	position: absolute;
 	top: -3px;
-	left: calc(50% - var(--icon-size, 48px) / 2 - 3px);
-	width: calc(var(--icon-size, 48px) + 6px);
-	height: calc(var(--icon-size, 48px) + 6px);
+	left: calc(50% - var(--node-box-width, 48px) / 2 - 3px);
+	width: calc(var(--node-box-width, 48px) + 6px);
+	height: calc(var(--node-box-height, 48px) + 6px);
 	border-radius: var(--trail-radius);
 	border: 2.5px solid #dd2d4a;
 	pointer-events: none;

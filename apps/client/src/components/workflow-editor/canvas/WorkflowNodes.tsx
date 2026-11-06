@@ -1,6 +1,10 @@
 import { Zap } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import type { NodeExecutionUpdate } from "@nodebase/shared";
+import {
+	getNodeOutputPorts,
+	type NodeExecutionUpdate,
+	switchNodeValueSchemas,
+} from "@nodebase/shared";
 import {
 	Handle,
 	type Node,
@@ -9,7 +13,7 @@ import {
 	useUpdateNodeInternals,
 } from "@xyflow/react";
 import { AlertCircle } from "lucide-react";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import type { WorkflowNodeData } from "@/constants/nodes";
 import { useTestWorkflowExecution } from "@/hooks/useWorkflow";
 import { cn } from "@/lib/utils";
@@ -22,8 +26,8 @@ import {
 type ExecutionStateType = NodeExecutionUpdate["type"] | null;
 
 const NODE_VARS = {
-	"--node-w": "100px",
-	"--node-h": "76px",
+	"--node-w": "calc(var(--node-box-width) + 52px)",
+	"--node-h": "calc(var(--node-box-height) + 28px)",
 	"--icon-size": "48px",
 	"--icon-radius": "0.8rem",
 	"--handle-size": "8px",
@@ -37,14 +41,38 @@ const TRIGGER_VARS = {
 
 export const WorkflowNode = memo(
 	({ data, selected }: NodeProps<Node<WorkflowNodeData>>) => {
-		const { ui, name, inputPorts, outputPorts } = data;
+		const { ui, name, inputPorts, outputPorts: savedOutputPorts } = data;
+		const draftCases = useWorkflowStore((state) =>
+			data.task === "action.switch"
+				? state.nodeDrafts[data.id]?.cases
+				: undefined,
+		);
+		const outputPorts = useMemo(() => {
+			const cases = switchNodeValueSchemas.cases.safeParse(draftCases);
+			return cases.success
+				? getNodeOutputPorts({
+						task: data.task,
+						settings: data.settings,
+						parameters: [{ name: "cases", value: cases.data }],
+					})
+				: savedOutputPorts;
+		}, [data.task, data.settings, draftCases, savedOutputPorts]);
+		const portCount = Math.max(
+			1,
+			inputPorts?.length ?? 0,
+			outputPorts?.length ?? 0,
+		);
+		const boxHeight = `max(var(--icon-size), calc(24px + ${portCount - 1} * var(--handle-gap)))`;
+		const boxWidth =
+			"min(80px, calc(var(--icon-size) + (var(--node-box-height) - var(--icon-size)) / 4))";
 		const configurationIssues = useWorkflowStore(
 			(state) => state.nodeConfigurationIssues[data.id],
 		);
 		const updateNodeInternals = useUpdateNodeInternals();
+		// biome-ignore lint/correctness/useExhaustiveDependencies: React Flow must remeasure when either set of handles changes.
 		useEffect(() => {
 			updateNodeInternals(data.id);
-		}, [data.id, updateNodeInternals]);
+		}, [data.id, inputPorts, outputPorts, updateNodeInternals]);
 		const Icon = ui.icon;
 		const nodeColor = ui.background ?? "#6366f1";
 
@@ -83,9 +111,8 @@ export const WorkflowNode = memo(
 		};
 
 		const getHandleTop = (i: number, total: number) => {
-			if (total === 1) return "calc(var(--icon-size) / 2)";
 			const offset = i - (total - 1) / 2;
-			return `calc(var(--icon-size) / 2 + ${offset} * var(--handle-gap))`;
+			return `calc(var(--node-box-height) / 2 + ${offset} * var(--handle-gap))`;
 		};
 
 		useEffect(() => {
@@ -112,7 +139,13 @@ export const WorkflowNode = memo(
 
 		return (
 			<div
-				style={(isTrigger ? TRIGGER_VARS : NODE_VARS) as React.CSSProperties}
+				style={
+					{
+						...(isTrigger ? TRIGGER_VARS : NODE_VARS),
+						"--node-box-height": boxHeight,
+						"--node-box-width": boxWidth,
+					} as React.CSSProperties & Record<`--${string}`, string>
+				}
 				data-type={data.type}
 				className={cn(
 					"workflow-node group relative cursor-grab transition-all duration-150",
@@ -143,9 +176,11 @@ export const WorkflowNode = memo(
 						id={port.name}
 						type="target"
 						position={Position.Left}
+						title={port.label || port.name}
+						aria-label={port.label || port.name}
 						style={{
 							...baseHandleStyles,
-							left: "calc((var(--node-w) - var(--icon-size)) / 2 - var(--handle-size) / 2)",
+							left: "calc((var(--node-w) - var(--node-box-width)) / 2 - var(--handle-size) / 2)",
 							top: getHandleTop(i, inputPorts.length),
 						}}
 					/>
@@ -153,8 +188,8 @@ export const WorkflowNode = memo(
 
 				<div
 					style={{
-						width: "var(--icon-size)",
-						height: "var(--icon-size)",
+						width: "var(--node-box-width)",
+						height: "var(--node-box-height)",
 						borderRadius: "var(--icon-radius)",
 						background: nodeColor,
 					}}
@@ -179,7 +214,7 @@ export const WorkflowNode = memo(
 				<span
 					style={{
 						color: "var(--foreground)",
-						top: "calc(var(--icon-size) + 4px)",
+						top: "calc(var(--node-box-height) + 4px)",
 						left: "50%",
 						transform: "translateX(-50%)",
 						textWrap: "balance",
@@ -196,10 +231,16 @@ export const WorkflowNode = memo(
 						id={port.name}
 						type="source"
 						position={Position.Right}
+						title={port.label || port.name}
+						aria-label={port.label || port.name}
+						isConnectable={
+							savedOutputPorts?.some((saved) => saved.name === port.name) ??
+							false
+						}
 						style={{
 							...baseHandleStyles,
 							right:
-								"calc((var(--node-w) - var(--icon-size)) / 2 - var(--handle-size) / 2)",
+								"calc((var(--node-w) - var(--node-box-width)) / 2 - var(--handle-size) / 2)",
 							top: getHandleTop(i, outputPorts.length),
 							cursor: "crosshair",
 						}}

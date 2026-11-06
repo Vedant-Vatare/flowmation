@@ -27,11 +27,27 @@ export const loopNodeValueSchemas = {
 	field: withExpr(z.string()),
 } as const;
 
+export const SWITCH_CASE_LIMIT = 12;
+
+const switchCasesSchema = z
+	.array(
+		z.object({
+			id: z.uuid(),
+			label: z.string().max(60),
+			value: withExpr(z.string()),
+		}),
+	)
+	.max(SWITCH_CASE_LIMIT)
+	.refine(
+		(cases) => new Set(cases.map(({ id }) => id)).size === cases.length,
+		"Case IDs must be unique",
+	);
+
+export type SwitchCase = z.infer<typeof switchCasesSchema>[number];
+
 export const switchNodeValueSchemas = {
 	input: withExpr(z.string()),
-	case_1: withExpr(z.string()),
-	case_2: withExpr(z.string()),
-	case_3: withExpr(z.string()),
+	cases: switchCasesSchema,
 } as const;
 
 export const callableWorkflowTargetSchema = z.templateLiteral([
@@ -67,36 +83,28 @@ export const runWorkflowNodeSchema = baseNodeSchema.extend({
 export const switchNodeSchema = baseNodeSchema.extend({
 	type: z.literal("action"),
 	task: z.literal("action.switch"),
-	parameters: z.array(
-		z.discriminatedUnion("name", [
-			nodeParameterSchema.extend({
-				name: z.literal("input"),
-				type: z.literal("input"),
-				value: switchNodeValueSchemas.input,
-			}),
-			nodeParameterSchema.extend({
-				name: z.literal("case_1"),
-				type: z.literal("input"),
-				value: switchNodeValueSchemas.case_1,
-			}),
-			nodeParameterSchema.extend({
-				name: z.literal("case_2"),
-				type: z.literal("input"),
-				value: switchNodeValueSchemas.case_2,
-			}),
-			nodeParameterSchema.extend({
-				name: z.literal("case_3"),
-				type: z.literal("input"),
-				value: switchNodeValueSchemas.case_3,
-			}),
-		]),
-	),
-	outputPorts: z.array(nodeOutputPortsSchema).default([
-		{ name: "case_1", label: "Case 1" },
-		{ name: "case_2", label: "Case 2" },
-		{ name: "case_3", label: "Case 3" },
-		{ name: "fallback", label: "Fallback" },
-	]),
+	parameters: z
+		.array(
+			z.discriminatedUnion("name", [
+				nodeParameterSchema.extend({
+					name: z.literal("input"),
+					type: z.literal("input"),
+					value: switchNodeValueSchemas.input,
+				}),
+				nodeParameterSchema.extend({
+					name: z.literal("cases"),
+					type: z.literal("array"),
+					value: switchCasesSchema,
+				}),
+			]),
+		)
+		.refine(
+			(parameters) => parameters.some(({ name }) => name === "cases"),
+			"Switch cases are missing",
+		),
+	outputPorts: z
+		.array(nodeOutputPortsSchema)
+		.default([{ name: "fallback", label: "Fallback" }]),
 });
 
 export const loopNodeSchema = baseNodeSchema.extend({

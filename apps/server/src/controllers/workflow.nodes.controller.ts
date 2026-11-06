@@ -240,6 +240,33 @@ export const updateNodeInWorkflow = async (req: Request, res: Response) => {
 	)
 		throw createHttpError.BadRequest("On Error is not supported for this node");
 	const outputPorts = getNodeOutputPorts(effectiveNode);
+	const removedSwitchPorts =
+		effectiveNode.task === "action.switch"
+			? (existingNode.outputPorts ?? [])
+					.filter(
+						(port) =>
+							port.name !== "error" &&
+							!outputPorts.some((output) => output.name === port.name),
+					)
+					.map((port) => port.name)
+			: [];
+	if (removedSwitchPorts.length) {
+		const [connection] = await db
+			.select({ id: workflowConnectionsTable.id })
+			.from(workflowConnectionsTable)
+			.where(
+				and(
+					eq(workflowConnectionsTable.workflowId, workflowId),
+					eq(workflowConnectionsTable.sourceId, existingNode.id),
+					inArray(workflowConnectionsTable.sourcePort, removedSwitchPorts),
+				),
+			)
+			.limit(1);
+		if (connection)
+			throw createHttpError.BadRequest(
+				"Disconnect the Switch output before removing its case",
+			);
+	}
 	if (!outputPorts.some((port) => port.name === "error")) {
 		const [connection] = await db
 			.select({ id: workflowConnectionsTable.id })

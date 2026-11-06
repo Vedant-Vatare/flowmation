@@ -1,3 +1,5 @@
+import { switchNodeValueSchemas } from "./schemas/nodes/control.nodes.js";
+
 type ErrorSettings = {
 	onError?: "stopWorkflow" | "continueRegularOutput" | "continueErrorOutput";
 	continueOnFail?: boolean;
@@ -21,10 +23,24 @@ export function getNodeOutputPorts<
 	task: string;
 	settings: ErrorSettings;
 	outputPorts?: T[] | null;
+	parameters?: { name: string; value: unknown }[];
 }): { name: string; label: string }[] {
-	const ports = (
-		node.outputPorts ?? [{ name: "default", label: "Default" }]
-	).filter((port) => port.name !== "error");
+	let ports: { name: string; label: string }[];
+
+	if (node.task === "action.switch" && node.parameters) {
+		const cases = node.parameters.find(({ name }) => name === "cases");
+		const values = switchNodeValueSchemas.cases.parse(cases?.value ?? []);
+		ports = values.map(({ id, label }, index) => ({
+			name: id,
+			label: label.trim() || `Case ${index + 1}`,
+		}));
+		ports.push({ name: "fallback", label: "Fallback" });
+	} else {
+		ports = (
+			node.outputPorts ?? [{ name: "default", label: "Default" }]
+		).filter((port) => port.name !== "error");
+	}
+
 	return getNodeErrorSetting(node.task, node.settings) === "continueErrorOutput"
 		? [...ports, { name: "error", label: "Error" }]
 		: ports;

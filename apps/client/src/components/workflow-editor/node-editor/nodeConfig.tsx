@@ -7,6 +7,7 @@ import { NodeActions, nodesWithActions } from "./NodeActions";
 import { NodeCredentials } from "./NodeCredentials";
 import { NodeField } from "./NodeEditor";
 import { NodeSettings } from "./NodeSettings";
+import { SwitchCasesField } from "./SwitchCasesField";
 
 type NodeConfig = {
 	nodeData: WorkflowNodeData;
@@ -26,29 +27,37 @@ const NodeParameters = ({ nodeData, register, control }: NodeConfig) => {
 		},
 	});
 
-	return nodeData.parameters.map((param) => (
-		<NodeField
-			key={param.name}
-			field={
-				nodeData.task === "action.run_workflow" && param.name === "target"
-					? {
-							...param,
-							options: callableTriggers.data?.filter(
-								(target) => target.workflowId !== nodeData.workflowId,
-							),
-							placeholder: callableTriggers.isError
-								? "Could not load workflows"
-								: callableTriggers.isPending
-									? "Loading workflows"
-									: param.placeholder,
-						}
-					: param
-			}
-			register={register}
-			control={control}
-			currentNodeId={nodeData.id}
-		/>
-	));
+	return nodeData.parameters.map((param) =>
+		nodeData.task === "action.switch" && param.name === "cases" ? (
+			<SwitchCasesField
+				key={param.name}
+				control={control}
+				nodeId={nodeData.id}
+			/>
+		) : (
+			<NodeField
+				key={param.name}
+				field={
+					nodeData.task === "action.run_workflow" && param.name === "target"
+						? {
+								...param,
+								options: callableTriggers.data?.filter(
+									(target) => target.workflowId !== nodeData.workflowId,
+								),
+								placeholder: callableTriggers.isError
+									? "Could not load workflows"
+									: callableTriggers.isPending
+										? "Loading workflows"
+										: param.placeholder,
+							}
+						: param
+				}
+				register={register}
+				control={control}
+				currentNodeId={nodeData.id}
+			/>
+		),
+	);
 };
 
 const checkNodeConfigs = (
