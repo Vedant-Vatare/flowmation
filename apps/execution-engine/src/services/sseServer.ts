@@ -50,11 +50,15 @@ export const sseClients = new Map<
 >();
 export const eventBuffers = new Map<string, string[]>();
 
-const corsHeaders = {
-	"Access-Control-Allow-Origin": process.env.CLIENT_URL ?? "",
+const clientOrigin = new URL(process.env.CLIENT_URL ?? "http://localhost:5173")
+	.origin;
+
+const corsHeaders: Record<string, string> = {
+	"Access-Control-Allow-Origin": clientOrigin,
 	"Access-Control-Allow-Credentials": "true",
 	"Access-Control-Allow-Methods": "GET, OPTIONS",
-	"Access-Control-Allow-Headers": "Accept, Last-Event-ID, Cache-Control",
+	"Access-Control-Allow-Headers":
+		"Accept, Content-Type, Last-Event-ID, Cache-Control",
 	Vary: "Origin",
 };
 
@@ -73,7 +77,7 @@ Bun.serve({
 			OPTIONS: (req) => {
 				const origin = req.headers.get("origin");
 
-				if (origin !== process.env.CLIENT_URL) {
+				if (origin !== clientOrigin) {
 					return new Response("Forbidden", { status: 403 });
 				}
 
@@ -83,7 +87,7 @@ Bun.serve({
 			GET: async (req, server) => {
 				const origin = req.headers.get("origin");
 
-				if (origin !== process.env.CLIENT_URL) {
+				if (origin !== clientOrigin) {
 					return new Response("Forbidden", { status: 403 });
 				}
 
