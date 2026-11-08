@@ -47,7 +47,7 @@ export type ExecuteWorkflowRequest = {
 	triggerType: "trigger" | "webhook" | "schedule";
 };
 
-export type NodeExecutionUpdate =
+export type NodeExecutionUpdate = { nodeExecutionId?: string } & (
 	| {
 			type: "node:started";
 			workflowNodeId: string;
@@ -67,7 +67,8 @@ export type NodeExecutionUpdate =
 			task: string;
 			error: unknown;
 			completedAt: Date;
-	  };
+	  }
+);
 
 export type WorkflowExecutionUpdate =
 	| {

@@ -32,29 +32,10 @@ type WorkflowTriggerStore = {
 	requestTriggerFocus: () => void;
 };
 
-// preserving the startedAt field instead of replacing when type is node:completed
-export type NodeExectionWithTime =
-	| {
-			type: "node:started";
-			workflowNodeId: string;
-			task: string;
-			startedAt: Date;
-	  }
-	| {
-			type: "node:completed";
-			workflowNodeId: string;
-			task: string;
-			output: unknown;
-			startedAt: Date;
-			completedAt: Date;
-	  }
-	| {
-			type: "node:failed";
-			workflowNodeId: string;
-			task: string;
-			error: unknown;
-			startedAt: Date;
-	  };
+export type NodeExectionWithTime = NodeExecutionUpdate & {
+	nodeExecutionId: string;
+	startedAt: Date;
+};
 
 type WorkflowExecutionStore = {
 	showLiveExecutionPanel: boolean;
@@ -62,6 +43,7 @@ type WorkflowExecutionStore = {
 	showExecutionUpdates: boolean;
 	setShowExecutionUpdates: (state: boolean) => void;
 	nodeExecutionUpdates: Record<string, NodeExectionWithTime>;
+	nodeExecutionHistory: NodeExectionWithTime[];
 	addNodeExecutionUpdate: (executionUpdate: NodeExecutionUpdate) => void;
 	clearExecutionUpdates: () => void;
 };
@@ -122,32 +104,62 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 			set({ showExecutionUpdates: state }),
 
 		nodeExecutionUpdates: {},
+		nodeExecutionHistory: [],
 		addNodeExecutionUpdate: (executionUpdate: NodeExecutionUpdate) =>
 			set((state) => {
-				const existing =
+				const latest =
 					state.nodeExecutionUpdates[executionUpdate.workflowNodeId];
 
-				// get startedAt value from existing update or from current update
-				const startedAt =
-					existing?.type === "node:started"
-						? existing.startedAt
-						: executionUpdate.type === "node:started"
-							? executionUpdate.startedAt
-							: undefined;
+				let nodeExecutionId = executionUpdate.nodeExecutionId;
+				if (nodeExecutionId == null) {
+					if (
+						executionUpdate.type !== "node:started" &&
+						latest?.type === "node:started"
+					) {
+						nodeExecutionId = latest.nodeExecutionId;
+					} else {
+						nodeExecutionId = crypto.randomUUID();
+					}
+				}
+
+				const index = state.nodeExecutionHistory.findIndex(
+					(entry) => entry.nodeExecutionId === nodeExecutionId,
+				);
+				const existing = state.nodeExecutionHistory[index];
+				let startedAt = existing?.startedAt;
+				if (startedAt == null) {
+					if (executionUpdate.type === "node:started") {
+						startedAt = executionUpdate.startedAt;
+					} else {
+						startedAt = executionUpdate.completedAt;
+					}
+				}
+
+				const update: NodeExectionWithTime = {
+					...executionUpdate,
+					nodeExecutionId,
+					startedAt,
+				};
+
+				const nodeExecutionHistory = [...state.nodeExecutionHistory];
+				if (index === -1) nodeExecutionHistory.push(update);
+				else nodeExecutionHistory[index] = update;
 
 				return {
 					nodeExecutionUpdates: {
 						...state.nodeExecutionUpdates,
-						[executionUpdate.workflowNodeId]: {
-							...executionUpdate,
-							...(startedAt ? { startedAt } : {}),
-						} as NodeExectionWithTime,
+						[executionUpdate.workflowNodeId]: update,
 					},
+					nodeExecutionHistory,
 				};
 			}),
 
 		clearExecutionUpdates: () => {
-			set({ showExecutionUpdates: false, nodeExecutionUpdates: {} });
+			set({
+				showExecutionUpdates: false,
+				nodeExecutionUpdates: {},
+				nodeExecutionHistory: [],
+			});
 		},
 	}),
 );

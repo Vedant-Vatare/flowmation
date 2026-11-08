@@ -153,7 +153,7 @@ const LogRow = memo(
 
 		const startedAt = log.startedAt as Date | undefined;
 		const completedAt =
-			log.type === "node:completed"
+			log.type !== "node:started"
 				? (log.completedAt as Date | undefined)
 				: undefined;
 		const duration = getDurationDiff(startedAt, completedAt);
@@ -266,7 +266,7 @@ const LogsTable = memo(
 			</TableHeader>
 			<TableBody>
 				{logs.map((log) => (
-					<LogRow key={log.workflowNodeId} log={log} display={display} />
+					<LogRow key={log.nodeExecutionId} log={log} display={display} />
 				))}
 			</TableBody>
 		</Table>
@@ -466,9 +466,7 @@ export const LiveExecutionLogs = () => {
 	const dragStartY = useRef(0);
 	const dragStartHeight = useRef(DEFAULT_HEIGHT);
 
-	const nodeExecutionUpdates = useWorkflowExecutionStore(
-		(s) => s.nodeExecutionUpdates,
-	);
+	const updates = useWorkflowExecutionStore((s) => s.nodeExecutionHistory);
 
 	const onMouseDown = useCallback(
 		(e: React.MouseEvent) => {
@@ -498,11 +496,6 @@ export const LiveExecutionLogs = () => {
 			window.removeEventListener("mouseup", onMouseUp);
 		};
 	}, [isDragging]);
-
-	const updates = Object.values(nodeExecutionUpdates).sort((a, b) => {
-		if (!a.startedAt || !b.startedAt) return 0;
-		return new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime();
-	});
 
 	const entries = updates.filter((e: NodeExectionWithTime) => {
 		if (e.type === "node:completed") return statusFilter.completed;
@@ -539,7 +532,7 @@ export const LiveExecutionLogs = () => {
 				onClose={onClose}
 			/>
 
-			<div className="flex-1 overflow-auto">
+			<div className="flex-1 overflow-auto pb-4">
 				{updates.length === 0 ? (
 					<EmptyState filtered={false} />
 				) : entries.length === 0 ? (

@@ -20,6 +20,7 @@ export const recordNodeStart = async (jobData: NodeJobPayload) => {
 	);
 	broadcastExecutionUpdate(jobData, {
 		type: "node:started",
+		nodeExecutionId: jobData.nodeExecutionId,
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
 		startedAt: new Date(),
@@ -46,6 +47,7 @@ export const recordNodeCompletion = async (
 	);
 	broadcastExecutionUpdate(jobData, {
 		type: "node:completed",
+		nodeExecutionId: jobData.nodeExecutionId,
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
 		output: nodeOutput,
@@ -86,6 +88,7 @@ export const recordNodeExecutionFailed = async (
 
 	broadcastExecutionUpdate(jobData, {
 		type: "node:failed",
+		nodeExecutionId: jobData.nodeExecutionId,
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
 		error,
@@ -113,6 +116,7 @@ export const recordNodeExecution = async (
 	);
 	broadcastExecutionUpdate(jobData, {
 		type: "node:completed",
+		nodeExecutionId: jobData.nodeExecutionId,
 		workflowNodeId: jobData.node.id,
 		task: jobData.node.task,
 		output: nodeOutput,
