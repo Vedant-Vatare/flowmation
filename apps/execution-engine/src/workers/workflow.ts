@@ -17,6 +17,7 @@ import {
 } from "@nodebase/shared";
 import { type Job, QueueEvents, UnrecoverableError, Worker } from "bullmq";
 import { executeTriggerNode } from "@/executer.js";
+import { getLoopItems } from "@/nodes/actions/loop.node.js";
 import {
 	createWorflowExecutionQuery,
 	deleteWorkflowExecutionQuery,
@@ -490,11 +491,7 @@ const currentNodePreExecution = async ({
 		const params = await getResolvedParams(node, jobData.executionId);
 		const rawValue = params.field?.value;
 
-		const items = Array.isArray(rawValue)
-			? rawValue
-			: rawValue !== null && rawValue !== undefined
-				? [rawValue]
-				: null;
+		const items = getLoopItems(rawValue);
 
 		if (!items || items.length === 0) {
 			const emptyState: LoopState = {
