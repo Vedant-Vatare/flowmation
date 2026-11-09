@@ -3,12 +3,17 @@ import {
 	db,
 	desc,
 	eq,
+	nodeExecutionTable,
 	userWorkflowsTable,
 	workflowExecutionTable,
 } from "@nodebase/db";
-import type { ExecuteWorkflowRequest } from "@nodebase/shared";
+import type {
+	ExecuteWorkflowRequest,
+	LatestWorkflowNodeOutputs,
+} from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
+import { z } from "zod";
 import { isDBQueryError } from "@/utils/api.utils.js";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
 
@@ -124,4 +129,78 @@ export const getExecutionLogs = async (req: Request, res: Response) => {
 		logs: logs.slice(0, limit),
 		hasNextPage,
 	});
+};
+
+export const getLatestWorkflowNodeOutputs = async (
+	req: Request,
+	res: Response,
+) => {
+	const workflowId = z.uuid().safeParse(req.params.workflowId);
+	if (!workflowId.success)
+		throw createHttpError.BadRequest("Invalid workflow ID");
+	const userId = res.locals.userId as string;
+	const data = await db.transaction(
+		async (tx): Promise<LatestWorkflowNodeOutputs> => {
+			const [workflow] = await tx
+				.select({ id: userWorkflowsTable.id })
+				.from(userWorkflowsTable)
+				.where(
+					and(
+						eq(userWorkflowsTable.id, workflowId.data),
+						eq(userWorkflowsTable.userId, userId),
+					),
+				);
+			if (!workflow) throw createHttpError.NotFound("Workflow not found");
+
+			const [execution] = await tx
+				.select()
+				.from(workflowExecutionTable)
+				.where(
+					and(
+						eq(workflowExecutionTable.workflowId, workflowId.data),
+						eq(workflowExecutionTable.userId, userId),
+					),
+				)
+				.orderBy(
+					desc(workflowExecutionTable.executedAt),
+					desc(workflowExecutionTable.id),
+				)
+				.limit(1);
+			if (!execution) return { execution: null, nodeOutputs: [] };
+
+			const rows = await tx
+				.selectDistinctOn([nodeExecutionTable.instanceId])
+				.from(nodeExecutionTable)
+				.where(
+					and(
+						eq(nodeExecutionTable.workflowId, workflowId.data),
+						eq(nodeExecutionTable.workflowExecutionId, execution.id),
+					),
+				)
+				.orderBy(
+					nodeExecutionTable.instanceId,
+					desc(nodeExecutionTable.executedAt),
+					desc(nodeExecutionTable.id),
+				);
+			return {
+				execution: {
+					id: execution.id,
+					status: execution.status,
+					executedAt: execution.executedAt.toISOString(),
+					completedAt: execution.completedAt?.toISOString() ?? null,
+					result: execution.result,
+				},
+				nodeOutputs: rows.map((row) => ({
+					id: row.id,
+					workflowNodeId: row.instanceId,
+					status: row.status,
+					output: row.output,
+					executedAt: row.executedAt.toISOString(),
+					completedAt: row.completedAt?.toISOString() ?? null,
+				})),
+			};
+		},
+		{ isolationLevel: "repeatable read" },
+	);
+	return res.status(200).json(data);
 };

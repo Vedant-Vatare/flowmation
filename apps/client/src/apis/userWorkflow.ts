@@ -2,6 +2,7 @@ import type {
 	DashboardWorkflow,
 	ExecuteWorkflowRequest,
 	ExecutionLog,
+	LatestWorkflowNodeOutputs,
 	NodeIdsWithPosition,
 	PartialWorkflowNode,
 	UpdateUserWorkflow,
@@ -192,6 +193,13 @@ export const workflowExecutionLogsApi = async (
 		hasNextPage: boolean;
 	}>(`/executions/${workflowId}?page=${page}`);
 
+	return response.data;
+};
+
+export const getLatestWorkflowNodeOutputsApi = async (workflowId: string) => {
+	const response = await api.get<LatestWorkflowNodeOutputs>(
+		`/executions/${workflowId}/nodes/latest`,
+	);
 	return response.data;
 };
 

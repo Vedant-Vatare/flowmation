@@ -33,6 +33,26 @@ export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
 export type NodeExecutionStatus = (typeof NODE_EXECUTION_STATUSES)[number];
 export type TriggerType = (typeof TRIGGER_TYPES)[number];
 
+export type WorkflowNodeOutput = {
+	id: string;
+	workflowNodeId: string;
+	status: NodeExecutionStatus;
+	output: unknown;
+	executedAt: string;
+	completedAt: string | null;
+};
+
+export type LatestWorkflowNodeOutputs = {
+	execution: {
+		id: string;
+		status: ExecutionStatus;
+		executedAt: string;
+		completedAt: string | null;
+		result: string | null;
+	} | null;
+	nodeOutputs: WorkflowNodeOutput[];
+};
+
 export type CreateWorkflow = {
 	name: string;
 	description: string;

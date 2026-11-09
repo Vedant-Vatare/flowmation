@@ -26,6 +26,7 @@ import {
 	executeWorkflowApi,
 	executionLogs,
 	getDashboardWorkflowsApi,
+	getLatestWorkflowNodeOutputsApi,
 	getPublishStatusApi,
 	getUserWorkflowsApi,
 	getWorkflowConnections,
@@ -450,6 +451,15 @@ export const useWorkflowLogs = (workflowId: string) => {
 			lastPage.hasNextPage ? allPages.length + 1 : undefined,
 	});
 };
+
+export const useLatestWorkflowNodeOutputs = (workflowId: string) =>
+	useQuery({
+		queryKey: ["workflow-node-outputs", { workflowId }],
+		queryFn: () => getLatestWorkflowNodeOutputsApi(workflowId),
+		enabled: !!workflowId,
+		refetchInterval: 5000,
+		refetchOnMount: "always",
+	});
 
 export const useExecutionLogs = () => {
 	return useInfiniteQuery({
