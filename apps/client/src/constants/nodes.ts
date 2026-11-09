@@ -38,6 +38,7 @@ import RandomIcon from "@/assets/icons/nodes/random.svg?react";
 import RazorpayIcon from "@/assets/icons/nodes/razorpay.svg?react";
 import RedisIcon from "@/assets/icons/nodes/redis.svg?react";
 import RunWorkflowIcon from "@/assets/icons/nodes/run-workflow.svg?react";
+import HumanInTheLoopIcon from "@/assets/icons/nodes/human-in-the-loop.svg?react";
 import ScheduleIcon from "@/assets/icons/nodes/schedule.svg?react";
 import SentryIcon from "@/assets/icons/nodes/sentry.svg?react";
 import SetVarIcon from "@/assets/icons/nodes/set-var.svg?react";
@@ -205,6 +206,12 @@ export const NODE_UI_REGISTRY: Record<string, NodeUI> = {
 		icon: SwitchIcon,
 		background: "#8338EC",
 		color: "#ffffff",
+	},
+	"action.human_in_the_loop": {
+		name: "Human in the Loop",
+		icon: HumanInTheLoopIcon,
+		background: "#FDE8CF",
+		color: "#8A4415",
 	},
 	"action.run_workflow": {
 		name: "Run Workflow",

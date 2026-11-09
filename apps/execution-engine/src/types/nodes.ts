@@ -1,4 +1,5 @@
 import type { getDecryptedCredential } from "@nodebase/db";
+import type { HumanReviewRequest } from "@nodebase/shared";
 
 export type DecryptedCredential = Awaited<
 	ReturnType<typeof getDecryptedCredential>
@@ -11,6 +12,7 @@ export type NodeExecutorOutput = {
 	output?: unknown;
 	status?: "completed" | "waiting" | "stopped";
 	allowedOutputPorts?: string[];
+	review?: HumanReviewRequest;
 };
 
 export type TriggerNodeExecutorOutput = NodeExecutorOutput & {

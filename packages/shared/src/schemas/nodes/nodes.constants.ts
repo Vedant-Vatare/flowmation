@@ -26,6 +26,10 @@ import {
 	googleCalendarTriggerNodeSchema,
 	googleCalendarTriggerNodeValueSchemas,
 } from "./google-calendar-trigger.schema.js";
+import {
+	humanInTheLoopNodeSchema,
+	humanInTheLoopNodeValueSchemas,
+} from "./human-in-the-loop.schema.js";
 import { aiNodeSchema, aiNodeValueSchemas } from "./integrations/ai.schema.js";
 import {
 	airtableNodeSchema,
@@ -176,6 +180,7 @@ export const nodeSchemaRegistry = new Map<string, z.ZodObject>([
 	["trigger.click", clickNodeSchema],
 	["trigger.called_by_workflow", calledByWorkflowNodeSchema],
 	["action.run_workflow", runWorkflowNodeSchema],
+	["action.human_in_the_loop", humanInTheLoopNodeSchema],
 	["trigger.input", inputNodeSchema],
 	["action.http", httpNodeSchema],
 	["action.wait", waitingNodeSchema],
@@ -232,6 +237,7 @@ export const nodeParamValueRegistry = new Map<
 	Record<string, z.ZodType>
 >([
 	["action.run_workflow", runWorkflowNodeValueSchemas],
+	["action.human_in_the_loop", humanInTheLoopNodeValueSchemas],
 	["action.xml", xmlNodeValueSchemas],
 	["action.csv", csvNodeValueSchemas],
 	["trigger.cron", cronJobNodeValueSchemas],

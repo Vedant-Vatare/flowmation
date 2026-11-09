@@ -22,6 +22,7 @@ import type {
 	GoogleSheetsNode,
 	HttpNode,
 	HubSpotNode,
+	HumanInTheLoopNode,
 	InputNode,
 	JiraNode,
 	JsonTransformNode,
@@ -51,6 +52,7 @@ import type {
 import type { Job } from "bullmq";
 import { conditionNodeExecutor } from "./nodes/actions/condition.node.js";
 import { httpNodeExecutor } from "./nodes/actions/http.node.js";
+import { humanInTheLoopNodeExecutor } from "./nodes/actions/human-in-the-loop.node.js";
 import { aiNodeExecutor } from "./nodes/actions/integrations/ai.node.js";
 import { airtableNodeExecutor } from "./nodes/actions/integrations/airtable.node.js";
 import { asanaNodeExecutor } from "./nodes/actions/integrations/asana.node.js";
@@ -263,6 +265,11 @@ export const executeNode = async (
 	}
 
 	switch (node.task) {
+		case "action.human_in_the_loop":
+			return humanInTheLoopNodeExecutor(
+				node as HumanInTheLoopNode,
+				executionId,
+			);
 		case "action.xml":
 			return xmlNodeExecutor(node as XmlNode, executionId);
 		case "action.csv":

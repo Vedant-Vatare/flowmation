@@ -4,6 +4,7 @@ export * from "./called-by-workflow.schema.js";
 export * from "./control.nodes.js";
 export * from "./gmail-trigger.schema.js";
 export * from "./google-calendar-trigger.schema.js";
+export * from "./human-in-the-loop.schema.js";
 export * from "./integrations/ai.schema.js";
 export * from "./integrations/airtable.schema.js";
 export * from "./integrations/asana.schema.js";
