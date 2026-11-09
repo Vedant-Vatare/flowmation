@@ -49,6 +49,11 @@ export async function addWorkflowInQueue(
 	});
 }
 
+export async function promoteWorkflowReview(jobId: string) {
+	const job = await workflowQueue.getJob(jobId);
+	if (job && (await job.isDelayed())) await job.promote();
+}
+
 export async function addNodeInQueue(
 	data: NodeJobPayload,
 	nodeConfigs: NodeExecutionConfig = {},

@@ -4,18 +4,145 @@ import {
 	desc,
 	eq,
 	nodeExecutionTable,
+	sql,
 	userWorkflowsTable,
 	workflowExecutionTable,
 } from "@nodebase/db";
+import { promoteWorkflowReview } from "@nodebase/queue";
 import type {
 	ExecuteWorkflowRequest,
 	LatestWorkflowNodeOutputs,
+	PendingHumanReview,
+	StoredHumanReview,
+} from "@nodebase/shared";
+import {
+	getHumanReviewRunState,
+	HUMAN_REVIEW_PENDING_PREFIX,
+	humanReviewDecisionSchema,
 } from "@nodebase/shared";
 import type { Request, Response } from "express";
 import createHttpError from "http-errors";
 import { z } from "zod";
 import { isDBQueryError } from "@/utils/api.utils.js";
 import { enqueueWorkflow } from "@/utils/workflow.utils.js";
+
+export const getPendingHumanReviews = async (req: Request, res: Response) => {
+	const workflowId = z.uuid().optional().safeParse(req.query.workflowId);
+	if (!workflowId.success)
+		throw createHttpError.BadRequest("Invalid workflow ID");
+	const rows = await db
+		.select({
+			id: nodeExecutionTable.id,
+			executionId: workflowExecutionTable.id,
+			workflowId: workflowExecutionTable.workflowId,
+			workflowName: userWorkflowsTable.name,
+			executedAt: workflowExecutionTable.executedAt,
+			request: sql<
+				StoredHumanReview["request"]
+			>`${nodeExecutionTable.output} -> 'request'`,
+			nodeName: sql<string>`${nodeExecutionTable.output} ->> 'nodeName'`,
+		})
+		.from(workflowExecutionTable)
+		.innerJoin(
+			nodeExecutionTable,
+			and(
+				eq(nodeExecutionTable.workflowExecutionId, workflowExecutionTable.id),
+				eq(
+					workflowExecutionTable.result,
+					sql<string>`${HUMAN_REVIEW_PENDING_PREFIX}::text || ${nodeExecutionTable.id}::text`,
+				),
+			),
+		)
+		.innerJoin(
+			userWorkflowsTable,
+			eq(workflowExecutionTable.workflowId, userWorkflowsTable.id),
+		)
+		.where(
+			and(
+				eq(workflowExecutionTable.userId, res.locals.userId),
+				eq(workflowExecutionTable.status, "running"),
+				sql`${nodeExecutionTable.output} -> 'decision' IS NULL`,
+				workflowId.data
+					? eq(workflowExecutionTable.workflowId, workflowId.data)
+					: undefined,
+			),
+		)
+		.orderBy(desc(workflowExecutionTable.executedAt));
+
+	const reviews: PendingHumanReview[] = rows.map(
+		({ request, executedAt, ...execution }) => ({
+			...execution,
+			...request,
+			runStartedAt: executedAt.toISOString(),
+		}),
+	);
+	return res.json({ reviews });
+};
+
+export const decideHumanReview = async (req: Request, res: Response) => {
+	const ids = z
+		.object({ executionId: z.uuid(), reviewId: z.uuid() })
+		.safeParse(req.params);
+	const decision = humanReviewDecisionSchema.safeParse(req.body);
+	if (!ids.success || !decision.success) {
+		throw createHttpError.BadRequest(
+			"Invalid review decision, content, or note",
+		);
+	}
+
+	const jobId = await db.transaction(async (tx) => {
+		const [execution] = await tx
+			.select({
+				status: workflowExecutionTable.status,
+				result: workflowExecutionTable.result,
+			})
+			.from(workflowExecutionTable)
+			.where(
+				and(
+					eq(workflowExecutionTable.id, ids.data.executionId),
+					eq(workflowExecutionTable.userId, res.locals.userId),
+				),
+			)
+			.for("update");
+		if (!execution) throw createHttpError.NotFound("Review not found");
+		if (
+			execution.status !== "running" ||
+			execution.result !== HUMAN_REVIEW_PENDING_PREFIX + ids.data.reviewId
+		) {
+			throw createHttpError.Conflict("This review is no longer pending");
+		}
+		const reviewFilter = and(
+			eq(nodeExecutionTable.id, ids.data.reviewId),
+			eq(nodeExecutionTable.workflowExecutionId, ids.data.executionId),
+		);
+		const [node] = await tx
+			.select({ output: nodeExecutionTable.output })
+			.from(nodeExecutionTable)
+			.where(reviewFilter)
+			.for("update");
+		const review = node?.output as StoredHumanReview | undefined;
+		if (!review || review.decision)
+			throw createHttpError.Conflict("This review is no longer pending");
+		if (
+			decision.data.content !== undefined &&
+			(!review.request.allowEdits || decision.data.decision !== "approved")
+		) {
+			throw createHttpError.BadRequest(
+				"Edits are only accepted when approving a review that allows edits",
+			);
+		}
+		await tx
+			.update(nodeExecutionTable)
+			.set({ output: { ...review, decision: decision.data } })
+			.where(reviewFilter);
+		return review.checkpoint.jobId;
+	});
+
+	void promoteWorkflowReview(jobId).catch((error: unknown) => {
+		console.warn("Could not wake the review job immediately", error);
+	});
+	return res.status(202).json({ message: "Review decision saved" });
+};
 
 export const executeWorkflow = async (req: Request, res: Response) => {
 	const workflowId = req.params.id as string;
@@ -69,7 +196,15 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 			throw createHttpError.BadRequest("page must be integer");
 
 		const workflowLogs = await db
-			.select()
+			.select({
+				id: workflowExecutionTable.id,
+				workflowId: workflowExecutionTable.workflowId,
+				userId: workflowExecutionTable.userId,
+				status: workflowExecutionTable.status,
+				executedAt: workflowExecutionTable.executedAt,
+				completedAt: workflowExecutionTable.completedAt,
+				result: workflowExecutionTable.result,
+			})
 			.from(workflowExecutionTable)
 			.where(
 				and(
@@ -85,7 +220,15 @@ export const getWorkflowLogs = async (req: Request, res: Response) => {
 
 		return res.status(200).json({
 			message: "workflow logs fetched successfully",
-			logs: workflowLogs.slice(0, limit),
+			logs: workflowLogs.slice(0, limit).map((log) => {
+				const review =
+					log.status === "running" ? getHumanReviewRunState(log.result) : null;
+				return {
+					...log,
+					status: review?.phase === "pending" ? "waiting" : log.status,
+					result: review ? null : log.result,
+				};
+			}),
 			hasNextPage,
 		});
 	} catch (e) {
@@ -112,6 +255,7 @@ export const getExecutionLogs = async (req: Request, res: Response) => {
 			status: workflowExecutionTable.status,
 			executedAt: workflowExecutionTable.executedAt,
 			completedAt: workflowExecutionTable.completedAt,
+			result: workflowExecutionTable.result,
 		})
 		.from(workflowExecutionTable)
 		.leftJoin(
@@ -126,7 +270,14 @@ export const getExecutionLogs = async (req: Request, res: Response) => {
 	const hasNextPage = logs.length > limit;
 
 	return res.status(200).json({
-		logs: logs.slice(0, limit),
+		logs: logs.slice(0, limit).map(({ result, ...log }) => ({
+			...log,
+			status:
+				log.status === "running" &&
+				getHumanReviewRunState(result)?.phase === "pending"
+					? "waiting"
+					: log.status,
+		})),
 		hasNextPage,
 	});
 };
@@ -153,7 +304,13 @@ export const getLatestWorkflowNodeOutputs = async (
 			if (!workflow) throw createHttpError.NotFound("Workflow not found");
 
 			const [execution] = await tx
-				.select()
+				.select({
+					id: workflowExecutionTable.id,
+					status: workflowExecutionTable.status,
+					executedAt: workflowExecutionTable.executedAt,
+					completedAt: workflowExecutionTable.completedAt,
+					result: workflowExecutionTable.result,
+				})
 				.from(workflowExecutionTable)
 				.where(
 					and(
@@ -167,6 +324,10 @@ export const getLatestWorkflowNodeOutputs = async (
 				)
 				.limit(1);
 			if (!execution) return { execution: null, nodeOutputs: [] };
+			const review =
+				execution.status === "running"
+					? getHumanReviewRunState(execution.result)
+					: null;
 
 			const rows = await tx
 				.selectDistinctOn([nodeExecutionTable.instanceId])
@@ -185,19 +346,26 @@ export const getLatestWorkflowNodeOutputs = async (
 			return {
 				execution: {
 					id: execution.id,
-					status: execution.status,
+					status: review?.phase === "pending" ? "waiting" : execution.status,
 					executedAt: execution.executedAt.toISOString(),
 					completedAt: execution.completedAt?.toISOString() ?? null,
-					result: execution.result,
+					result: review ? null : execution.result,
 				},
-				nodeOutputs: rows.map((row) => ({
-					id: row.id,
-					workflowNodeId: row.instanceId,
-					status: row.status,
-					output: row.output,
-					executedAt: row.executedAt.toISOString(),
-					completedAt: row.completedAt?.toISOString() ?? null,
-				})),
+				nodeOutputs: rows.map((row) => {
+					const reviewInProgress =
+						row.status === "running" && row.id === review?.id;
+					return {
+						id: row.id,
+						workflowNodeId: row.instanceId,
+						status:
+							reviewInProgress && review.phase === "pending"
+								? "waiting"
+								: row.status,
+						output: reviewInProgress ? null : row.output,
+						executedAt: row.executedAt.toISOString(),
+						completedAt: row.completedAt?.toISOString() ?? null,
+					};
+				}),
 			};
 		},
 		{ isolationLevel: "repeatable read" },

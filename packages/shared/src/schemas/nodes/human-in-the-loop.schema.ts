@@ -45,9 +45,58 @@ export const humanInTheLoopNodeSchema = baseNodeSchema.extend({
 	),
 });
 
+export const humanReviewDecisionSchema = z.strictObject({
+	decision: z.enum(["approved", "declined"]),
+	content: z.json().optional(),
+	note: z.string().trim().max(4000).optional(),
+});
+
+export type HumanReviewDecision = z.infer<typeof humanReviewDecisionSchema>;
+
 export type HumanReviewRequest = {
 	message: string;
 	content: z.infer<ReturnType<typeof z.json>>;
 	allowEdits: boolean;
 	onDecline: z.infer<typeof humanReviewDeclineSchema>;
+};
+
+export type PendingHumanReview = HumanReviewRequest & {
+	id: string;
+	executionId: string;
+	workflowId: string;
+	workflowName: string | null;
+	nodeName: string;
+	runStartedAt: string;
+};
+
+export const HUMAN_REVIEW_PENDING_PREFIX = "human-review:pending:";
+export const HUMAN_REVIEW_RESUMING_PREFIX = "human-review:resuming:";
+
+export function getHumanReviewRunState(result: string | null) {
+	for (const [phase, prefix] of [
+		["pending", HUMAN_REVIEW_PENDING_PREFIX],
+		["resuming", HUMAN_REVIEW_RESUMING_PREFIX],
+	] as const) {
+		if (!result?.startsWith(prefix)) continue;
+		const id = z.uuid().safeParse(result.slice(prefix.length));
+		if (id.success) return { phase, id: id.data };
+	}
+	return null;
+}
+
+export type HumanReviewCheckpoint = {
+	jobId: string;
+	nodeId: string;
+	pendingNodeIds: string[];
+	selectedPorts: [string, string[]][];
+	outputs: Record<string, string>;
+	nodeFailed: boolean;
+	lastError?: string;
+};
+
+export type StoredHumanReview = {
+	nodeName: string;
+	request: HumanReviewRequest;
+	checkpoint: HumanReviewCheckpoint;
+	decision?: HumanReviewDecision;
 };

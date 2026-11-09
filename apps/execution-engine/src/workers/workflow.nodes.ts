@@ -60,6 +60,14 @@ export const workflowNodesWorker = new Worker(
 				throw nodeFailure(executionResponse);
 			}
 			executorSucceeded = true;
+			if (executionResponse.review) {
+				return {
+					id: nodeExecutionId,
+					status: "waiting",
+					allowedNodePorts: [],
+					review: executionResponse.review,
+				};
+			}
 			const allowedNodePorts = getNodeOutputPorts(executionResponse);
 
 			console.log(
@@ -104,7 +112,7 @@ export const workflowNodesWorker = new Worker(
 							nodeId: string;
 							attempts: number;
 						};
-					}
+				  }
 				| undefined;
 
 			if (!executorSucceeded) {

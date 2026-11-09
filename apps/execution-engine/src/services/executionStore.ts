@@ -6,7 +6,11 @@ export const storeNodeOutput = async (
 	output: unknown,
 ) => {
 	const key = `exec:${executionId}`;
-	await redis.pipeline().hset(key, nodeName, JSON.stringify(output)).expire(key, 3600).exec();
+	await redis
+		.pipeline()
+		.hset(key, nodeName, JSON.stringify(output))
+		.expire(key, 3600)
+		.exec();
 };
 
 export const getNodeOutput = async (
@@ -16,6 +20,19 @@ export const getNodeOutput = async (
 	const key = `exec:${executionId}`;
 	const data = await redis.hget(key, nodeName);
 	return data ? JSON.parse(data) : null;
+};
+
+export const snapshotExecutionOutputs = (executionId: string) =>
+	redis.hgetall(`exec:${executionId}`);
+
+export const restoreExecutionOutputs = async (
+	executionId: string,
+	outputs: Record<string, string>,
+) => {
+	if (Object.keys(outputs).length === 0) return;
+	const key = `exec:${executionId}`;
+	await redis.hset(key, outputs);
+	await redis.expire(key, 3600);
 };
 
 export const getNodesOutputsByName = async (

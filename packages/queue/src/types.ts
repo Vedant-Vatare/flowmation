@@ -1,4 +1,8 @@
-import type { WorkflowConnection, WorkflowNode } from "@nodebase/shared";
+import type {
+	HumanReviewRequest,
+	WorkflowConnection,
+	WorkflowNode,
+} from "@nodebase/shared";
 
 import type { JobsOptions } from "bullmq";
 
@@ -29,6 +33,7 @@ export type WorkflowNodesWorker = {
 	output?: unknown;
 	allowedNodePorts: string[];
 	status: string;
+	review?: HumanReviewRequest;
 };
 
 export type NodeExecutionConfig = Partial<JobsOptions>;

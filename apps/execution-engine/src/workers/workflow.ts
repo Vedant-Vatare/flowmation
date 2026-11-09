@@ -37,20 +37,64 @@ import {
 	recordNodeExecution,
 	recordNodeStart,
 } from "@/utils/workflow.updates.utils.js";
+import { pauseForReview, resumeWorkflowReview } from "./workflow.review.js";
 
 const nodeQueueEvents = new QueueEvents(NODE_QUEUE_NAME, { connection });
 await nodeQueueEvents.waitUntilReady();
 
+type WorkflowResult = {
+	removeRecord?: boolean;
+	success?: boolean;
+	nodeFailed?: boolean;
+	cancelled?: boolean;
+	error?: string;
+};
+
 export const workflowWorker = new Worker(
 	WORKFLOW_QUEUE_NAME,
-	async (job: Job<WorkflowJobPayload>) => {
+	async (job: Job<WorkflowJobPayload>, token) => {
+		if (job.data.triggerType === "schedule" && !job.data.executionId)
+			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
+
+		const resumed = await resumeWorkflowReview(job, token);
+		if (resumed?.finished) return;
+		if (resumed) {
+			if (resumed.cancelled) {
+				return finishWorkflow(job, { cancelled: true });
+			}
+			const { checkpoint, node, approved } = resumed;
+			const { nodes, connections } = job.data;
+			const pendingBranches = checkpoint.pendingNodeIds.map((id) => {
+				const pendingNode = nodes.find((item) => item.id === id);
+				if (!pendingNode)
+					throw new UnrecoverableError(
+						"A pending branch is missing from this run.",
+					);
+				return pendingNode;
+			});
+			const ports = [approved ? "default" : "declined"];
+			const selectedPorts = new Map(checkpoint.selectedPorts);
+			selectedPorts.set(node.id, ports);
+			const nextNode =
+				getNextNode(connections, node, nodes, ports, pendingBranches) ??
+				pendingBranches.pop();
+			const result = await handleSequentialNodeExecution(
+				job,
+				token,
+				nextNode,
+				pendingBranches,
+				{
+					selectedPorts,
+					nodeFailed: checkpoint.nodeFailed,
+					lastError: checkpoint.lastError,
+				},
+			);
+			return finishWorkflow(job, result);
+		}
+
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
 		);
-
-		if (job.data.triggerType === "schedule")
-			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
-
 		await createWorflowExecutionQuery(
 			job.data.executionId,
 			job.data.userId,
@@ -67,7 +111,7 @@ export const workflowWorker = new Worker(
 		const triggerResult = await handleWorkflowTrigger(job);
 
 		if (!triggerResult?.node || triggerResult?.skipCurrentExecution) {
-			return { removeRecord: true };
+			return finishWorkflow(job, { removeRecord: true });
 		}
 
 		const startNode = getNextNode(
@@ -84,52 +128,56 @@ export const workflowWorker = new Worker(
 
 		const nodeExecutionResult = await handleSequentialNodeExecution(
 			job,
+			token,
 			startNode,
 			globalPendingBranches,
 		);
-		return nodeExecutionResult;
+		return finishWorkflow(job, nodeExecutionResult);
 	},
 	{ connection, concurrency: 50 },
 );
 
-workflowWorker.on(
-	"completed",
-	async (
-		job: Job<WorkflowJobPayload>,
-		result: {
-			removeRecord?: boolean;
-			success?: boolean;
-			nodeFailed?: boolean;
-			error?: string;
-		},
-	) => {
-		if (!job) return;
-		if (result?.removeRecord) {
-			await deleteWorkflowExecutionQuery(job.data.executionId);
-			console.log("workflow was recorded!", job.data.executionId);
-			return;
-		}
+async function finishWorkflow(
+	job: Job<WorkflowJobPayload>,
+	result: WorkflowResult,
+) {
+	if (result?.removeRecord) {
+		await deleteWorkflowExecutionQuery(job.data.executionId);
+		console.log("workflow was recorded!", job.data.executionId);
+		return;
+	}
 
-		const status = result?.nodeFailed ? "failed" : "success";
-		console.log(
-			"workflow execution complete for workflow:",
-			job.data.workflowId,
-			job.data.executionId,
-			"status:",
-			status,
-		);
-		await updateWorkflowStatusQuery(job.data.executionId, status, result.error);
-		broadcastExecutionUpdate(
-			job.data,
-			result.nodeFailed
-				? {
-						type: "workflow:failed",
-						error: result.error || "A workflow node failed",
-					}
-				: { type: "workflow:completed", completedAt: new Date() },
-		);
-	},
-);
+	const status = result.cancelled
+		? "cancelled"
+		: result.nodeFailed
+			? "failed"
+			: "success";
+	console.log(
+		"workflow execution complete for workflow:",
+		job.data.workflowId,
+		job.data.executionId,
+		"status:",
+		status,
+	);
+	await updateWorkflowStatusQuery(
+		job.data.executionId,
+		status,
+		result.cancelled ? "Stopped by human review" : result.error,
+	);
+	broadcastExecutionUpdate(
+		job.data,
+		result.nodeFailed
+			? {
+					type: "workflow:failed",
+					error: result.error || "A workflow node failed",
+				}
+			: {
+					type: result.cancelled ? "workflow:cancelled" : "workflow:completed",
+					completedAt: new Date(),
+				},
+	);
+	return result;
+}
 
 workflowWorker.on(
 	"failed",
@@ -236,9 +284,15 @@ const handleWorkflowTrigger = async (
 
 const handleSequentialNodeExecution = async (
 	job: Job<WorkflowJobPayload>,
-	startNode: WorkflowNode,
+	token: string | undefined,
+	startNode: WorkflowNode | undefined,
 	globalPendingBranches: WorkflowNode[],
-): Promise<{ success: boolean; nodeFailed?: boolean; error?: string }> => {
+	state?: {
+		selectedPorts: Map<string, string[]>;
+		nodeFailed: boolean;
+		lastError?: string;
+	},
+): Promise<WorkflowResult> => {
 	const { nodes, connections, executionId, workflowId, userId } = job.data;
 
 	let currentNode: WorkflowNode | undefined = startNode;
@@ -246,11 +300,11 @@ const handleSequentialNodeExecution = async (
 
 	/* nodeconfigs is populated when current node is executed and its configs can be passed for the next node execution which is used by worker job configs. */
 	let nodeConfigs: NodeExecutionConfig = {};
-	let nodeFailed = false;
-	let lastError: string | undefined;
-	const selectedPorts = new Map<string, string[]>([
-		[job.data.triggerNodeId, ["default"]],
-	]);
+	let nodeFailed = state?.nodeFailed ?? false;
+	let lastError = state?.lastError;
+	const selectedPorts =
+		state?.selectedPorts ??
+		new Map<string, string[]>([[job.data.triggerNodeId, ["default"]]]);
 
 	while (currentNode) {
 		const node = currentNode;
@@ -310,6 +364,22 @@ const handleSequentialNodeExecution = async (
 				continue;
 			}
 			return { success: false, nodeFailed: true, error: lastError };
+		}
+
+		if (nodeExecution.review) {
+			return pauseForReview({
+				job,
+				token,
+				node,
+				id: nodeExecution.id,
+				request: nodeExecution.review,
+				checkpoint: {
+					pendingNodeIds: globalPendingBranches.map(({ id }) => id),
+					selectedPorts: [...selectedPorts],
+					nodeFailed,
+					lastError,
+				},
+			});
 		}
 
 		if (nodeExecution.status === "failed") {

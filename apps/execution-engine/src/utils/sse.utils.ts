@@ -28,13 +28,17 @@ export const broadcastExecutionUpdate = (
 		return;
 	}
 
-	controller.enqueue(update);
-
-	if (
-		executionUpdate.type === "workflow:completed" ||
-		executionUpdate.type === "workflow:failed"
-	) {
-		controller.close();
+	try {
+		controller.enqueue(update);
+		if (
+			executionUpdate.type === "workflow:completed" ||
+			executionUpdate.type === "workflow:cancelled" ||
+			executionUpdate.type === "workflow:failed"
+		) {
+			controller.close();
+			sseClients.delete(jobData.executionId);
+		}
+	} catch {
 		sseClients.delete(jobData.executionId);
 	}
 };

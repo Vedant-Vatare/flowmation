@@ -29,8 +29,10 @@ export const NODE_EXECUTION_STATUSES = [
 export const TRIGGER_TYPES = ["manual", "webhook", "schedule"] as const;
 
 export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
-export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number];
-export type NodeExecutionStatus = (typeof NODE_EXECUTION_STATUSES)[number];
+export type ExecutionStatus = (typeof EXECUTION_STATUSES)[number] | "waiting";
+export type NodeExecutionStatus =
+	| (typeof NODE_EXECUTION_STATUSES)[number]
+	| "waiting";
 export type TriggerType = (typeof TRIGGER_TYPES)[number];
 
 export type WorkflowNodeOutput = {
@@ -69,7 +71,7 @@ export type ExecuteWorkflowRequest = {
 
 export type NodeExecutionUpdate = { nodeExecutionId?: string } & (
 	| {
-			type: "node:started";
+			type: "node:started" | "node:waiting";
 			workflowNodeId: string;
 			task: string;
 			startedAt: Date;
@@ -92,7 +94,7 @@ export type NodeExecutionUpdate = { nodeExecutionId?: string } & (
 
 export type WorkflowExecutionUpdate =
 	| {
-			type: "workflow:completed";
+			type: "workflow:completed" | "workflow:cancelled";
 			completedAt: Date;
 	  }
 	| {
@@ -122,7 +124,7 @@ export type WorkflowExecution = {
 	id: string;
 	workflowId: string;
 	userId: string;
-	status: (typeof EXECUTION_STATUSES)[number];
+	status: ExecutionStatus;
 	executedAt: Date;
 	completedAt: Date | null;
 	result: string | null;
@@ -132,7 +134,7 @@ export type ExecutionLog = {
 	id: string;
 	workflowId: string;
 	workflowName: string | null;
-	status: "running" | "success" | "failed" | "cancelled";
+	status: ExecutionStatus;
 	executedAt: Date;
 	completedAt: Date | null;
 };

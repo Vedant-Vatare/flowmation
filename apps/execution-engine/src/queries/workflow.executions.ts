@@ -1,23 +1,48 @@
 import {
+	and,
 	db,
 	eq,
 	nodeExecutionTable,
 	workflowExecutionTable,
 } from "@nodebase/db";
-import type { ExecutionStatus } from "@nodebase/shared";
+import { getHumanReviewRunState } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 
 export const updateWorkflowStatusQuery = async (
 	id: string,
-	status: ExecutionStatus,
+	status: typeof workflowExecutionTable.$inferSelect.status,
 	error?: string,
-) => {
-	return await db
-		.update(workflowExecutionTable)
-		.set({ status, completedAt: new Date(), result: error ?? null })
-		.where(eq(workflowExecutionTable.id, id))
-		.returning();
-};
+) =>
+	db.transaction(async (tx) => {
+		if (status === "failed") {
+			const [execution] = await tx
+				.select({ result: workflowExecutionTable.result })
+				.from(workflowExecutionTable)
+				.where(eq(workflowExecutionTable.id, id))
+				.for("update");
+			const review = getHumanReviewRunState(execution?.result ?? null);
+			if (review) {
+				await tx
+					.update(nodeExecutionTable)
+					.set({ status: "failed", completedAt: new Date(), output: error })
+					.where(
+						and(
+							eq(nodeExecutionTable.id, review.id),
+							eq(nodeExecutionTable.workflowExecutionId, id),
+							eq(nodeExecutionTable.status, "running"),
+						),
+					);
+			}
+		}
+		await tx
+			.update(workflowExecutionTable)
+			.set({
+				status,
+				completedAt: new Date(),
+				result: error ?? null,
+			})
+			.where(eq(workflowExecutionTable.id, id));
+	});
 
 export const createWorflowExecutionQuery = async (
 	id: string,
