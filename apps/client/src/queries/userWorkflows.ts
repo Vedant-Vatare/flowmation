@@ -452,12 +452,15 @@ export const useWorkflowLogs = (workflowId: string) => {
 	});
 };
 
-export const useLatestWorkflowNodeOutputs = (workflowId: string) =>
+export const useLatestWorkflowNodeOutputs = (
+	workflowId: string,
+	enabled = true,
+) =>
 	useQuery({
 		queryKey: ["workflow-node-outputs", { workflowId }],
 		queryFn: () => getLatestWorkflowNodeOutputsApi(workflowId),
-		enabled: !!workflowId,
-		refetchInterval: 5000,
+		enabled: !!workflowId && enabled,
+		refetchInterval: enabled ? 5000 : false,
 		refetchOnMount: "always",
 	});
 

@@ -5,8 +5,7 @@ import {
 	supportsErrorOutput,
 } from "@nodebase/shared";
 import { useReactFlow, useStore as useReactFlowStore } from "@xyflow/react";
-import { ChevronRight } from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { memo, useState } from "react";
 import {
 	type Control,
 	Controller,
@@ -14,11 +13,6 @@ import {
 	useFormState,
 } from "react-hook-form";
 import { toast } from "sonner";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
 	Select,
 	SelectContent,
@@ -30,8 +24,6 @@ import { Switch } from "@/components/ui/switch";
 import type { WorkflowCanvasNode, WorkflowNodeData } from "@/constants/nodes";
 import { useUpdateWorkflowNode } from "@/queries/userWorkflows";
 import { getEditableNodeSettings } from "./nodeSettings.utils";
-
-let settingsOpen = true;
 
 type SettingField = {
 	label: string;
@@ -192,7 +184,6 @@ type Props = {
 };
 
 export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
-	const [open, setOpen] = useState(settingsOpen);
 	const { errors } = useFormState({ control });
 	const [pendingSetting, setPendingSetting] = useState<string | null>(null);
 	const { getNodes, setNodes } = useReactFlow<WorkflowCanvasNode>();
@@ -255,13 +246,7 @@ export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 		}
 	};
 
-	const toggle = useCallback(() => {
-		settingsOpen = !settingsOpen;
-		setOpen(settingsOpen);
-	}, []);
-
 	const settings = getEditableNodeSettings(nodeData.task, nodeData.settings);
-	if (!settings) return null;
 
 	const keys = ORDER.filter(
 		(k) =>
@@ -271,132 +256,119 @@ export const NodeSettings = memo(({ nodeData, register, control }: Props) => {
 			settings[k as keyof typeof settings] !== null,
 	);
 
-	if (keys.length === 0 && !supportsErrorOutput(nodeData.task)) return null;
+	if (keys.length === 0 && !supportsErrorOutput(nodeData.task))
+		return (
+			<p className="px-3 py-5 text-xs text-muted-foreground">
+				This node has no execution settings.
+			</p>
+		);
 
 	return (
-		<Collapsible
-			open={open}
-			onOpenChange={toggle}
-			className="group/collapsible"
-		>
-			<CollapsibleTrigger asChild>
-				<button
-					id="node-settings-toggle"
-					type="button"
-					className="flex items-center gap-2 w-full px-3 py-2.5 hover:bg-muted/30 transition-colors"
-				>
-					<span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70 leading-none">
-						Node Settings
-					</span>
-					<ChevronRight className="size-3 text-muted-foreground/50 ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
-				</button>
-			</CollapsibleTrigger>
-			<CollapsibleContent>
-				{supportsErrorOutput(nodeData.task) && (
-					<Controller
-						name="onError"
-						control={control}
-						defaultValue={getNodeErrorSetting(nodeData.task, settings)}
-						render={({ field }) => (
-							<div className="flex flex-col gap-2 px-3 py-3">
-								<label
-									htmlFor="onError"
-									className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70"
+		<div className="py-2">
+			{supportsErrorOutput(nodeData.task) && (
+				<Controller
+					name="onError"
+					control={control}
+					defaultValue={getNodeErrorSetting(nodeData.task, settings)}
+					render={({ field }) => (
+						<div className="flex flex-col gap-2 px-3 py-3">
+							<label
+								htmlFor="onError"
+								className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground/70"
+							>
+								On Error
+							</label>
+							<Select
+								name={field.name}
+								value={pendingSetting ?? String(field.value)}
+								disabled={pendingSetting !== null}
+								onValueChange={(value) =>
+									void changeErrorSetting(value, field.onChange)
+								}
+							>
+								<SelectTrigger
+									id="onError"
+									ref={field.ref}
+									onBlur={field.onBlur}
+									className="w-full bg-muted/50"
 								>
-									On Error
-								</label>
-								<Select
-									name={field.name}
-									value={pendingSetting ?? String(field.value)}
-									disabled={pendingSetting !== null}
-									onValueChange={(value) =>
-										void changeErrorSetting(value, field.onChange)
-									}
-								>
-									<SelectTrigger
-										id="onError"
-										ref={field.ref}
-										onBlur={field.onBlur}
-										className="w-full bg-muted/50"
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent position="popper">
+									<SelectItem
+										value="stopWorkflow"
+										disabled={hasErrorConnection}
 									>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent position="popper">
-										<SelectItem
-											value="stopWorkflow"
-											disabled={hasErrorConnection}
-										>
-											Stop Workflow
-										</SelectItem>
-										<SelectItem
-											value="continueRegularOutput"
-											disabled={hasErrorConnection}
-										>
-											Continue
-										</SelectItem>
-										<SelectItem value="continueErrorOutput">
-											Continue (using error output)
-										</SelectItem>
-									</SelectContent>
-								</Select>
-								{hasErrorConnection && (
-									<p className="text-xs text-muted-foreground">
-										Remove the connection from the Error port before choosing
-										Stop Workflow or Continue.
-									</p>
-								)}
+										Stop Workflow
+									</SelectItem>
+									<SelectItem
+										value="continueRegularOutput"
+										disabled={hasErrorConnection}
+									>
+										Continue
+									</SelectItem>
+									<SelectItem value="continueErrorOutput">
+										Continue (using error output)
+									</SelectItem>
+								</SelectContent>
+							</Select>
+							{hasErrorConnection && (
 								<p className="text-xs text-muted-foreground">
-									Applies after retries finish. Error output adds a separate
-									port for a recovery path.
+									Remove the connection from the Error port before choosing Stop
+									Workflow or Continue.
 								</p>
-							</div>
-						)}
-					/>
-				)}
-				{keys.map((key) => {
-					const field = getField(key, nodeData.task);
-					if (!field) return null;
+							)}
+							<p className="text-xs text-muted-foreground">
+								Applies after retries finish. Error output adds a separate port
+								for a recovery path.
+							</p>
+						</div>
+					)}
+				/>
+			)}
+			{keys.map((key) => {
+				const field = getField(key, nodeData.task);
+				if (!field) return null;
 
-					switch (field.type) {
-						case "number":
-							return (
-								<NumberSetting
-									key={key}
-									name={key}
-									error={
-										typeof errors[key]?.message === "string"
-											? errors[key]?.message
-											: undefined
-									}
-									label={field.label}
-									min={field.min}
-									max={field.max}
-									register={register}
-								/>
-							);
-						case "boolean":
-							return (
-								<BooleanSetting
-									key={key}
-									name={key}
-									label={field.label}
-									control={control}
-								/>
-							);
-						case "textarea":
-							return (
-								<TextareaSetting
-									key={key}
-									name={key}
-									label={field.label}
-									register={register}
-								/>
-							);
-						default:
-							return null;
-					}
-				})}
-			</CollapsibleContent>
-		</Collapsible>
+				switch (field.type) {
+					case "number":
+						return (
+							<NumberSetting
+								key={key}
+								name={key}
+								error={
+									typeof errors[key]?.message === "string"
+										? errors[key]?.message
+										: undefined
+								}
+								label={field.label}
+								min={field.min}
+								max={field.max}
+								register={register}
+							/>
+						);
+					case "boolean":
+						return (
+							<BooleanSetting
+								key={key}
+								name={key}
+								label={field.label}
+								control={control}
+							/>
+						);
+					case "textarea":
+						return (
+							<TextareaSetting
+								key={key}
+								name={key}
+								label={field.label}
+								register={register}
+							/>
+						);
+					default:
+						return null;
+				}
+			})}
+		</div>
 	);
 });

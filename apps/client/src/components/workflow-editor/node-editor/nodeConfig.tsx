@@ -6,7 +6,6 @@ import { useNodeCredentialProvider } from "@/hooks/nodes";
 import { NodeActions, nodesWithActions } from "./NodeActions";
 import { NodeCredentials } from "./NodeCredentials";
 import { NodeField } from "./NodeEditor";
-import { NodeSettings } from "./NodeSettings";
 import { SwitchCasesField } from "./SwitchCasesField";
 
 type NodeConfig = {
@@ -68,9 +67,6 @@ const checkNodeConfigs = (
 
 	if (credentialprovider) return true;
 
-	if (nodeData.settings && Object.keys(nodeData.settings).length > 0)
-		return true;
-
 	if (
 		nodesWithActions.includes(
 			nodeData.task as (typeof nodesWithActions)[number],
@@ -101,12 +97,6 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 		);
 	}
 
-	const showSettings =
-		nodeData.settings &&
-		Object.entries(nodeData.settings).some(
-			([k, v]) => k !== "hasExpressions" && v !== undefined && v !== null,
-		);
-
 	return (
 		<>
 			<NodeActions nodeData={nodeData} />
@@ -120,9 +110,6 @@ export const NodeConfig = ({ nodeData, register, control }: NodeConfig) => {
 				register={register}
 				control={control}
 			/>
-			{(showInfo || showCredentials || nodeData.parameters.length > 0) &&
-				showSettings && <SectionDivider />}
-			<NodeSettings nodeData={nodeData} register={register} control={control} />
 		</>
 	);
 };

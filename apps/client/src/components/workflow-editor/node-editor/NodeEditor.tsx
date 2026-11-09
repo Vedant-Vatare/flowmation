@@ -28,11 +28,13 @@ import { useWorkflowStore } from "@/store/workflow/useWorkflowStore";
 import { hasExpressionsInParams } from "@/utils/nodes/nodes.params.utils";
 import { isUniqueNodeName } from "@/utils/nodes/nodes.utils";
 import { Button } from "../../ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { EditorStatusBar } from "./EditorStatusBar";
 import {
 	type ConfigurationIssue,
 	NodeConfigurationIssues,
 } from "./NodeConfigurationIssues";
+import { NodeExecutionData } from "./NodeExecutionData";
 import {
 	ArrayField,
 	BooleanField,
@@ -47,6 +49,7 @@ import {
 	RadioField,
 	TextareaField,
 } from "./NodeFields";
+import { NodeSettings as NodeExecutionSettings } from "./NodeSettings";
 import { NodeConfig } from "./nodeConfig";
 import { getEditableNodeSettings } from "./nodeSettings.utils";
 
@@ -220,6 +223,7 @@ const NodeNameSection = ({ node }: { node: WorkflowCanvasNode }) => {
 };
 
 export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
+	const [activeTab, setActiveTab] = useState("parameters");
 	const { mutateAsync: updateNode } = useUpdateWorkflowNode(node.id);
 	const { getNodes } = useReactFlow<WorkflowCanvasNode>();
 	const mountedRef = useRef(false);
@@ -390,10 +394,12 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		);
 	}, [node.id, configurationIssues]);
 	const focusIssue = (field: string) => {
-		if (field === "retryCount" || field === "timeout") {
-			const toggle = document.getElementById("node-settings-toggle");
-			if (toggle?.getAttribute("data-state") === "closed") toggle.click();
-		}
+		setActiveTab(
+			node.data.parameters.some((param) => param.name === field) ||
+				field === "credentialId"
+				? "parameters"
+				: "settings",
+		);
 		requestAnimationFrame(() => {
 			const target =
 				document.getElementById(field) ??
@@ -614,32 +620,70 @@ export const NodeEditor = memo(({ node }: { node: WorkflowCanvasNode }) => {
 		getNodeDraft,
 	]);
 
+	const visibleStatus = configurationIssues.length
+		? getNodeDraft()
+			? "unsaved"
+			: "idle"
+		: editorStatus;
+
 	return (
-		<div className="flex flex-col h-full w-full bg-background shadow-sm">
-			<div className="sticky top-0 z-10 bg-background">
+		<Tabs
+			value={activeTab}
+			onValueChange={setActiveTab}
+			className="min-h-full w-full gap-0 bg-background"
+		>
+			<div className="sticky top-0 z-10 mb-2 border-b bg-background">
 				<NodeNameSection node={node} />
-				<EditorStatusBar
-					status={
-						configurationIssues.length
-							? getNodeDraft()
-								? "unsaved"
-								: "idle"
-							: editorStatus
-					}
-				/>
+				<TabsList
+					variant="line"
+					aria-label="Node editor"
+					className="w-full px-2"
+				>
+					<TabsTrigger value="parameters" className="text-xs">
+						Parameters
+					</TabsTrigger>
+					<TabsTrigger value="settings" className="text-xs">
+						Settings
+					</TabsTrigger>
+					<TabsTrigger value="output" className="text-xs">
+						Output
+					</TabsTrigger>
+				</TabsList>
+				{visibleStatus !== "idle" && <EditorStatusBar status={visibleStatus} />}
 			</div>
 			<NodeConfigurationIssues
 				issues={configurationIssues}
 				onSelect={focusIssue}
 			/>
-
-			<div className="flex flex-col">
+			<TabsContent
+				value="parameters"
+				forceMount
+				className="data-[state=inactive]:hidden"
+			>
 				<NodeConfig
 					nodeData={node.data}
 					register={register}
 					control={control}
 				/>
-			</div>
-		</div>
+			</TabsContent>
+			<TabsContent
+				value="settings"
+				forceMount
+				className="data-[state=inactive]:hidden"
+			>
+				<NodeExecutionSettings
+					nodeData={node.data}
+					register={register}
+					control={control}
+				/>
+			</TabsContent>
+			<TabsContent
+				value="output"
+				forceMount
+				className="min-w-0 data-[state=inactive]:hidden"
+			>
+				<NodeExecutionData node={node} active={activeTab === "output"} />
+			</TabsContent>
+		</Tabs>
 	);
 });
