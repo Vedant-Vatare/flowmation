@@ -50,47 +50,25 @@ type WorkflowResult = {
 	error?: string;
 };
 
+export type WorkflowReviewHandlers = {
+	getNextNode: typeof getNextNode;
+	executeNodes: typeof handleSequentialNodeExecution;
+	finishWorkflow: typeof finishWorkflow;
+};
+
 export const workflowWorker = new Worker(
 	WORKFLOW_QUEUE_NAME,
 	async (job: Job<WorkflowJobPayload>, token) => {
 		if (job.data.triggerType === "schedule" && !job.data.executionId)
 			await job.updateData({ ...job.data, executionId: crypto.randomUUID() });
 
-		const resumed = await resumeWorkflowReview(job, token);
-		if (resumed?.finished) return;
-		if (resumed) {
-			if (resumed.cancelled) {
-				return finishWorkflow(job, { cancelled: true });
-			}
-			const { checkpoint, node, approved } = resumed;
-			const { nodes, connections } = job.data;
-			const pendingBranches = checkpoint.pendingNodeIds.map((id) => {
-				const pendingNode = nodes.find((item) => item.id === id);
-				if (!pendingNode)
-					throw new UnrecoverableError(
-						"A pending branch is missing from this run.",
-					);
-				return pendingNode;
-			});
-			const ports = [approved ? "default" : "declined"];
-			const selectedPorts = new Map(checkpoint.selectedPorts);
-			selectedPorts.set(node.id, ports);
-			const nextNode =
-				getNextNode(connections, node, nodes, ports, pendingBranches) ??
-				pendingBranches.pop();
-			const result = await handleSequentialNodeExecution(
-				job,
-				token,
-				nextNode,
-				pendingBranches,
-				{
-					selectedPorts,
-					nodeFailed: checkpoint.nodeFailed,
-					lastError: checkpoint.lastError,
-				},
-			);
-			return finishWorkflow(job, result);
-		}
+		const review = await resumeWorkflowReview(job, token, {
+			getNextNode,
+			executeNodes: handleSequentialNodeExecution,
+			finishWorkflow,
+		});
+
+		if (review) return review.result;
 
 		console.log(
 			`loading workflow: ${job.data.workflowId} via ${job.data.triggerType ?? "unknown"}`,
@@ -255,8 +233,7 @@ const handleWorkflowTrigger = async (
 		throw new UnrecoverableError("could not start trigger node execution");
 	}
 
-	/* runs the trigger node and also determines if trigger node and workflow 
-  should continue executing */
+	/* runs the trigger node and also determines if trigger node and workflow should continue executing */
 
 	const nodeExecution = await executeTriggerNode(triggerNode, job);
 	if (!nodeExecution?.success) {
@@ -436,8 +413,6 @@ const getNextNode = (
 	allowedPorts: string[],
 	pendingBranches: WorkflowNode[],
 ): WorkflowNode | undefined => {
-	// const _pendingBranchesNames = pendingBranches.map((n) => n.name);
-
 	const outgoing = connections.filter(
 		(c) =>
 			c.sourceId === currentNode.id &&

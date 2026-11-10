@@ -23,6 +23,7 @@ import {
 } from "@/services/executionStore.js";
 import { broadcastExecutionUpdate } from "@/utils/sse.utils.js";
 import { recordNodeCompletion } from "@/utils/workflow.updates.utils.js";
+import type { WorkflowReviewHandlers } from "./workflow.js";
 
 const waitForReview = async (job: Job<WorkflowJobPayload>, token?: string) => {
 	await job.moveToDelayed(Date.now() + 30_000, token);
@@ -81,7 +82,8 @@ export const pauseForReview = async ({
 
 export const resumeWorkflowReview = async (
 	job: Job<WorkflowJobPayload>,
-	token?: string,
+	token: string | undefined,
+	{ getNextNode, executeNodes, finishWorkflow }: WorkflowReviewHandlers,
 ) => {
 	const [execution] = await db
 		.select({
@@ -93,7 +95,7 @@ export const resumeWorkflowReview = async (
 	if (!execution) return null;
 	const { status, result } = execution;
 	if (status === "success" || status === "cancelled" || status === "failed") {
-		return { finished: true } as const;
+		return { result: undefined };
 	}
 	const state = getHumanReviewRunState(result);
 	if (!state || !result) return null;
@@ -129,7 +131,8 @@ export const resumeWorkflowReview = async (
 			),
 		)
 		.returning({ id: workflowExecutionTable.id });
-	if (!claimed) return { finished: true } as const;
+
+	if (!claimed) return { result: undefined };
 	const { checkpoint } = review;
 
 	const node = job.data.nodes.find(({ id }) => id === checkpoint.nodeId);
@@ -149,6 +152,7 @@ export const resumeWorkflowReview = async (
 	};
 
 	await restoreExecutionOutputs(job.data.executionId, checkpoint.outputs);
+
 	await recordNodeCompletion(
 		{
 			...job.data,
@@ -157,5 +161,36 @@ export const resumeWorkflowReview = async (
 		},
 		output,
 	);
-	return { finished: false, checkpoint, node, approved, cancelled } as const;
+
+	if (cancelled) {
+		return { result: await finishWorkflow(job, { cancelled: true }) };
+	}
+
+	const { nodes, connections } = job.data;
+	const pendingBranches = checkpoint.pendingNodeIds.map((id) => {
+		const pendingNode = nodes.find((item) => item.id === id);
+		if (!pendingNode)
+			throw new UnrecoverableError(
+				"A pending branch is missing from this run.",
+			);
+		return pendingNode;
+	});
+	const ports = [approved ? "default" : "declined"];
+	const selectedPorts = new Map(checkpoint.selectedPorts);
+	selectedPorts.set(node.id, ports);
+	const nextNode =
+		getNextNode(connections, node, nodes, ports, pendingBranches) ??
+		pendingBranches.pop();
+	const continuation = await executeNodes(
+		job,
+		token,
+		nextNode,
+		pendingBranches,
+		{
+			selectedPorts,
+			nodeFailed: checkpoint.nodeFailed,
+			lastError: checkpoint.lastError,
+		},
+	);
+	return { result: await finishWorkflow(job, continuation) };
 };

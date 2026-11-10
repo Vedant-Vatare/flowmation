@@ -30,6 +30,7 @@ const checkWorkflowStatus = async (executionId: string, userId: string) => {
 	try {
 		const userWorkflowExecution =
 			await db.query.workflowExecutionTable.findFirst({
+				columns: { id: true },
 				where: and(
 					eq(workflowExecutionTable.id, executionId),
 					eq(workflowExecutionTable.userId, userId),

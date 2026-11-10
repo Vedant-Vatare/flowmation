@@ -2,6 +2,7 @@ import type { HumanReviewDecision, PendingHumanReview } from "@nodebase/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { ClipboardCheck } from "lucide-react";
+import { Popover as PopoverPrimitive } from "radix-ui";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -220,7 +221,6 @@ function usePendingHumanReviews(workflowId?: string) {
 export function WorkflowHeaderReviews({ workflowId }: { workflowId: string }) {
 	const { data } = usePendingHumanReviews(workflowId);
 	const [selected, setSelected] = useState<PendingHumanReview>();
-	const [listOpen, setListOpen] = useState(false);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 	const openingReview = useRef(false);
 	const reviews = data ?? [];
@@ -240,7 +240,7 @@ export function WorkflowHeaderReviews({ workflowId }: { workflowId: string }) {
 				</Button>
 			)}
 			{count > 1 && (
-				<Popover open={listOpen} onOpenChange={setListOpen}>
+				<Popover>
 					<PopoverTrigger asChild>
 						<Button ref={triggerRef} size="xs" variant="outline">
 							{label}
@@ -260,28 +260,29 @@ export function WorkflowHeaderReviews({ workflowId }: { workflowId: string }) {
 						<ul className="max-h-72 divide-y overflow-y-auto">
 							{reviews.map((review) => (
 								<li key={review.id}>
-									<button
-										type="button"
-										className="grid w-full min-w-0 gap-1 px-3 py-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
-										onClick={() => {
-											openingReview.current = true;
-											setListOpen(false);
-											setSelected(review);
-										}}
-									>
-										<span className="truncate text-sm font-medium">
-											{review.nodeName}
-										</span>
-										<time
-											dateTime={review.runStartedAt}
-											className="text-xs text-muted-foreground"
+									<PopoverPrimitive.Close asChild>
+										<button
+											type="button"
+											className="grid w-full min-w-0 gap-1 px-3 py-2 text-left hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+											onClick={() => {
+												openingReview.current = true;
+												setSelected(review);
+											}}
 										>
-											{new Date(review.runStartedAt).toLocaleString()}
-										</time>
-										<span className="truncate text-xs text-muted-foreground">
-											{review.message}
-										</span>
-									</button>
+											<span className="truncate text-sm font-medium">
+												{review.nodeName}
+											</span>
+											<time
+												dateTime={review.runStartedAt}
+												className="text-xs text-muted-foreground"
+											>
+												{new Date(review.runStartedAt).toLocaleString()}
+											</time>
+											<span className="truncate text-xs text-muted-foreground">
+												{review.message}
+											</span>
+										</button>
+									</PopoverPrimitive.Close>
 								</li>
 							))}
 						</ul>
