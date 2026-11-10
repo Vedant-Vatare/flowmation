@@ -6,6 +6,8 @@ import {
 	useWorkflowExecutionStore,
 } from "@/store/workflow/useWorkflowStore";
 
+let activeConnection: AbortController | undefined;
+
 const cleanupTestWebhookStatus = () => {
 	const testWebhook = useWebhookStore.getState().testWebhook;
 	const clearTestWebhook = useWebhookStore.getState().clearTestWebhook;
@@ -18,13 +20,21 @@ export const initiateSSEConnection = (
 	maxTimeMs?: number,
 	onStart?: () => void,
 ) => {
-	const addExecutionUpdate =
-		useWorkflowExecutionStore.getState().addNodeExecutionUpdate;
-
+	activeConnection?.abort();
 	const controller = new AbortController();
+	activeConnection = controller;
+	const {
+		addNodeExecutionUpdate,
+		clearExecutionUpdates,
+		setShowExecutionUpdates,
+	} = useWorkflowExecutionStore.getState();
+	clearExecutionUpdates();
+	setShowExecutionUpdates(true);
 	const URL = `${import.meta.env.VITE_SSE_SERVER_URL}/${executionId}`;
 
-	if (maxTimeMs) setTimeout(() => controller.abort(), maxTimeMs);
+	const timeout = maxTimeMs
+		? setTimeout(() => controller.abort(), maxTimeMs)
+		: undefined;
 
 	fetchEventSource(URL, {
 		signal: controller.signal,
@@ -32,6 +42,7 @@ export const initiateSSEConnection = (
 		credentials: "include",
 
 		async onopen(response: Response) {
+			if (controller.signal.aborted) return;
 			if (response.ok) {
 				console.log("Connected to SSE server", response.status);
 				if (onStart) onStart();
@@ -49,14 +60,21 @@ export const initiateSSEConnection = (
 		},
 
 		async onmessage(msg) {
+			if (controller.signal.aborted) return;
 			try {
 				const executionUpdate: ExecutionUpdate = JSON.parse(msg.data);
 
 				if (executionUpdate.type.startsWith("node:")) {
-					addExecutionUpdate(executionUpdate as NodeExecutionUpdate);
+					addNodeExecutionUpdate(executionUpdate as NodeExecutionUpdate);
 				}
-				if (executionUpdate.type === "workflow:completed") {
-					console.log("Workflow completed");
+				if (
+					executionUpdate.type === "workflow:completed" ||
+					executionUpdate.type === "workflow:cancelled"
+				) {
+					if (executionUpdate.type === "workflow:cancelled") {
+						useWorkflowExecutionStore.getState().setRunCancelled();
+					}
+					console.log(executionUpdate.type);
 					controller.abort();
 					cleanupTestWebhookStatus();
 				}
@@ -69,13 +87,19 @@ export const initiateSSEConnection = (
 				console.error("Failed to parse SSE message:", error, msg.data);
 			}
 		},
-	}).catch((error: unknown) => {
-		console.error("Could not connect to workflow updates:", error);
-		cleanupTestWebhookStatus();
-		toast.error(
-			"Could not connect to live workflow updates. Check Runs for the execution result.",
-		);
-	});
+	})
+		.catch((error: unknown) => {
+			if (controller.signal.aborted) return;
+			console.error("Could not connect to workflow updates:", error);
+			cleanupTestWebhookStatus();
+			toast.error(
+				"Could not connect to live workflow updates. Check Runs for the execution result.",
+			);
+		})
+		.finally(() => {
+			clearTimeout(timeout);
+			if (activeConnection === controller) activeConnection = undefined;
+		});
 
 	return controller;
 };

@@ -17,6 +17,7 @@ const statusLabels: Record<NodeExecutionStatus, string> = {
 	success: "Completed",
 	failed: "Failed",
 	skipped: "Skipped",
+	waiting: "Needs review",
 };
 
 const SavedOutput = ({
@@ -71,7 +72,7 @@ const SavedOutput = ({
 						{statusLabels[result.status]}
 					</span>
 				</div>
-				{result.status !== "running" && result.status !== "skipped" && (
+				{(result.status === "success" || result.status === "failed") && (
 					<Button
 						type="button"
 						variant="ghost"
@@ -94,7 +95,11 @@ const SavedOutput = ({
 					{new Date(result.executedAt).toLocaleString()}
 				</time>
 			</p>
-			{result.status === "running" ? (
+			{result.status === "waiting" ? (
+				<p className="pb-3 text-xs text-muted-foreground">
+					Open Pending reviews in Runs to make a decision.
+				</p>
+			) : result.status === "running" ? (
 				<p className="pb-3 text-xs text-muted-foreground">
 					Waiting for this node to finish…
 				</p>
@@ -199,7 +204,8 @@ export const NodeExecutionData = memo(
 			data?.nodeOutputs.map((output) => [output.workflowNodeId, output]),
 		);
 		const execution = data?.execution;
-		const isRunning = execution?.status === "running";
+		const isRunning =
+			execution?.status === "running" || execution?.status === "waiting";
 
 		return (
 			<section aria-label="Execution data" className="min-w-0 px-3 py-4">

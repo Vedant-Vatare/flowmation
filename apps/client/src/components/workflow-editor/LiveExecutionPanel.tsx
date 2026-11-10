@@ -3,6 +3,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { useReactFlow } from "@xyflow/react";
 import { FilterIcon, Settings2Icon, XIcon } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { PendingHumanReviews } from "@/components/PendingHumanReviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +41,7 @@ const MIN_HEIGHT = 120;
 const MAX_HEIGHT = 600;
 const DEFAULT_HEIGHT = 256;
 
-type StatusType = "node:completed" | "node:failed" | "node:started";
+type StatusType = NodeExectionWithTime["type"];
 
 type StatusFilter = {
 	completed: boolean;
@@ -54,6 +55,8 @@ type DisplaySettings = {
 };
 
 const StatusBadge = memo(({ type }: { type: StatusType }) => {
+	if (type === "node:waiting")
+		return <Badge variant="secondary">Needs review</Badge>;
 	if (type === "node:completed")
 		return (
 			<Badge className="bg-success text-success-foreground border-0 font-medium text-xs px-2 py-0.5">
@@ -84,6 +87,9 @@ const RunStatusBadge = memo(
 		if (entries.length === 0) return null;
 		const hasFailed = entries.some((e) => e.type === "node:failed");
 		const hasRunning = entries.some((e) => e.type === "node:started");
+		if (entries.some((e) => e.type === "node:waiting")) {
+			return <Badge variant="secondary">Needs review</Badge>;
+		}
 		if (hasFailed)
 			return (
 				<Badge className="bg-red-500/15 text-red-600 dark:text-red-400 border-0 text-xs font-medium">
@@ -153,7 +159,7 @@ const LogRow = memo(
 
 		const startedAt = log.startedAt as Date | undefined;
 		const completedAt =
-			log.type !== "node:started"
+			log.type === "node:completed" || log.type === "node:failed"
 				? (log.completedAt as Date | undefined)
 				: undefined;
 		const duration = getDurationDiff(startedAt, completedAt);
@@ -207,6 +213,8 @@ const LogRow = memo(
 						) : (
 							<span className="text-muted-foreground">—</span>
 						)
+					) : log.type === "node:waiting" ? (
+						<span className="text-muted-foreground">Awaiting decision</span>
 					) : (
 						<span className="text-muted-foreground italic">In progress…</span>
 					)}
@@ -376,6 +384,7 @@ const PanelSettings = memo(
 const PanelHeader = memo(
 	({
 		allEntries,
+		runCancelled,
 		statusFilter,
 		display,
 		onStatusFilterChange,
@@ -383,6 +392,7 @@ const PanelHeader = memo(
 		onClose,
 	}: {
 		allEntries: NodeExectionWithTime[];
+		runCancelled: boolean;
 		filteredCount: number;
 		statusFilter: StatusFilter;
 		display: DisplaySettings;
@@ -395,7 +405,11 @@ const PanelHeader = memo(
 				<h3 className="font-semibold text-foreground text-sm tracking-tight">
 					Execution Logs
 				</h3>
-				<RunStatusBadge entries={allEntries} />
+				{runCancelled ? (
+					<Badge variant="secondary">Stopped</Badge>
+				) : (
+					<RunStatusBadge entries={allEntries} />
+				)}
 			</div>
 
 			<div className="flex items-center gap-1">
@@ -444,7 +458,7 @@ const DragHandle = memo(
 	),
 );
 
-export const LiveExecutionLogs = () => {
+export const LiveExecutionLogs = ({ workflowId }: { workflowId: string }) => {
 	const { open: sidebarOpen, width, isMobile } = useSidebar();
 	const showLiveExecutionPanel = useWorkflowExecutionStore(
 		(s) => s.showLiveExecutionPanel,
@@ -467,6 +481,7 @@ export const LiveExecutionLogs = () => {
 	const dragStartHeight = useRef(DEFAULT_HEIGHT);
 
 	const updates = useWorkflowExecutionStore((s) => s.nodeExecutionHistory);
+	const runCancelled = useWorkflowExecutionStore((s) => s.runCancelled);
 
 	const onMouseDown = useCallback(
 		(e: React.MouseEvent) => {
@@ -500,7 +515,8 @@ export const LiveExecutionLogs = () => {
 	const entries = updates.filter((e: NodeExectionWithTime) => {
 		if (e.type === "node:completed") return statusFilter.completed;
 		if (e.type === "node:failed") return statusFilter.failed;
-		if (e.type === "node:started") return statusFilter.running;
+		if (e.type === "node:started" || e.type === "node:waiting")
+			return statusFilter.running;
 		return true;
 	});
 
@@ -524,6 +540,7 @@ export const LiveExecutionLogs = () => {
 
 			<PanelHeader
 				allEntries={updates}
+				runCancelled={runCancelled}
 				filteredCount={entries.length}
 				statusFilter={statusFilter}
 				display={display}
@@ -533,6 +550,7 @@ export const LiveExecutionLogs = () => {
 			/>
 
 			<div className="flex-1 overflow-auto pb-4">
+				<PendingHumanReviews workflowId={workflowId} />
 				{updates.length === 0 ? (
 					<EmptyState filtered={false} />
 				) : entries.length === 0 ? (

@@ -2,9 +2,11 @@ import type {
 	DashboardWorkflow,
 	ExecuteWorkflowRequest,
 	ExecutionLog,
+	HumanReviewDecision,
 	LatestWorkflowNodeOutputs,
 	NodeIdsWithPosition,
 	PartialWorkflowNode,
+	PendingHumanReview,
 	UpdateUserWorkflow,
 	UserWorkflow,
 	WorkflowConnection,
@@ -13,6 +15,22 @@ import type {
 	WorkflowNode,
 } from "@nodebase/shared";
 import api from "./axios";
+
+export const getPendingHumanReviewsApi = async (workflowId?: string) => {
+	const response = await api.get<{ reviews: PendingHumanReview[] }>(
+		"/executions/reviews",
+		{ params: { workflowId } },
+	);
+	return response.data.reviews;
+};
+
+export const decideHumanReviewApi = async (
+	executionId: string,
+	reviewId: string,
+	decision: HumanReviewDecision,
+) => {
+	await api.post(`/executions/${executionId}/reviews/${reviewId}`, decision);
+};
 
 export const deleteUserWorkflowApi = async (workflowId: string) => {
 	await api.delete(`/workflows/${workflowId}`);

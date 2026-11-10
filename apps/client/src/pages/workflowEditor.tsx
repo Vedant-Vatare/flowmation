@@ -34,7 +34,7 @@ export const WorkflowEditorPage = () => {
 				>
 					<WorkflowCanvas />
 					<WorkflowEditorSidebar />
-					<LiveExecutionLogs />
+					<LiveExecutionLogs workflowId={workflowId} />
 				</SidebarProvider>
 			</div>
 		</ReactFlowProvider>

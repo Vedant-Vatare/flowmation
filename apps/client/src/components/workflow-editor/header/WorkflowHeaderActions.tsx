@@ -1,4 +1,5 @@
 import { useMatch } from "@tanstack/react-router";
+import { WorkflowHeaderReviews } from "@/components/PendingHumanReviews";
 import { WorkflowSettings } from "./WorkflowSettings";
 import { WorkflowSnapShotButton } from "./WorkflowSnapShotButton";
 export const WorkflowHeaderActions = () => {
@@ -11,6 +12,10 @@ export const WorkflowHeaderActions = () => {
 
 	return (
 		<div className="flex shrink-0 items-center gap-1.5">
+			<WorkflowHeaderReviews
+				key={`reviews-${workflowId}`}
+				workflowId={workflowId}
+			/>
 			<WorkflowSettings key={workflowId} workflowId={workflowId} />
 			<WorkflowSnapShotButton />
 		</div>

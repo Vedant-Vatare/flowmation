@@ -42,10 +42,7 @@ import {
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useDebounce } from "@/hooks/debounce";
 import { initiateSSEConnection } from "@/services/sse";
-import {
-	usePublishStatusStore,
-	useWorkflowExecutionStore,
-} from "@/store/workflow/useWorkflowStore";
+import { usePublishStatusStore } from "@/store/workflow/useWorkflowStore";
 import { getErrorMessage } from "@/utils/error";
 
 export const userWorkflowsOptions = () =>
@@ -414,9 +411,6 @@ export const useUpdateUserWorkflow = () => {
 };
 
 export const useExecuteWorkflow = () => {
-	const setShowExecutionUpdates = useWorkflowExecutionStore(
-		(s) => s.setShowExecutionUpdates,
-	);
 	return useMutation({
 		mutationFn: ({
 			workflowId,
@@ -432,7 +426,6 @@ export const useExecuteWorkflow = () => {
 		onSuccess: (data) => {
 			toast.success("Workflow execution started");
 			initiateSSEConnection(data.executionId);
-			setShowExecutionUpdates(true);
 		},
 		onError: (error) => {
 			toast.error(getErrorMessage(error));
@@ -468,6 +461,14 @@ export const useExecutionLogs = () => {
 	return useInfiniteQuery({
 		queryKey: ["execution-logs"],
 		queryFn: ({ pageParam }: { pageParam: number }) => executionLogs(pageParam),
+		refetchInterval: (query) =>
+			query.state.data?.pages.some((page) =>
+				page.logs.some(
+					({ status }) => status === "waiting" || status === "running",
+				),
+			)
+				? 5000
+				: false,
 
 		initialPageParam: 1,
 		getNextPageParam: (lastPage, allPages) =>

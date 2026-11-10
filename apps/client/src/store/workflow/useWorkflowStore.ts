@@ -42,6 +42,8 @@ type WorkflowExecutionStore = {
 	setLiveExecutionPanel: (state: boolean) => void;
 	showExecutionUpdates: boolean;
 	setShowExecutionUpdates: (state: boolean) => void;
+	runCancelled: boolean;
+	setRunCancelled: () => void;
 	nodeExecutionUpdates: Record<string, NodeExectionWithTime>;
 	nodeExecutionHistory: NodeExectionWithTime[];
 	addNodeExecutionUpdate: (executionUpdate: NodeExecutionUpdate) => void;
@@ -102,6 +104,8 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 		showExecutionUpdates: false,
 		setShowExecutionUpdates: (state: boolean) =>
 			set({ showExecutionUpdates: state }),
+		runCancelled: false,
+		setRunCancelled: () => set({ runCancelled: true }),
 
 		nodeExecutionUpdates: {},
 		nodeExecutionHistory: [],
@@ -128,7 +132,7 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 				const existing = state.nodeExecutionHistory[index];
 				let startedAt = existing?.startedAt;
 				if (startedAt == null) {
-					if (executionUpdate.type === "node:started") {
+					if ("startedAt" in executionUpdate) {
 						startedAt = executionUpdate.startedAt;
 					} else {
 						startedAt = executionUpdate.completedAt;
@@ -157,6 +161,7 @@ export const useWorkflowExecutionStore = create<WorkflowExecutionStore>(
 		clearExecutionUpdates: () => {
 			set({
 				showExecutionUpdates: false,
+				runCancelled: false,
 				nodeExecutionUpdates: {},
 				nodeExecutionHistory: [],
 			});

@@ -1,8 +1,10 @@
+import type { ExecutionStatus } from "@nodebase/shared";
 import { Link } from "@tanstack/react-router";
 import { endOfDay, format, isWithinInterval, startOfDay } from "date-fns";
 import { ArrowUpRight, CalendarIcon, Filter, Loader2, X } from "lucide-react";
 import { memo, useCallback, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
+import { PendingHumanReviews } from "@/components/PendingHumanReviews";
 import { RefreshLogsButton } from "@/components/RefreshLogsButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,20 +33,14 @@ import {
 import { useExecutionLogs } from "@/queries/userWorkflows";
 import { formatRelativeTime, getDurationDiff } from "@/utils/datetime";
 
-type ExecutionStatus = "running" | "success" | "failed" | "cancelled";
-
-type StatusFilter = {
-	success: boolean;
-	failed: boolean;
-	running: boolean;
-	cancelled: boolean;
-};
+type StatusFilter = Record<ExecutionStatus, boolean>;
 
 const DEFAULT_STATUS_FILTER: StatusFilter = {
 	success: true,
 	failed: true,
 	running: true,
 	cancelled: true,
+	waiting: true,
 };
 
 const StatusBadge = memo(({ status }: { status: ExecutionStatus }) => {
@@ -66,6 +62,8 @@ const StatusBadge = memo(({ status }: { status: ExecutionStatus }) => {
 				Running
 			</Badge>
 		);
+	if (status === "waiting")
+		return <Badge variant="secondary">Needs review</Badge>;
 
 	return (
 		<Badge variant="secondary" className="text-xs px-2 py-0.5 font-medium">
@@ -74,11 +72,10 @@ const StatusBadge = memo(({ status }: { status: ExecutionStatus }) => {
 	);
 });
 
-const isAllSelected = (f: StatusFilter) =>
-	f.success && f.failed && f.running && f.cancelled;
+const isAllSelected = (f: StatusFilter) => Object.values(f).every(Boolean);
 
 const activeStatusCount = (f: StatusFilter) =>
-	[f.success, f.failed, f.running, f.cancelled].filter(Boolean).length;
+	Object.values(f).filter(Boolean).length;
 
 export const ExecutionLogsPage = () => {
 	const [statusFilter, setStatusFilter] = useState<StatusFilter>(
@@ -127,7 +124,7 @@ export const ExecutionLogsPage = () => {
 	);
 
 	const filteredLogs = uniqueLogs.filter((log) => {
-		if (!statusFilter[log.status as keyof StatusFilter]) return false;
+		if (!statusFilter[log.status]) return false;
 		if (dateRange?.from) {
 			const logDate = new Date(log.executedAt);
 			const from = startOfDay(dateRange.from);
@@ -217,14 +214,14 @@ export const ExecutionLogsPage = () => {
 								<Filter className="size-3.5 text-muted-foreground" />
 								<span
 									className={
-										statusCount < 4
+										!isAllSelected(statusFilter)
 											? "text-foreground font-normal"
 											: "text-primary-foreground font-normal"
 									}
 								>
 									Status
 								</span>
-								{statusCount < 4 && (
+								{!isAllSelected(statusFilter) && (
 									<span className="rounded-full bg-primary/10 text-primary px-1.5 py-px text-[10px] font-semibold leading-none">
 										{statusCount}
 									</span>
@@ -272,12 +269,22 @@ export const ExecutionLogsPage = () => {
 								>
 									Cancelled
 								</DropdownMenuCheckboxItem>
+								<DropdownMenuCheckboxItem
+									checked={statusFilter.waiting}
+									onCheckedChange={(checked) =>
+										setStatusFilter((f) => ({ ...f, waiting: checked }))
+									}
+									className="text-xs"
+								>
+									Needs review
+								</DropdownMenuCheckboxItem>
 							</DropdownMenuGroup>
 						</DropdownMenuContent>
 					</DropdownMenu>
 				</div>
 			</div>
 
+			<PendingHumanReviews />
 			<div className="overflow-x-auto overflow-y-auto border rounded-md flex-1">
 				{filteredLogs.length === 0 ? (
 					<div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
@@ -304,7 +311,7 @@ export const ExecutionLogsPage = () => {
 							{filteredLogs.map((log) => (
 								<TableRow key={log.id}>
 									<TableCell className="py-3 px-4">
-										<StatusBadge status={log.status as ExecutionStatus} />
+										<StatusBadge status={log.status} />
 									</TableCell>
 									<TableCell className="py-3 px-4">
 										<Link
