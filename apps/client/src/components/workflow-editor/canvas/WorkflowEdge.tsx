@@ -9,8 +9,6 @@ import {
 } from "@xyflow/react";
 import type { WorkflowNodeData } from "@/constants/nodes";
 
-const LABEL_OFFSET = 0.2;
-
 const BACKWARD_OFFSET = 40;
 const BACKWARD_PADDING = 80;
 const BACKWARD_RADIUS = 16;
@@ -130,12 +128,8 @@ export function WorkflowEdge({
 		});
 	}
 
-	const pointX = isBackward
-		? labelX
-		: sourceX + (labelX - sourceX) * LABEL_OFFSET;
-	const pointY = isBackward
-		? labelY - 12
-		: sourceY + (labelY - sourceY) * LABEL_OFFSET;
+	const pointX = labelX;
+	const pointY = isBackward ? labelY - 12 : labelY;
 
 	return (
 		<>
@@ -147,11 +141,11 @@ export function WorkflowEdge({
 							...(sourceHandleId === "error"
 								? {
 										background:
-											"oklch(0.72 0.12 10 / 0.07)",
+											"color-mix(in oklch, var(--background), oklch(0.72 0.12 10) 7%)",
 									}
 								: {}),
 							position: "absolute",
-							transform: `translate(0, -50%) translate(${pointX}px, ${pointY}px)`,
+							transform: `translate(-50%, -50%) translate(${pointX}px, ${pointY}px)`,
 							pointerEvents: "all",
 						}}
 						className="nodrag nopan edge-label"

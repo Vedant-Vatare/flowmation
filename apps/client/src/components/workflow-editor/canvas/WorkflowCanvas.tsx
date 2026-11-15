@@ -1,4 +1,3 @@
-import { LayoutProvider } from "@jalez/react-flow-automated-layout";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Connection, Edge } from "@xyflow/react";
 import { useNodes, useReactFlow } from "@xyflow/react";
@@ -374,14 +373,8 @@ const WorkflowCanvasLayout = () => {
 	const { workflowId } = Route.useParams();
 	return (
 		<div style={{ width: "100%", height: "100%" }}>
-			<LayoutProvider
-				initialDirection="RIGHT"
-				initialAutoLayout={false}
-				initialNodeDimensions={{ width: 100, height: 76 }}
-			>
-				<TestWebhook />
-				<WorkflowCanvas key={workflowId} />
-			</LayoutProvider>
+			<TestWebhook />
+			<WorkflowCanvas key={workflowId} />
 		</div>
 	);
 };

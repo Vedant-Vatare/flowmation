@@ -1,6 +1,5 @@
 import { Redo03Icon, Undo03Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useLayoutContext } from "@jalez/react-flow-automated-layout";
 import type { NodeIdsWithPosition, WorkflowConnection } from "@nodebase/shared";
 import { useIsMutating, useQueryClient } from "@tanstack/react-query";
 import { useReactFlow, useViewport } from "@xyflow/react";
@@ -39,6 +38,7 @@ import {
 	useWorkflowStore,
 	useWorkflowTriggerStore,
 } from "@/store/workflow/useWorkflowStore";
+import { layoutWorkflowNodes } from "@/utils/nodes/layout";
 
 const MIN_ZOOM = 50;
 const MAX_ZOOM = 150;
@@ -74,11 +74,19 @@ function ControlButton({
 
 const ZoomControls = () => {
 	const { workflowId } = Route.useParams();
-	const { zoomIn, zoomOut, fitView, setViewport, getNodes } =
-		useReactFlow<WorkflowCanvasNode>();
+	const {
+		zoomIn,
+		zoomOut,
+		fitView,
+		setViewport,
+		getNodes,
+		getEdges,
+		getInternalNode,
+		setNodes,
+	} = useReactFlow<WorkflowCanvasNode>();
 	const viewport = useViewport();
 	const { mutate: updateNodesPositions } = useUpdateNodesPositions();
-	const { applyLayout } = useLayoutContext();
+	const [isFormatting, setIsFormatting] = useState(false);
 	const [zoom, setZoom] = useState(100);
 	const [zoomInput, setZoomInput] = useState("100");
 	const [isEditing, setIsEditing] = useState(false);
@@ -137,31 +145,53 @@ const ZoomControls = () => {
 	);
 
 	const handleApplyLayout = useCallback(async () => {
-		const nodesBefore = getNodes().reduce<
-			Record<string, { x: number; y: number }>
-		>((acc, n) => {
-			acc[n.id] = {
-				x: Math.round(n.position.x),
-				y: Math.round(n.position.y),
-			};
-			return acc;
-		}, {});
+		if (isFormatting) return;
+		setIsFormatting(true);
+		try {
+			const formatted = await layoutWorkflowNodes(
+				getNodes(),
+				getEdges(),
+				getInternalNode,
+			);
+			const positions = new Map(
+				formatted.map(({ id, position }) => [id, position]),
+			);
+			const changed = getNodes().flatMap<NodeIdsWithPosition[number]>(
+				(node) => {
+					const position = positions.get(node.id);
+					if (
+						!position ||
+						(position.x === node.position.x && position.y === node.position.y)
+					)
+						return [];
+					return [
+						{ id: node.id, positionX: position.x, positionY: position.y },
+					];
+				},
+			);
+			if (changed.length === 0) return;
 
-		const formatted = await applyLayout();
-		if (!formatted) return;
-
-		const changed = formatted.nodes.reduce<NodeIdsWithPosition>((acc, curr) => {
-			const before = nodesBefore[curr.id];
-			const nx = Math.round(curr.position.x);
-			const ny = Math.round(curr.position.y);
-			if (!before || before.x !== nx || before.y !== ny)
-				acc.push({ id: curr.id, positionX: nx, positionY: ny });
-			return acc;
-		}, []);
-
-		if (changed.length > 0)
+			setNodes((nodes) =>
+				nodes.map((node) => {
+					const position = positions.get(node.id);
+					return position ? { ...node, position } : node;
+				}),
+			);
 			updateNodesPositions({ workflowId, nodes: changed });
-	}, [applyLayout, getNodes, workflowId, updateNodesPositions]);
+		} catch {
+			toast.error("Could not arrange nodes. Please try again.");
+		} finally {
+			setIsFormatting(false);
+		}
+	}, [
+		isFormatting,
+		getNodes,
+		getEdges,
+		getInternalNode,
+		setNodes,
+		workflowId,
+		updateNodesPositions,
+	]);
 
 	useEffect(() => {
 		const current = Math.round((viewport.zoom || 1) * 100);
@@ -228,6 +258,7 @@ const ZoomControls = () => {
 
 			<ControlButton
 				onClick={handleApplyLayout}
+				disabled={isFormatting}
 				title="Arrange nodes automatically"
 			>
 				<Waypoints size={15} strokeWidth={1.75} />
