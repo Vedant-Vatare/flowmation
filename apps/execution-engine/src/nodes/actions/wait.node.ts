@@ -1,10 +1,11 @@
 import type { WaitNode } from "@nodebase/shared";
+import { retainExecutionOutputsForWait } from "@/services/executionStore.js";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const waitNodeExecutor = async (
 	node: WaitNode,
-	workflowId: string,
+	executionId: string,
 ): Promise<NodeExecutorOutput> => {
 	const timeUnitsToMs = {
 		seconds: 1000,
@@ -15,7 +16,7 @@ export const waitNodeExecutor = async (
 
 	let delay: number = 0;
 
-	const params = await getResolvedParams(node, workflowId);
+	const params = await getResolvedParams(node, executionId);
 
 	if (params.start.value === "time_period") {
 		if (!params.wait_time_period.value) {
@@ -31,7 +32,8 @@ export const waitNodeExecutor = async (
 				message: "time period value could not be parsed to number",
 			};
 		}
-		delay = val * timeUnitsToMs[params.time_unit.value as keyof typeof timeUnitsToMs];
+		delay =
+			val * timeUnitsToMs[params.time_unit.value as keyof typeof timeUnitsToMs];
 	} else {
 		if (!params.date_time.value) {
 			return {
@@ -48,6 +50,13 @@ export const waitNodeExecutor = async (
 		}
 	}
 
+	if (!Number.isFinite(delay) || delay <= 0) {
+		return {
+			success: false,
+			message: "Waiting time must be a positive finite duration",
+		};
+	}
+	await retainExecutionOutputsForWait(executionId, delay);
 	return {
 		success: true,
 		status: "waiting",

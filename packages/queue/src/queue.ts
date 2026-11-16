@@ -49,6 +49,15 @@ export async function addWorkflowInQueue(
 	});
 }
 
+export async function getWorkflowExecutionNodes(
+	executionId: string,
+): Promise<WorkflowNode[]> {
+	const jobs = await workflowQueue.getActive();
+	const job = jobs.find((job) => job.data.executionId === executionId);
+	if (!job) throw new Error("Workflow execution snapshot not found");
+	return job.data.nodes;
+}
+
 export async function promoteWorkflowReview(jobId: string) {
 	const job = await workflowQueue.getJob(jobId);
 	if (job && (await job.isDelayed())) await job.promote();
