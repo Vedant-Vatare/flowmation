@@ -1,5 +1,10 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	jsonRecordsInputSchema,
+	jsonRecordsValueSchema,
+	jsonValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const supabaseNodeValueSchemas = {
@@ -7,12 +12,12 @@ export const supabaseNodeValueSchemas = {
 	table: withExpr(z.string()),
 	selectColumns: withExpr(z.string()),
 	filter: withExpr(z.string()),
-	data: withExpr(z.string()),
+	data: withExpr(jsonRecordsInputSchema, jsonRecordsValueSchema),
 	orderBy: withExpr(z.string()),
 	limit: withExpr(z.string()),
 	offset: withExpr(z.string()),
 	functionName: withExpr(z.string()),
-	functionBody: withExpr(z.string()),
+	functionBody: withExpr(z.json(), jsonValueSchema),
 } as const;
 
 export const supabaseNodeSchema = baseNodeSchema.extend({

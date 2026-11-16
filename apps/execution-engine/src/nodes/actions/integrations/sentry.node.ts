@@ -1,4 +1,4 @@
-import type { SentryNode } from "@nodebase/shared";
+import { type SentryNode, stringListValueSchema } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -217,7 +217,7 @@ export const sentryNodeExecutor = async (
 
 		if (operation === "create_release") {
 			const version = params.version?.value as string;
-			const projectsRaw = params.projects?.value as string;
+			const projectsRaw = params.projects?.value;
 
 			if (!version) {
 				return { success: false, message: "Release Version is required" };
@@ -226,10 +226,7 @@ export const sentryNodeExecutor = async (
 				return { success: false, message: "Projects are required" };
 			}
 
-			const projects = projectsRaw
-				.split(",")
-				.map((p) => p.trim())
-				.filter(Boolean);
+			const projects = stringListValueSchema.parse(projectsRaw ?? "");
 
 			if (projects.length === 0) {
 				return {

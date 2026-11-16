@@ -18,13 +18,13 @@ export const comparisonOperatorsEnum = z.enum([
 ]);
 
 export const conditionalNodeValueSchemas = {
-	left_operand: withExpr(z.union([z.string(), z.number(), z.boolean()])),
-	right_operand: withExpr(z.union([z.string(), z.number(), z.boolean()])),
+	left_operand: withExpr(z.json(), z.json().optional()),
+	right_operand: withExpr(z.json(), z.json().optional()),
 	operator: withExpr(comparisonOperatorsEnum),
 } as const;
 
 export const loopNodeValueSchemas = {
-	field: withExpr(z.string()),
+	field: withExpr(z.json()),
 } as const;
 
 export const SWITCH_CASE_LIMIT = 12;
@@ -58,7 +58,7 @@ export const callableWorkflowTargetSchema = z.templateLiteral([
 
 export const runWorkflowNodeValueSchemas = {
 	target: z.union([z.literal(""), callableWorkflowTargetSchema]),
-	input: withExpr(z.string()),
+	input: withExpr(z.json()),
 } as const;
 
 export const runWorkflowNodeSchema = baseNodeSchema.extend({

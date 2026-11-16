@@ -6,7 +6,7 @@ export const humanReviewDeclineSchema = z.enum(["stop", "route"]);
 
 export const humanInTheLoopNodeValueSchemas = {
 	message: withExpr(z.string().trim().min(1).max(4000)),
-	content: withExpr(z.string()),
+	content: withExpr(z.json()),
 	allow_edits: withExpr(z.enum(["yes", "no"])),
 	on_decline: withExpr(humanReviewDeclineSchema),
 } as const;

@@ -105,6 +105,7 @@ import type {
 import {
 	checkRequiredParameters,
 	getResolvedParams,
+	prepareNodeForExecution,
 } from "./utils/node.executor.utils.js";
 
 const credentialNodeExecutors: Record<
@@ -182,39 +183,19 @@ const credentialNodeExecutors: Record<
 export const executeNode = async (
 	job: NodeJobPayload,
 ): Promise<NodeExecutorOutput> => {
-	const { userId, workflowId, executionId, node, nodeData } = job;
-	const { valid, missing } = checkRequiredParameters(node.parameters);
-
-	if (!valid) {
-		return {
-			success: false,
-			message: `Missing required parameters: ${missing.join(", ")}`,
-			retryable: false,
-		};
-	}
+	const { userId, workflowId, executionId, nodeData } = job;
+	const node = await prepareNodeForExecution(job.node, executionId);
 
 	const credentialExecutor = Object.hasOwn(credentialNodeExecutors, node.task)
 		? credentialNodeExecutors[node.task]
 		: undefined;
 
 	if (credentialExecutor) {
-		let executionNode = node;
-
 		if (node.task === "action.discord") {
 			try {
 				const params = await getResolvedParams(node, executionId);
-				executionNode = {
-					...node,
-					parameters: Object.values(params),
-					settings: { ...node.settings, hasExpressions: false },
-				};
-
 				if (params.operation?.value !== "send_dm") {
-					return discordNodeExecutor(
-						executionNode as DiscordNode,
-						executionId,
-						null,
-					);
+					return discordNodeExecutor(node as DiscordNode, executionId, null);
 				}
 			} catch {
 				return {
@@ -261,7 +242,7 @@ export const executeNode = async (
 			};
 		}
 
-		return credentialExecutor(executionNode, executionId, credential);
+		return credentialExecutor(node, executionId, credential);
 	}
 
 	switch (node.task) {
@@ -284,7 +265,7 @@ export const executeNode = async (
 		case "action.switch":
 			return switchNodeExecutor(node as SwitchNode, executionId);
 		case "action.run_workflow":
-			return runWorkflowNodeExecutor(job);
+			return runWorkflowNodeExecutor({ ...job, node });
 		case "action.loop":
 			return loopNodeExecutor(node as LoopNode, nodeData?.loopState);
 		case "action.merge":

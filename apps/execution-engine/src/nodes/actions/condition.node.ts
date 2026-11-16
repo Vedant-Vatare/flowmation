@@ -86,7 +86,7 @@ export const conditionNodeExecutor = async (
 		output =
 			(Array.isArray(data) && data.includes(rightValue)) ||
 			(data !== null &&
-				typeof rightValue !== "boolean" &&
+				(typeof rightValue === "string" || typeof rightValue === "number") &&
 				typeof data === "object" &&
 				Object.hasOwn(data, rightValue));
 	} else if (operator === "emt") {

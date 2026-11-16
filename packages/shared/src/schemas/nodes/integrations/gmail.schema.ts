@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	boundedStringListInputSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const gmailNodeValueSchemas = {
@@ -11,7 +15,7 @@ export const gmailNodeValueSchemas = {
 	query: withExpr(z.string().max(2000)),
 	maxResults: withExpr(z.coerce.number().int().min(1).max(500)),
 	messageId: withExpr(z.string().max(2000)),
-	labelIds: withExpr(z.string().max(2000)),
+	labelIds: withExpr(boundedStringListInputSchema, stringListValueSchema),
 	readStatus: withExpr(z.string()),
 } as const;
 

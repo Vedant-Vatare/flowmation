@@ -1,4 +1,4 @@
-import type { NotionNode } from "@nodebase/shared";
+import { jsonObjectValueSchema, type NotionNode } from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -150,20 +150,6 @@ const textToNotionBlocks = (content: string) => {
 	});
 };
 
-const mergeProperties = (
-	title: string,
-	propertiesJson?: string,
-): Record<string, unknown> => {
-	const base = buildTitleProperty(title);
-	if (!propertiesJson) return base;
-	try {
-		const extra = JSON.parse(propertiesJson);
-		return { ...base, ...extra };
-	} catch {
-		return base;
-	}
-};
-
 export const notionNodeExecutor = async (
 	node: NotionNode,
 	executionId: string,
@@ -193,14 +179,17 @@ export const notionNodeExecutor = async (
 				(params.databaseId?.value as string) ?? "",
 			);
 			const title = params.title?.value as string;
-			const properties = params.properties?.value as string | undefined;
+			const properties = params.properties?.value;
+			const extraProperties = properties
+				? jsonObjectValueSchema.parse(properties)
+				: {};
 
 			if (!databaseId) throw new Error("databaseId is required");
 			if (!title) throw new Error("title is required");
 
 			const body = {
 				parent: { type: "database_id" as const, database_id: databaseId },
-				properties: mergeProperties(title, properties),
+				properties: { ...buildTitleProperty(title), ...extraProperties },
 			};
 
 			const response = await fetch(`${NOTION_API}/pages`, {

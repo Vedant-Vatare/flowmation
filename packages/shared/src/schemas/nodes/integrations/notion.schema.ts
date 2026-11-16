@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	jsonObjectInputSchema,
+	jsonObjectValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const notionNodeValueSchemas = {
@@ -9,7 +13,7 @@ export const notionNodeValueSchemas = {
 	title: withExpr(z.string()),
 	content: withExpr(z.string()),
 	databaseId: withExpr(z.string()),
-	properties: withExpr(z.string()),
+	properties: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
 } as const;
 
 const dependsOnSchema = z.array(

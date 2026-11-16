@@ -1,10 +1,14 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { jsonListValueSchema } from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const postgresNodeValueSchemas = {
 	query: withExpr(z.string()),
-	parameters: withExpr(z.string()),
+	parameters: withExpr(
+		z.union([z.string(), z.array(z.json())]),
+		jsonListValueSchema,
+	),
 } as const;
 
 export const postgresNodeSchema = baseNodeSchema.extend({

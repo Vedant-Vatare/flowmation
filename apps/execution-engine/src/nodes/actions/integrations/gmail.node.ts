@@ -1,4 +1,4 @@
-import type { GmailNode } from "@nodebase/shared";
+import { type GmailNode, stringListValueSchema } from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -103,11 +103,9 @@ export const gmailNodeExecutor = async (
 
 		if (operation === "add_label" || operation === "remove_label") {
 			const messageId = params.messageId?.value as string;
-			const labelIdsStr = params.labelIds?.value as string;
-			const labelIds = labelIdsStr
-				.split(",")
-				.map((l) => l.trim())
-				.filter(Boolean);
+			const labelIds = stringListValueSchema.parse(
+				params.labelIds?.value ?? "",
+			);
 
 			const body =
 				operation === "add_label"

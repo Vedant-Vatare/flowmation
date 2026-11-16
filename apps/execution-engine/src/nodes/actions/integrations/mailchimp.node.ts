@@ -1,16 +1,7 @@
 import { createHash } from "node:crypto";
-import type { MailchimpNode } from "@nodebase/shared";
+import { type MailchimpNode, stringListValueSchema } from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
-
-const parseJson = (value: string | undefined, paramName: string): unknown => {
-	if (!value || !value.trim()) return undefined;
-	try {
-		return JSON.parse(value);
-	} catch {
-		throw new Error(`Invalid JSON in ${paramName}: ${value}`);
-	}
-};
 
 const emailToHash = (email: string): string =>
 	createHash("md5").update(email.toLowerCase().trim()).digest("hex");
@@ -50,8 +41,8 @@ export const mailchimpNodeExecutor = async (
 		const listId = params.listId?.value as string;
 		const email = params.email?.value as string;
 		const status = params.status?.value as string;
-		const mergeFields = params.mergeFields?.value as string;
-		const tags = params.tags?.value as string;
+		const mergeFields = params.mergeFields?.value;
+		const tags = stringListValueSchema.parse(params.tags?.value ?? "");
 		const campaignId = params.campaignId?.value as string;
 		const campaignName = params.campaignName?.value as string;
 		const subject = params.subject?.value as string;
@@ -109,8 +100,7 @@ export const mailchimpNodeExecutor = async (
 					status,
 				};
 
-				const mergeFieldsParsed = parseJson(mergeFields, "mergeFields");
-				if (mergeFieldsParsed) body.merge_fields = mergeFieldsParsed;
+				if (mergeFields) body.merge_fields = mergeFields;
 
 				result = await mailchimpRequest(
 					`/lists/${listId}/members`,
@@ -118,18 +108,17 @@ export const mailchimpNodeExecutor = async (
 					body,
 				);
 
-				if (tags && result && typeof result === "object" && "id" in result) {
-					const tagList = tags
-						.split(",")
-						.map((t) => t.trim())
-						.filter(Boolean);
-					if (tagList.length > 0) {
-						await mailchimpRequest(
-							`/lists/${listId}/members/${(result as { id: string }).id}/tags`,
-							"POST",
-							{ tags: tagList.map((name) => ({ name, status: "active" })) },
-						);
-					}
+				if (
+					tags.length > 0 &&
+					result &&
+					typeof result === "object" &&
+					"id" in result
+				) {
+					await mailchimpRequest(
+						`/lists/${listId}/members/${(result as { id: string }).id}/tags`,
+						"POST",
+						{ tags: tags.map((name) => ({ name, status: "active" })) },
+					);
 				}
 			} else if (operation === "get") {
 				if (!email) return { success: false, message: "Email is required" };
@@ -149,8 +138,7 @@ export const mailchimpNodeExecutor = async (
 				const body: Record<string, unknown> = {};
 				if (status) body.status = status;
 
-				const mergeFieldsParsed = parseJson(mergeFields, "mergeFields");
-				if (mergeFieldsParsed) body.merge_fields = mergeFieldsParsed;
+				if (mergeFields) body.merge_fields = mergeFields;
 
 				if (Object.keys(body).length > 0) {
 					result = await mailchimpRequest(
@@ -165,18 +153,12 @@ export const mailchimpNodeExecutor = async (
 					);
 				}
 
-				if (tags) {
-					const tagList = tags
-						.split(",")
-						.map((t) => t.trim())
-						.filter(Boolean);
-					if (tagList.length > 0) {
-						await mailchimpRequest(
-							`/lists/${listId}/members/${hash}/tags`,
-							"POST",
-							{ tags: tagList.map((name) => ({ name, status: "active" })) },
-						);
-					}
+				if (tags.length > 0) {
+					await mailchimpRequest(
+						`/lists/${listId}/members/${hash}/tags`,
+						"POST",
+						{ tags: tags.map((name) => ({ name, status: "active" })) },
+					);
 				}
 			} else if (operation === "archive") {
 				if (!email) return { success: false, message: "Email is required" };

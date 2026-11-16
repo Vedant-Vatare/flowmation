@@ -1,19 +1,27 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	booleanInputSchema,
+	booleanValueSchema,
+	finiteNumberValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const redisNodeValueSchemas = {
 	operation: withExpr(z.string()),
 	key: withExpr(z.string()),
-	value: withExpr(z.string()),
+	value: withExpr(z.json()),
 	keyType: withExpr(z.string()),
 	pattern: withExpr(z.string()),
 	channel: withExpr(z.string()),
 	data: withExpr(z.string()),
-	tail: withExpr(z.string()),
-	expire: withExpr(z.string()),
-	ttl: withExpr(z.string()),
-	getValues: withExpr(z.string()),
+	tail: withExpr(booleanInputSchema, booleanValueSchema),
+	expire: withExpr(booleanInputSchema, booleanValueSchema),
+	ttl: withExpr(
+		z.union([z.string(), z.number().nonnegative()]),
+		finiteNumberValueSchema.pipe(z.number().int().nonnegative()),
+	),
+	getValues: withExpr(booleanInputSchema, booleanValueSchema),
 } as const;
 
 const showFor = (operations: string[]) =>

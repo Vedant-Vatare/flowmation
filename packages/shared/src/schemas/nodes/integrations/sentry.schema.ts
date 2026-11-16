@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	stringListInputSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const sentryNodeValueSchemas = {
@@ -8,7 +12,7 @@ export const sentryNodeValueSchemas = {
 	issueId: withExpr(z.string()),
 	status: withExpr(z.string()),
 	version: withExpr(z.string()),
-	projects: withExpr(z.string()),
+	projects: withExpr(stringListInputSchema, stringListValueSchema),
 	limit: withExpr(z.string()),
 } as const;
 

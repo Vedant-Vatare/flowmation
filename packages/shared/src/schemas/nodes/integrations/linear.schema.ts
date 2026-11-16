@@ -1,5 +1,10 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	boundedStringListInputSchema,
+	jsonObjectValueSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const linearNodeValueSchemas = {
@@ -11,8 +16,11 @@ export const linearNodeValueSchemas = {
 	priority: withExpr(z.coerce.number().int().min(0).max(4)),
 	assignee_id: withExpr(z.string().max(2000)),
 	state_id: withExpr(z.string().max(2000)),
-	labels: withExpr(z.string().max(2000)),
-	filter: withExpr(z.string().max(10000)),
+	labels: withExpr(boundedStringListInputSchema, stringListValueSchema),
+	filter: withExpr(
+		z.union([z.string().max(10000), z.record(z.string(), z.json())]),
+		jsonObjectValueSchema,
+	),
 	limit: withExpr(z.coerce.number().int().min(1).max(250)),
 } as const;
 

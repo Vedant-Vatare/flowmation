@@ -14,6 +14,7 @@ export const anyNodeValueSchema: z.ZodType<unknown> = z.lazy(() =>
 		z.string(),
 		z.number(),
 		z.boolean(),
+		z.null(),
 		z.array(anyNodeValueSchema),
 		z.record(z.string(), anyNodeValueSchema),
 	]),

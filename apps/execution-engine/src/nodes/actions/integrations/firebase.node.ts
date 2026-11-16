@@ -80,22 +80,15 @@ export const firebaseNodeExecutor = async (
 		}
 
 		if (operation === "write_data") {
-			const dataStr = params.data?.value as string;
-			if (!dataStr) {
+			const payload = params.data?.value;
+			if (payload === undefined || payload === "") {
 				return { success: false, message: "Data is required" };
-			}
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
 			}
 
 			const response = await fetch(url.toString(), {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(payload),
 			});
 
 			if (!response.ok) {
@@ -115,22 +108,15 @@ export const firebaseNodeExecutor = async (
 		}
 
 		if (operation === "push_data") {
-			const dataStr = params.data?.value as string;
-			if (!dataStr) {
+			const payload = params.data?.value;
+			if (payload === undefined || payload === "") {
 				return { success: false, message: "Data is required" };
-			}
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
 			}
 
 			const response = await fetch(url.toString(), {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(payload),
 			});
 
 			if (!response.ok) {
@@ -150,22 +136,15 @@ export const firebaseNodeExecutor = async (
 		}
 
 		if (operation === "update_data") {
-			const dataStr = params.data?.value as string;
-			if (!dataStr) {
+			const payload = params.data?.value;
+			if (payload === undefined || payload === "") {
 				return { success: false, message: "Data is required" };
-			}
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
 			}
 
 			const response = await fetch(url.toString(), {
 				method: "PATCH",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(payload),
 			});
 
 			if (!response.ok) {

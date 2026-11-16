@@ -123,19 +123,12 @@ export const airtableNodeExecutor = async (
 		}
 
 		if (operation === "create_record") {
-			const fieldsRaw = params.fields?.value as string;
-			if (!fieldsRaw) {
+			const fields = params.fields?.value;
+			if (!fields) {
 				return {
 					success: false,
 					message: "Fields (JSON) are required",
 				};
-			}
-
-			let fields: Record<string, unknown>;
-			try {
-				fields = JSON.parse(fieldsRaw) as Record<string, unknown>;
-			} catch {
-				return { success: false, message: "Invalid JSON in Fields" };
 			}
 
 			const response = await fetch(`${AIRTABLE_API}/${baseId}/${tableName}`, {
@@ -166,20 +159,13 @@ export const airtableNodeExecutor = async (
 
 		if (operation === "update_record") {
 			const recordId = params.recordId?.value as string;
-			const fieldsRaw = params.fields?.value as string;
+			const fields = params.fields?.value;
 
 			if (!recordId) {
 				return { success: false, message: "Record ID is required" };
 			}
-			if (!fieldsRaw) {
+			if (!fields) {
 				return { success: false, message: "Fields (JSON) are required" };
-			}
-
-			let fields: Record<string, unknown>;
-			try {
-				fields = JSON.parse(fieldsRaw) as Record<string, unknown>;
-			} catch {
-				return { success: false, message: "Invalid JSON in Fields" };
 			}
 
 			const response = await fetch(

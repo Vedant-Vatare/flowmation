@@ -15,10 +15,11 @@ export const httpNodeExecutor = async (
 	}
 
 	const bodyMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-	const body =
-		bodyMethods.has(method) && params.body.value
-			? params.body.value
-			: undefined;
+	const value = params.body?.value;
+	let body: string | undefined;
+	if (bodyMethods.has(method) && value !== undefined && value !== "") {
+		body = typeof value === "string" ? value : JSON.stringify(value);
+	}
 
 	const headersRecord: Record<string, string | string[]> =
 		typeof params.headers.value === "object" ? params.headers.value : {};

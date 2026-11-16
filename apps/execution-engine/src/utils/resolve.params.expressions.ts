@@ -4,13 +4,13 @@ import { getNodeOutput } from "@/services/executionStore.js";
 const EXPRESSION_REGEX = /\{\{\s*([^}.]+?)(?:\.([^}]+?))?\s*\}\}/g;
 
 type NodeParameterLike = Omit<NodeParameters, "value"> & {
-	value?: NodeParameters["value"];
+	value?: unknown;
 };
 
 export async function FormatParamsValueExpressions<T extends NodeParameterLike>(
 	params: T[],
 	executionId: string,
-): Promise<T[]> {
+): Promise<Array<Omit<T, "value"> & { value: unknown }>> {
 	return Promise.all(
 		params.map(async (param) => ({
 			...param,
@@ -90,8 +90,6 @@ function coerce(val: unknown, type: NodePropertyType): unknown {
 		if (typeof val === "object") return val;
 		return String(val);
 	}
-	if (type === "boolean") return Boolean(val);
-	if (type === "number") return Number(val);
 	return val;
 }
 

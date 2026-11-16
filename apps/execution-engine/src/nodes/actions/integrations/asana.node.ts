@@ -249,7 +249,7 @@ export const asanaNodeExecutor = async (
 
 		if (operation === "update_task") {
 			const taskGid = params.taskGid?.value as string;
-			const completed = params.completed?.value as string;
+			const completed = params.completed?.value;
 
 			if (!taskGid) {
 				return { success: false, message: "Task GID is required" };
@@ -257,7 +257,7 @@ export const asanaNodeExecutor = async (
 
 			const body: Record<string, unknown> = {
 				data: {
-					completed: completed === "true",
+					completed: completed === true || completed === "true",
 				},
 			};
 

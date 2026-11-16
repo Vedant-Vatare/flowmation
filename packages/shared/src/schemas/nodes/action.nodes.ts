@@ -9,9 +9,24 @@ import { withExpr } from "./validation.js";
 
 export const httpNodeValueSchemas = {
 	url: withExpr(z.url({ error: "Must be a valid URL" }).max(4000)),
-	method: withExpr(z.string()),
+	method: withExpr(
+		z
+			.string()
+			.transform((value) => value.toUpperCase())
+			.pipe(
+				z.enum(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]),
+			),
+	),
 	urlParams: withExpr(z.record(z.string(), z.string())),
-	body: withExpr(z.string().max(10000)),
+	body: withExpr(
+		z.union([
+			z.string().max(10000),
+			z.record(z.string(), z.json()),
+			z.array(z.json()),
+			z.number(),
+			z.boolean(),
+		]),
+	),
 	headers: withExpr(
 		z.record(z.string(), z.union([z.string(), z.array(z.string())])),
 	),

@@ -1,5 +1,11 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	jsonObjectInputSchema,
+	jsonObjectValueSchema,
+	stringListInputSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const mailchimpNodeValueSchemas = {
@@ -10,8 +16,8 @@ export const mailchimpNodeValueSchemas = {
 	listId: withExpr(z.string()),
 	email: withExpr(z.string()),
 	status: withExpr(z.string()),
-	mergeFields: withExpr(z.string()),
-	tags: withExpr(z.string()),
+	mergeFields: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
+	tags: withExpr(stringListInputSchema, stringListValueSchema),
 	campaignId: withExpr(z.string()),
 	campaignName: withExpr(z.string()),
 	subject: withExpr(z.string()),

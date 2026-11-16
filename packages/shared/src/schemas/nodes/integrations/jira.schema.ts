@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	boundedStringListInputSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const jiraNodeValueSchemas = {
@@ -12,7 +16,7 @@ export const jiraNodeValueSchemas = {
 	status: withExpr(z.string()),
 	priority: withExpr(z.string()),
 	assignee: withExpr(z.string().max(2000)),
-	labels: withExpr(z.string().max(2000)),
+	labels: withExpr(boundedStringListInputSchema, stringListValueSchema),
 	jql: withExpr(z.string().max(10000)),
 	max_results: withExpr(z.coerce.number().int().min(1).max(100)),
 	transition_id: withExpr(z.string().max(2000)),

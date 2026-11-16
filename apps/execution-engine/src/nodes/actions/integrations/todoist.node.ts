@@ -1,4 +1,4 @@
-import type { TodoistNode } from "@nodebase/shared";
+import { stringListValueSchema, type TodoistNode } from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleResponse } from "@/utils/api.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -59,8 +59,10 @@ export const todoistNodeExecutor = async (
 			const dueString = params.due_string?.value as string;
 			if (dueString) body.due_string = dueString;
 
-			const labels = params.labels?.value as string;
-			if (labels) body.labels = labels.split(",").map((l) => l.trim());
+			const labels = params.labels?.value
+				? stringListValueSchema.parse(params.labels.value)
+				: undefined;
+			if (labels) body.labels = labels;
 
 			const response = await fetch(`${TODOIST_API_BASE}/tasks`, {
 				method: "POST",
@@ -107,8 +109,10 @@ export const todoistNodeExecutor = async (
 			const dueString = params.due_string?.value as string;
 			if (dueString) body.due_string = dueString;
 
-			const labels = params.labels?.value as string;
-			if (labels) body.labels = labels.split(",").map((l) => l.trim());
+			const labels = params.labels?.value
+				? stringListValueSchema.parse(params.labels.value)
+				: undefined;
+			if (labels) body.labels = labels;
 
 			if (Object.keys(body).length === 0) {
 				return {

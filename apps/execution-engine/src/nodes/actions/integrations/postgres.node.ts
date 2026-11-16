@@ -27,12 +27,11 @@ export const postgresNodeExecutor = async (
 			return { success: false, message: "Query is required" };
 		}
 
-		const parametersStr = params.parameters?.value as string;
+		const values = params.parameters?.value;
 		let queryParams: unknown[] | undefined;
-
-		if (parametersStr?.trim()) {
-			queryParams = parametersStr.split(",").map((p) => p.trim());
-		}
+		if (Array.isArray(values)) queryParams = values;
+		else if (values?.trim())
+			queryParams = values.split(",").map((value) => value.trim());
 
 		const { Client } = await import("pg");
 		const client = new Client({ connectionString });

@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	jsonObjectInputSchema,
+	jsonObjectValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const airtableNodeValueSchemas = {
@@ -7,7 +11,7 @@ export const airtableNodeValueSchemas = {
 	baseId: withExpr(z.string()),
 	tableName: withExpr(z.string()),
 	recordId: withExpr(z.string()),
-	fields: withExpr(z.string()),
+	fields: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
 	filterByFormula: withExpr(z.string()),
 	sort: withExpr(z.string()),
 	sortDirection: withExpr(z.string()),

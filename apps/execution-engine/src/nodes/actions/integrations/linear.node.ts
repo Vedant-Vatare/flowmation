@@ -1,4 +1,8 @@
-import type { LinearNode } from "@nodebase/shared";
+import {
+	jsonObjectValueSchema,
+	type LinearNode,
+	stringListValueSchema,
+} from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -94,7 +98,9 @@ export const linearNodeExecutor = async (
 			const priority = Number(params.priority?.value) || 3;
 			const assigneeId = params.assignee_id?.value as string;
 			const stateId = params.state_id?.value as string;
-			const labels = params.labels?.value as string;
+			const labels = params.labels?.value
+				? stringListValueSchema.parse(params.labels.value)
+				: undefined;
 
 			const input: Record<string, unknown> = { teamId, title };
 			if (description) input.description = description;
@@ -102,10 +108,7 @@ export const linearNodeExecutor = async (
 			if (assigneeId) input.assigneeId = assigneeId;
 			if (stateId) input.stateId = stateId;
 			if (labels) {
-				input.labelIds = labels
-					.split(",")
-					.map((l) => l.trim())
-					.filter(Boolean);
+				input.labelIds = labels;
 			}
 
 			const result = await graphqlRequest(
@@ -162,17 +165,10 @@ export const linearNodeExecutor = async (
 
 		if (operation === "list_issues") {
 			const teamId = params.team_id?.value as string;
-			const filterStr = params.filter?.value as string;
+			const filterValue = params.filter?.value;
 			const limit = Number(params.limit?.value) || 50;
 
-			let filter: Record<string, unknown> = {};
-			if (filterStr) {
-				try {
-					filter = JSON.parse(filterStr);
-				} catch {
-					throw new Error("Invalid filter JSON");
-				}
-			}
+			let filter = filterValue ? jsonObjectValueSchema.parse(filterValue) : {};
 			if (teamId) {
 				filter = { ...filter, team: { id: { eq: teamId } } };
 			}

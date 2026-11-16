@@ -1,5 +1,9 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	stringListInputSchema,
+	stringListValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const todoistNodeValueSchemas = {
@@ -10,7 +14,7 @@ export const todoistNodeValueSchemas = {
 	description: withExpr(z.string()),
 	priority: withExpr(z.string()),
 	due_string: withExpr(z.string()),
-	labels: withExpr(z.string()),
+	labels: withExpr(stringListInputSchema, stringListValueSchema),
 } as const;
 
 export const todoistNodeSchema = baseNodeSchema.extend({

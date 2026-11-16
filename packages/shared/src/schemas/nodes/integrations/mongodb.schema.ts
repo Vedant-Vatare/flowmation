@@ -1,15 +1,21 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import {
+	jsonObjectInputSchema,
+	jsonObjectValueSchema,
+	jsonRecordsInputSchema,
+	jsonRecordsValueSchema,
+} from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const mongodbNodeValueSchemas = {
 	operation: withExpr(z.string()),
 	database: withExpr(z.string()),
 	collection: withExpr(z.string()),
-	filter: withExpr(z.string()),
-	document: withExpr(z.string()),
-	update: withExpr(z.string()),
-	projection: withExpr(z.string()),
+	filter: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
+	document: withExpr(jsonRecordsInputSchema, jsonRecordsValueSchema),
+	update: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
+	projection: withExpr(jsonObjectInputSchema, jsonObjectValueSchema),
 } as const;
 
 export const mongodbNodeSchema = baseNodeSchema.extend({

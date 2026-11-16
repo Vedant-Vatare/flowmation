@@ -1,5 +1,6 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { booleanInputSchema, booleanValueSchema } from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const asanaNodeValueSchemas = {
@@ -10,7 +11,7 @@ export const asanaNodeValueSchemas = {
 	name: withExpr(z.string()),
 	notes: withExpr(z.string()),
 	dueOn: withExpr(z.string()),
-	completed: withExpr(z.string()),
+	completed: withExpr(booleanInputSchema, booleanValueSchema),
 	limit: withExpr(z.string()),
 } as const;
 

@@ -1,15 +1,10 @@
-import type { MongodbNode } from "@nodebase/shared";
+import {
+	jsonObjectValueSchema,
+	jsonRecordsValueSchema,
+	type MongodbNode,
+} from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
-
-const parseJson = (value: string | undefined, paramName: string): unknown => {
-	if (!value || !value.trim()) return undefined;
-	try {
-		return JSON.parse(value);
-	} catch {
-		throw new Error(`Invalid JSON in ${paramName}: ${value}`);
-	}
-};
 
 const convertObjectIds = (
 	obj: Record<string, unknown>,
@@ -63,13 +58,24 @@ export const mongodbNodeExecutor = async (
 		if (!collection)
 			return { success: false, message: "Collection is required" };
 
-		const filter = parseJson(params.filter?.value as string, "filter");
-		const document = parseJson(params.document?.value as string, "document");
-		const update = parseJson(params.update?.value as string, "update");
-		const projection = parseJson(
-			params.projection?.value as string,
-			"projection",
-		);
+		const filter = params.filter?.value
+			? jsonObjectValueSchema.parse(params.filter.value)
+			: undefined;
+		const document = params.document?.value
+			? jsonRecordsValueSchema.parse(params.document.value)
+			: undefined;
+		const update = params.update?.value
+			? jsonObjectValueSchema.parse(params.update.value)
+			: undefined;
+		const projection = params.projection?.value
+			? jsonObjectValueSchema.parse(params.projection.value)
+			: undefined;
+		if (operation === "insertOne" && Array.isArray(document))
+			return {
+				success: false,
+				retryable: false,
+				message: "Document must be one JSON object for insertOne",
+			};
 
 		const { MongoClient, ObjectId } = await import("mongodb");
 		const client = new MongoClient(connectionString);
@@ -109,7 +115,7 @@ export const mongodbNodeExecutor = async (
 							success: false,
 							message: "Document is required for insertOne",
 						};
-					result = await col.insertOne(document);
+					result = await col.insertOne(jsonObjectValueSchema.parse(document));
 					break;
 				}
 				case "insertMany": {

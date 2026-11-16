@@ -1,5 +1,6 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { boundedStringListInputSchema } from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const gitHubNodeValueSchemas = {
@@ -11,8 +12,8 @@ export const gitHubNodeValueSchemas = {
 	title: withExpr(z.string().max(2000)),
 	body: withExpr(z.string().max(10000)),
 	state: withExpr(z.string()),
-	labels: withExpr(z.string().max(2000)),
-	assignees: withExpr(z.string().max(2000)),
+	labels: withExpr(boundedStringListInputSchema),
+	assignees: withExpr(boundedStringListInputSchema),
 	assignee: withExpr(z.string().max(2000)),
 	pull_number: withExpr(z.string().max(2000)),
 	base: withExpr(z.string().max(2000)),

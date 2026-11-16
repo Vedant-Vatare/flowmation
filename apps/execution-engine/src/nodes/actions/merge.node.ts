@@ -1,8 +1,7 @@
-import type { MergeNode, NodeParameters } from "@nodebase/shared";
+import type { MergeNode } from "@nodebase/shared";
 import { getNodesOutputsByName } from "@/services/executionStore.js";
 import type { NodeExecutorOutput } from "@/types/nodes.js";
-
-type MergeMode = "combine" | "append";
+import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
 export const mergeNodeExecutor = async (
 	node: MergeNode,
@@ -17,7 +16,8 @@ export const mergeNodeExecutor = async (
 			};
 		}
 
-		const mode = getMergeMode(node.parameters);
+		const params = await getResolvedParams(node, executionId);
+		const mode = params.mode?.value || "combine";
 		const outputs = await getNodesOutputsByName(executionId, upstreamNodeNames);
 
 		if (!outputs || outputs.length === 0) {
@@ -43,11 +43,6 @@ export const mergeNodeExecutor = async (
 			message: error instanceof Error ? error.message : "Merge failed",
 		};
 	}
-};
-
-const getMergeMode = (parameters: NodeParameters[]): MergeMode => {
-	const modeParam = parameters.find((p) => p.name === "mode");
-	return (modeParam?.value as MergeMode) ?? "combine";
 };
 
 const appendMode = (outputs: unknown[]): unknown => {

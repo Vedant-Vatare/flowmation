@@ -3,7 +3,7 @@ import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
 import { withExpr } from "../validation.js";
 
 export const arrayTransformNodeValueSchemas = {
-	input_array: withExpr(z.union([z.string(), z.array(z.any())])),
+	input_array: withExpr(z.json()),
 	operation: withExpr(z.enum(["map", "filter", "sort", "flatten", "deduplicate", "first", "last", "slice", "reverse"])),
 	expression: withExpr(z.string()),
 	sort_direction: withExpr(z.enum(["asc", "desc"])),

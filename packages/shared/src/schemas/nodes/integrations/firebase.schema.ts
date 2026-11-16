@@ -1,11 +1,12 @@
 import z from "zod";
 import { baseNodeSchema, nodeParameterSchema } from "../base.nodes.js";
+import { jsonValueSchema } from "../parameter-values.js";
 import { withExpr } from "../validation.js";
 
 export const firebaseNodeValueSchemas = {
 	operation: withExpr(z.string()),
 	path: withExpr(z.string()),
-	data: withExpr(z.string()),
+	data: withExpr(z.json(), jsonValueSchema),
 } as const;
 
 export const firebaseNodeSchema = baseNodeSchema.extend({

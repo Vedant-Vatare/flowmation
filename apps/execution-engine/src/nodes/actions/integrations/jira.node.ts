@@ -1,4 +1,4 @@
-import type { JiraNode } from "@nodebase/shared";
+import { type JiraNode, stringListValueSchema } from "@nodebase/shared";
 import { UnrecoverableError } from "bullmq";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
@@ -99,7 +99,9 @@ export const jiraNodeExecutor = async (
 			const description = params.description?.value as string;
 			const priority = params.priority?.value as string;
 			const assignee = params.assignee?.value as string;
-			const labels = params.labels?.value as string;
+			const labels = params.labels?.value
+				? stringListValueSchema.parse(params.labels.value)
+				: undefined;
 
 			const fields: Record<string, unknown> = {
 				project: { key: projectKey },
@@ -109,11 +111,7 @@ export const jiraNodeExecutor = async (
 			if (description) fields.description = description;
 			if (priority) fields.priority = { name: priority };
 			if (assignee) fields.assignee = { name: assignee };
-			if (labels)
-				fields.labels = labels
-					.split(",")
-					.map((l) => l.trim())
-					.filter(Boolean);
+			if (labels) fields.labels = labels;
 
 			const response = await fetch(`${baseUrl}/rest/api/3/issue`, {
 				method: "POST",
@@ -144,17 +142,15 @@ export const jiraNodeExecutor = async (
 			const description = params.description?.value as string;
 			const priority = params.priority?.value as string;
 			const assignee = params.assignee?.value as string;
-			const labels = params.labels?.value as string;
+			const labels = params.labels?.value
+				? stringListValueSchema.parse(params.labels.value)
+				: undefined;
 
 			if (summary) fields.summary = summary;
 			if (description) fields.description = description;
 			if (priority) fields.priority = { name: priority };
 			if (assignee) fields.assignee = { name: assignee };
-			if (labels)
-				fields.labels = labels
-					.split(",")
-					.map((l) => l.trim())
-					.filter(Boolean);
+			if (labels) fields.labels = labels;
 
 			const response = await fetch(`${baseUrl}/rest/api/3/issue/${issueKey}`, {
 				method: "PUT",

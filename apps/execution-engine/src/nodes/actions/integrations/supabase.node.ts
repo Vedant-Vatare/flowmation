@@ -97,16 +97,10 @@ export const supabaseNodeExecutor = async (
 
 		if (operation === "insert_rows") {
 			const table = params.table?.value as string;
-			const dataStr = params.data?.value as string;
+			const data = params.data?.value;
 			if (!table) return { success: false, message: "Table name is required" };
-			if (!dataStr) return { success: false, message: "Data is required" };
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
-			}
+			if (data === undefined || data === "")
+				return { success: false, message: "Data is required" };
 
 			const response = await fetch(`${baseUrl}/rest/v1/${table}`, {
 				method: "POST",
@@ -114,7 +108,7 @@ export const supabaseNodeExecutor = async (
 					...headers,
 					Prefer: "return=representation",
 				},
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(data),
 			});
 
 			if (!response.ok) {
@@ -135,19 +129,13 @@ export const supabaseNodeExecutor = async (
 
 		if (operation === "update_rows") {
 			const table = params.table?.value as string;
-			const dataStr = params.data?.value as string;
+			const data = params.data?.value;
 			const filter = params.filter?.value as string;
 			if (!table) return { success: false, message: "Table name is required" };
-			if (!dataStr) return { success: false, message: "Data is required" };
+			if (data === undefined || data === "")
+				return { success: false, message: "Data is required" };
 			if (!filter)
 				return { success: false, message: "Filter is required for update" };
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
-			}
 
 			const url = new URL(`${baseUrl}/rest/v1/${table}`);
 			const filterParts = filter.split("&");
@@ -162,7 +150,7 @@ export const supabaseNodeExecutor = async (
 					...headers,
 					Prefer: "return=representation",
 				},
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(data),
 			});
 
 			if (!response.ok) {
@@ -218,16 +206,10 @@ export const supabaseNodeExecutor = async (
 
 		if (operation === "upsert_rows") {
 			const table = params.table?.value as string;
-			const dataStr = params.data?.value as string;
+			const data = params.data?.value;
 			if (!table) return { success: false, message: "Table name is required" };
-			if (!dataStr) return { success: false, message: "Data is required" };
-
-			let parsedData: unknown;
-			try {
-				parsedData = JSON.parse(dataStr);
-			} catch {
-				return { success: false, message: "Invalid JSON data" };
-			}
+			if (data === undefined || data === "")
+				return { success: false, message: "Data is required" };
 
 			const response = await fetch(`${baseUrl}/rest/v1/${table}`, {
 				method: "POST",
@@ -235,7 +217,7 @@ export const supabaseNodeExecutor = async (
 					...headers,
 					Prefer: "return=representation,resolution=merge-duplicates",
 				},
-				body: JSON.stringify(parsedData),
+				body: JSON.stringify(data),
 			});
 
 			if (!response.ok) {
@@ -259,16 +241,11 @@ export const supabaseNodeExecutor = async (
 			if (!functionName)
 				return { success: false, message: "Function name is required" };
 
-			const functionBodyStr = params.functionBody?.value as string;
-			let body: string | undefined;
-			if (functionBodyStr) {
-				try {
-					JSON.parse(functionBodyStr);
-					body = functionBodyStr;
-				} catch {
-					return { success: false, message: "Invalid JSON function body" };
-				}
-			}
+			const functionBody = params.functionBody?.value;
+			const body =
+				functionBody === undefined || functionBody === ""
+					? undefined
+					: JSON.stringify(functionBody);
 
 			const response = await fetch(`${baseUrl}/functions/v1/${functionName}`, {
 				method: "POST",

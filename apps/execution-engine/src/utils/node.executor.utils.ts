@@ -1,33 +1,117 @@
 import type { NodeExecutionConfig, NodeJobPayload } from "@nodebase/queue";
-import type { NodeParameters, WorkflowNode } from "@nodebase/shared";
+import {
+	booleanValueSchema,
+	finiteNumberValueSchema,
+	getResolvedValueSchema,
+	type NodeParameters,
+	nodeParamValueRegistry,
+	type WorkflowNode,
+} from "@nodebase/shared";
+import { UnrecoverableError } from "bullmq";
 import { FormatParamsValueExpressions } from "./resolve.params.expressions.js";
 import { recordNodeCompletion } from "./workflow.updates.utils.js";
 
 type KeyValueEntry = Record<string, string>;
 
 type NodeParameterLike = Omit<NodeParameters, "value"> & {
-	value?: NodeParameters["value"];
+	value?: unknown;
+};
+const preparedParameters = new WeakMap<object, NodeParameterLike[]>();
+
+export const prepareNodeForExecution = async (
+	node: WorkflowNode,
+	executionId: string,
+): Promise<WorkflowNode> => {
+	const params = await getResolvedParams(node, executionId);
+	const prepared = { ...node };
+	preparedParameters.set(prepared, Object.values(params));
+	return prepared;
 };
 
 export const getResolvedParams = async <T extends NodeParameterLike>(
-	node: { parameters: T[]; settings: WorkflowNode["settings"] },
+	node: {
+		task: string;
+		name?: string;
+		parameters: T[];
+		settings: WorkflowNode["settings"];
+	},
 	executionId: string,
 ) => {
-	const parameters = (
-		node.settings.hasExpressions
-			? await FormatParamsValueExpressions(node.parameters, executionId)
-			: node.parameters
-	) as T[];
-
-	for (const p of parameters) {
-		if (p.type === "number" && typeof p.value === "string" && p.value !== "") {
-			const n = Number(p.value);
-			if (!Number.isNaN(n)) (p as Record<string, unknown>).value = n;
-		}
-	}
-
-	return getTypedParams(parameters);
+	// Upstream data that looks like an expression must not be evaluated a second time.
+	const prepared = preparedParameters.get(node);
+	if (prepared) return getTypedParams(prepared as T[]);
+	const parameters = await FormatParamsValueExpressions(
+		node.parameters,
+		executionId,
+	);
+	validateResolvedParameters(node, parameters);
+	// Values have now passed the runtime rules belonging to these parameter definitions.
+	return getTypedParams(parameters as T[]);
 };
+
+function validateResolvedParameters(
+	node: { task: string; name?: string },
+	parameters: NodeParameterLike[],
+): void {
+	const schemas = nodeParamValueRegistry.get(node.task);
+	if (!schemas) throw new UnrecoverableError(`Unknown node task: ${node.task}`);
+	const byName = new Map(parameters.map((param) => [param.name, param]));
+	const validated = new Set<string>();
+	const visiting = new Set<string>();
+	function fail(label: string, message: string): never {
+		throw new UnrecoverableError(
+			`${node.name ?? node.task}: ${label}: ${message}`,
+		);
+	}
+	const validate = (name: string): void => {
+		if (validated.has(name)) return;
+		const param = byName.get(name);
+		if (!param) return;
+		if (visiting.has(name)) fail(param.label, "Circular parameter dependency");
+		visiting.add(name);
+		const active = (param.dependsOn ?? []).every((dependency) => {
+			validate(dependency.parameter);
+			const value = byName.get(dependency.parameter)?.value;
+			return dependency.values.some(
+				(expected) =>
+					expected === value ||
+					(typeof value === "boolean" && expected === String(value)) ||
+					(typeof expected === "boolean" && value === String(expected)),
+			);
+		});
+		const storedSchema = schemas[name];
+		if (!storedSchema) fail(param.label, "Unknown parameter");
+		const schema = getResolvedValueSchema(storedSchema);
+		const empty =
+			param.value === undefined || param.value === null || param.value === "";
+		if (!active) {
+			param.value = "";
+		} else if (empty) {
+			if (param.required && !schema.safeParse(undefined).success)
+				fail(param.label, "A value is required after resolving expressions");
+			if (param.value !== null || !schema.safeParse(null).success)
+				param.value = "";
+		} else {
+			if (param.type === "number" || param.type === "boolean") {
+				const primitiveSchema =
+					param.type === "number"
+						? finiteNumberValueSchema
+						: booleanValueSchema;
+				const primitive = primitiveSchema.safeParse(param.value);
+				if (!primitive.success)
+					fail(param.label, `Expected a valid ${param.type}`);
+				param.value = primitive.data;
+			}
+			const result = schema.safeParse(param.value);
+			if (!result.success)
+				fail(param.label, result.error.issues[0]?.message ?? "Invalid value");
+			param.value = result.data;
+		}
+		visiting.delete(name);
+		validated.add(name);
+	};
+	for (const param of parameters) validate(param.name);
+}
 
 export const getTypedParams = <T extends { name: string }>(parameters: T[]) => {
 	return Object.fromEntries(parameters.map((p) => [p.name, p])) as {
@@ -73,7 +157,7 @@ export const flattenKeyValueParam = (
 	);
 
 export const checkRequiredParameters = (
-	params: NodeParameters[],
+	params: NodeParameterLike[],
 ): { valid: boolean; missing: string[] } => {
 	const missing: string[] = [];
 	const valueMap = Object.fromEntries(params.map((p) => [p.name, p.value]));

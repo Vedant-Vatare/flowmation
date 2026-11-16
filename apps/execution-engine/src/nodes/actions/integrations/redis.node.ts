@@ -1,15 +1,10 @@
-import type { RedisNode } from "@nodebase/shared";
+import {
+	jsonObjectValueSchema,
+	type RedisNode,
+	stringListValueSchema,
+} from "@nodebase/shared";
 import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
-
-const parseJson = (value: string | undefined, paramName: string): unknown => {
-	if (!value || !value.trim()) return undefined;
-	try {
-		return JSON.parse(value);
-	} catch {
-		throw new Error(`Invalid JSON in ${paramName}: ${value}`);
-	}
-};
 
 export const redisNodeExecutor = async (
 	node: RedisNode,
@@ -29,6 +24,18 @@ export const redisNodeExecutor = async (
 		const operation = params.operation?.value as string;
 
 		if (!operation) return { success: false, message: "Operation is required" };
+		const rawValue = params.value?.value;
+		const keyType = params.keyType?.value || "automatic";
+		const value =
+			typeof rawValue === "string" ? rawValue : JSON.stringify(rawValue);
+		const hash =
+			operation === "set" && keyType === "hash"
+				? jsonObjectValueSchema.parse(rawValue)
+				: undefined;
+		const members =
+			operation === "set" && keyType === "sets"
+				? stringListValueSchema.parse(rawValue)
+				: undefined;
 
 		const { Redis } = await import("ioredis");
 		const redis = new Redis(connectionString);
@@ -39,7 +46,6 @@ export const redisNodeExecutor = async (
 			switch (operation) {
 				case "get": {
 					const key = params.key?.value as string;
-					const keyType = (params.keyType?.value as string) || "automatic";
 					if (!key) return { success: false, message: "Key is required" };
 
 					if (keyType === "automatic") {
@@ -69,36 +75,22 @@ export const redisNodeExecutor = async (
 
 				case "set": {
 					const key = params.key?.value as string;
-					const value = params.value?.value as string;
-					const keyType = (params.keyType?.value as string) || "automatic";
-					const expire = params.expire?.value as string;
-					const ttl = params.ttl?.value as string;
+					const expire = params.expire?.value === true;
+					const ttl = params.ttl?.value;
 
 					if (!key) return { success: false, message: "Key is required" };
 
 					if (keyType === "hash") {
-						const parsed = parseJson(value, "value") as Record<string, unknown>;
-						if (!parsed || typeof parsed !== "object") {
-							return {
-								success: false,
-								message: "Value must be a JSON object for hash",
-							};
-						}
-						await redis.hset(key, parsed);
+						if (hash) await redis.hset(key, hash);
 					} else if (keyType === "list") {
 						await redis.rpush(key, value ?? "");
 					} else if (keyType === "sets") {
-						const parsed = parseJson(value, "value") as string[];
-						if (Array.isArray(parsed)) {
-							await redis.sadd(key, ...parsed);
-						} else {
-							await redis.sadd(key, value ?? "");
-						}
+						if (members?.length) await redis.sadd(key, ...members);
 					} else {
 						await redis.set(key, value ?? "");
 					}
 
-					if (expire === "true" && ttl) {
+					if (expire && ttl) {
 						const ttlNum = Number(ttl);
 						if (ttlNum > 0) await redis.expire(key, ttlNum);
 					}
@@ -117,13 +109,13 @@ export const redisNodeExecutor = async (
 
 				case "keys": {
 					const pattern = params.pattern?.value as string;
-					const getValues = params.getValues?.value as string;
+					const getValues = params.getValues?.value !== false;
 					if (!pattern)
 						return { success: false, message: "Key pattern is required" };
 
 					const keys = await redis.keys(pattern);
 
-					if (getValues === "false") {
+					if (!getValues) {
 						result = { keys };
 					} else {
 						const data: Record<string, unknown> = {};
@@ -146,14 +138,14 @@ export const redisNodeExecutor = async (
 
 				case "incr": {
 					const key = params.key?.value as string;
-					const expire = params.expire?.value as string;
-					const ttl = params.ttl?.value as string;
+					const expire = params.expire?.value === true;
+					const ttl = params.ttl?.value;
 
 					if (!key) return { success: false, message: "Key is required" };
 
 					const newVal = await redis.incr(key);
 
-					if (expire === "true" && ttl) {
+					if (expire && ttl) {
 						const ttlNum = Number(ttl);
 						if (ttlNum > 0) await redis.expire(key, ttlNum);
 					}
@@ -178,13 +170,12 @@ export const redisNodeExecutor = async (
 
 				case "push": {
 					const key = params.key?.value as string;
-					const value = params.value?.value as string;
-					const tail = params.tail?.value as string;
+					const tail = params.tail?.value === true;
 
 					if (!key) return { success: false, message: "Key is required" };
 					if (!value) return { success: false, message: "Data is required" };
 
-					if (tail === "true") {
+					if (tail) {
 						await redis.rpush(key, value);
 					} else {
 						await redis.lpush(key, value);
@@ -197,12 +188,12 @@ export const redisNodeExecutor = async (
 
 				case "pop": {
 					const key = params.key?.value as string;
-					const tail = params.tail?.value as string;
+					const tail = params.tail?.value === true;
 
 					if (!key) return { success: false, message: "Key is required" };
 
 					let value: string | null;
-					if (tail === "true") {
+					if (tail) {
 						value = await redis.rpop(key);
 					} else {
 						value = await redis.lpop(key);
