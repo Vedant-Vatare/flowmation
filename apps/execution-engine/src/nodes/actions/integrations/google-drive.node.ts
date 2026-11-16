@@ -35,6 +35,10 @@ export const googleDriveNodeExecutor = async (
 			const pageSize = (params.pageSize?.value as string) || "10";
 
 			url.searchParams.set("pageSize", pageSize);
+			url.searchParams.set(
+				"fields",
+				"nextPageToken,files(id,name,mimeType,modifiedTime,webViewLink)",
+			);
 			if (query) url.searchParams.set("q", query);
 
 			const response = await fetch(url.toString(), {

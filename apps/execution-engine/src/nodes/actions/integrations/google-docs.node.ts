@@ -80,9 +80,7 @@ export const googleDocsNodeExecutor = async (
 						requests: [
 							{
 								insertText: {
-									location: {
-										index: -1,
-									},
+									endOfSegmentLocation: {},
 									text,
 								},
 							},
