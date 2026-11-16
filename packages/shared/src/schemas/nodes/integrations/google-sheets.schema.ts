@@ -6,7 +6,12 @@ export const googleSheetsNodeValueSchemas = {
 	operation: withExpr(z.string()),
 	spreadsheetId: withExpr(z.string()),
 	range: withExpr(z.string()),
-	values: withExpr(z.string()),
+	values: withExpr(
+		z.union([
+			z.string(),
+			z.array(z.array(z.union([z.string(), z.number(), z.boolean()]))),
+		]),
+	),
 	valueInputOption: withExpr(z.string()),
 } as const;
 

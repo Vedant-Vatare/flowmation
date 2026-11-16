@@ -243,6 +243,8 @@ export const NodeInspector = ({
 								} else {
 									displayValue = String(rawValue ?? "");
 								}
+							} else if (rawValue !== null && typeof rawValue === "object") {
+								displayValue = JSON.stringify(rawValue, null, 2);
 							} else {
 								displayValue = String(rawValue ?? "");
 							}

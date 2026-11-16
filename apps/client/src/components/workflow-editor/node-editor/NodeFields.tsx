@@ -88,6 +88,23 @@ const FieldWrapper = ({
 	</fieldset>
 );
 
+function formatFieldValue(value: unknown): string {
+	if (value !== null && typeof value === "object") {
+		return JSON.stringify(value, null, 2);
+	}
+	return String(value ?? "");
+}
+
+function parseFieldValue(value: string, isStructured: boolean): unknown {
+	if (!isStructured) return value;
+
+	try {
+		return JSON.parse(value);
+	} catch {
+		return value;
+	}
+}
+
 const ExpressionController = ({
 	field,
 	control,
@@ -97,29 +114,38 @@ const ExpressionController = ({
 	multiline?: boolean;
 }) => {
 	const [isEditingExpr, setIsEditingExpr] = useState(false);
+	const isStructured = field.value !== null && typeof field.value === "object";
 	return (
 		<Controller
 			name={field.name}
 			control={control}
-			render={({ field: f, fieldState: { error } }) => (
-				<FieldWrapper
-					field={field}
-					error={isEditingExpr ? undefined : error?.message}
-					onBlur={f.onBlur}
-				>
-					<ExpressionInput
-						id={field.name}
-						invalid={!!error && !isEditingExpr}
-						value={String(f.value ?? "")}
-						onChange={f.onChange}
-						currentNodeId={currentNodeId}
-						multiline={multiline}
-						placeholder={String(field.placeholder ?? field.default ?? "")}
-						className="bg-muted/50"
-						setIsEditingExpr={setIsEditingExpr}
-					/>
-				</FieldWrapper>
-			)}
+			render={({ field: formField, fieldState: { error } }) => {
+				const inputValue = formatFieldValue(formField.value);
+				const handleChange = (value: string) => {
+					const nextValue = parseFieldValue(value, isStructured);
+					formField.onChange(nextValue);
+				};
+
+				return (
+					<FieldWrapper
+						field={field}
+						error={isEditingExpr ? undefined : error?.message}
+						onBlur={formField.onBlur}
+					>
+						<ExpressionInput
+							id={field.name}
+							invalid={!!error && !isEditingExpr}
+							value={inputValue}
+							onChange={handleChange}
+							currentNodeId={currentNodeId}
+							multiline={multiline}
+							placeholder={String(field.placeholder ?? field.default ?? "")}
+							className="bg-muted/50"
+							setIsEditingExpr={setIsEditingExpr}
+						/>
+					</FieldWrapper>
+				);
+			}}
 		/>
 	);
 };

@@ -3,7 +3,36 @@ import type { DecryptedCredential, NodeExecutorOutput } from "@/types/nodes.js";
 import { handleGoogleAPIResponse } from "@/utils/api.utils.js";
 import { getResolvedParams } from "@/utils/node.executor.utils.js";
 
-const parseValues = (raw: string): string[][] => {
+type SheetCell = string | number | boolean;
+
+function isValidCell(cell: unknown): cell is SheetCell {
+	if (typeof cell === "number") return Number.isFinite(cell);
+	return typeof cell === "string" || typeof cell === "boolean";
+}
+
+function isValidRow(row: unknown): row is SheetCell[] {
+	return Array.isArray(row) && row.every(isValidCell);
+}
+
+const parseValues = (raw: unknown): SheetCell[][] => {
+	let value = raw;
+	if (typeof raw === "string" && raw.trimStart().startsWith("[")) {
+		try {
+			value = JSON.parse(raw);
+		} catch {
+			value = raw;
+		}
+	}
+	if (Array.isArray(value)) {
+		if (!value.every(isValidRow)) {
+			throw new Error(
+				"Values must be a two-dimensional array of strings, numbers or booleans",
+			);
+		}
+		return value;
+	}
+	if (typeof raw !== "string")
+		throw new Error("Values must be rows or comma-separated text");
 	return raw
 		.split("\n")
 		.map((line) => line.trim())
