@@ -5,10 +5,17 @@ import type {
 } from "@nodebase/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNodes, useReactFlow } from "@xyflow/react";
-import { SearchIcon, XIcon } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import {
+	ChevronLeft,
+	ChevronRight,
+	PanelRightOpen,
+	SearchIcon,
+	XIcon,
+} from "lucide-react";
+import { memo, useCallback, useId, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { insertWorkflowNodeApi } from "@/apis/userWorkflow";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
 	Sidebar,
@@ -18,8 +25,15 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { NodeUI, WorkflowCanvasNode } from "@/constants/nodes";
 import { useSortedNodes } from "@/hooks/nodes";
 import {
@@ -370,54 +384,103 @@ const NodeEditorTab = () => {
 	return <NodeEditor key={selectedNode.id} node={selectedNode} />;
 };
 
-export const WorkflowEditorSidebar = memo(() => {
+const WorkflowSidebarContent = memo(() => {
 	const tabOpen = useWorkflowSidbarTabsStore((s) => s.tabOpen);
 	const setTabOpen = useWorkflowSidbarTabsStore((s) => s.setTabOpen);
 
 	return (
-		<Sidebar
-			side="right"
-			collapsible="offcanvas"
-			className="top-(--main-header-height) h-(--main-content-level-height)"
-		>
-			<SidebarRail side="right" />
-			<SidebarContent className="pt-5">
-				<Tabs
-					defaultValue="editor"
-					value={tabOpen}
-					className="flex flex-col flex-1 min-h-0"
+		<SidebarContent className="md:pt-5">
+			<Tabs value={tabOpen} className="flex flex-col flex-1 min-h-0">
+				<TabsList className="ml-2 px-2 py-1.5 gap-2 mb-1 shrink-0">
+					<TabsTrigger value="nodes" onClick={() => setTabOpen("nodes")}>
+						Nodes
+					</TabsTrigger>
+					<TabsTrigger value="editor" onClick={() => setTabOpen("editor")}>
+						Editor
+					</TabsTrigger>
+					<TabsTrigger value="runs" onClick={() => setTabOpen("runs")}>
+						Runs
+					</TabsTrigger>
+				</TabsList>
+				<TabsContent
+					value="nodes"
+					className="flex-1 overflow-y-auto min-h-0 mt-0"
 				>
-					<TabsList className="ml-2 px-2 py-1.5 gap-2 mb-1 shrink-0">
-						<TabsTrigger value="nodes" onClick={() => setTabOpen("nodes")}>
-							Nodes
-						</TabsTrigger>
-						<TabsTrigger value="editor" onClick={() => setTabOpen("editor")}>
-							Editor
-						</TabsTrigger>
-						<TabsTrigger value="runs" onClick={() => setTabOpen("runs")}>
-							Runs
-						</TabsTrigger>
-					</TabsList>
-					<TabsContent
-						value="nodes"
-						className="flex-1 overflow-y-auto min-h-0 mt-0"
+					<Nodes />
+				</TabsContent>
+				<TabsContent
+					value="editor"
+					className="flex-1 overflow-y-auto min-h-0 mt-0 "
+				>
+					<NodeEditorTab />
+				</TabsContent>
+				<TabsContent
+					value="runs"
+					className="flex-1 overflow-y-auto min-h-0 mt-0"
+				>
+					<WorkflowLogs />
+				</TabsContent>
+			</Tabs>
+		</SidebarContent>
+	);
+});
+
+export const WorkflowEditorSidebar = memo(() => {
+	const { isMobile, open, toggleSidebar } = useSidebar();
+	const panelId = useId();
+
+	const toggleLabel = open ? "Close workflow tools" : "Open workflow tools";
+	const Chevron = open ? ChevronRight : ChevronLeft;
+
+	return (
+		<>
+			{!isMobile && (
+				<div className="relative z-60 w-0 shrink-0">
+					<TooltipProvider delayDuration={800} skipDelayDuration={0}>
+						<Tooltip>
+							<TooltipTrigger asChild>
+								<Button
+									type="button"
+									variant="outline"
+									size="icon"
+									className="absolute top-[calc(50dvh-var(--main-header-height))] right-0 h-12 w-8 -translate-y-1/2 rounded-none rounded-l-md border-border bg-sidebar text-sidebar-foreground shadow-none transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-inset dark:border-border dark:bg-sidebar dark:hover:bg-sidebar-accent pointer-coarse:w-11"
+									aria-label={toggleLabel}
+									aria-controls={panelId}
+									aria-expanded={open}
+									onClick={toggleSidebar}
+								>
+									<Chevron aria-hidden="true" />
+								</Button>
+							</TooltipTrigger>
+							<TooltipContent side="left" sideOffset={8}>
+								{toggleLabel}
+							</TooltipContent>
+						</Tooltip>
+					</TooltipProvider>
+				</div>
+			)}
+			<Sidebar
+				id={panelId}
+				role="complementary"
+				aria-label="Workflow sidebar"
+				inert={!open}
+				side="right"
+				collapsible="offcanvas"
+				mobileTrigger={
+					<Button
+						type="button"
+						variant="outline"
+						className="absolute top-3 right-3 z-10 h-11 border-border bg-card text-card-foreground shadow-none hover:bg-muted dark:bg-card dark:hover:bg-muted"
 					>
-						<Nodes />
-					</TabsContent>
-					<TabsContent
-						value="editor"
-						className="flex-1 overflow-y-auto min-h-0 mt-0 "
-					>
-						<NodeEditorTab />
-					</TabsContent>
-					<TabsContent
-						value="runs"
-						className="flex-1 overflow-y-auto min-h-0 mt-0"
-					>
-						<WorkflowLogs />
-					</TabsContent>
-				</Tabs>
-			</SidebarContent>
-		</Sidebar>
+						Show sidebar
+						<PanelRightOpen aria-hidden="true" />
+					</Button>
+				}
+				className="top-(--main-header-height) h-(--main-content-level-height)"
+			>
+				<SidebarRail side="right" />
+				<WorkflowSidebarContent />
+			</Sidebar>
+		</>
 	);
 });

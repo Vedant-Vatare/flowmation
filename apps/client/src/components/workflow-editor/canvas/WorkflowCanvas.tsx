@@ -7,6 +7,7 @@ import "@xyflow/react/dist/style.css";
 import type { WorkflowNode as WorkflowNodeRecord } from "@nodebase/shared";
 import { toast } from "sonner";
 import Loader from "@/components/ui/Loader";
+import { useSidebar } from "@/components/ui/sidebar";
 import type { WorkflowCanvasNode } from "@/constants/nodes";
 import { useCanvasHistoryRecorder } from "@/hooks/useCanvasHistoryRecorder";
 import {
@@ -39,8 +40,10 @@ import { WorkflowControls } from "./WorkflowControls";
 
 const WorkflowCanvas = () => {
 	const { workflowId } = Route.useParams();
+	const { isMobile, setOpen, setOpenMobile } = useSidebar();
 	const { data: workflowNodes, isLoading: nodesLoading } =
 		useWorkflowNodesQuery(workflowId);
+	const initializedSidebar = useRef(false);
 	const { data: workflowConnections, isLoading: connectionsLoading } =
 		useWorkflowConnectionsQuery(workflowId);
 	const { mutateAsync: deleteNode } = useDeleteWorkflowNode();
@@ -75,6 +78,15 @@ const WorkflowCanvas = () => {
 	);
 
 	useEffect(() => {
+		if (!workflowNodes || initializedSidebar.current) return;
+		initializedSidebar.current = true;
+		if (workflowNodes.length > 0) return;
+
+		useWorkflowSidbarTabsStore.getState().setTabOpen("nodes");
+		if (!isMobile) setOpen(true);
+	}, [isMobile, setOpen, workflowNodes]);
+
+	useEffect(() => {
 		if (!workflowNodes) return;
 		setNodes(toCanvasNodes(workflowNodes));
 	}, [workflowNodes, setNodes]);
@@ -106,10 +118,12 @@ const WorkflowCanvas = () => {
 		});
 	}, [triggerFocusRequestKey, nodes, fitView]);
 
+	const setToolsOpen = isMobile ? setOpenMobile : setOpen;
+
 	const handleNodeClick = (node: WorkflowCanvasNode) => {
-		useWorkflowSidbarTabsStore.getState().setSidebarOpen(true);
 		useWorkflowStore.getState().setSelectedNodeId(node.id);
 		useWorkflowSidbarTabsStore.getState().setTabOpen("editor");
+		setToolsOpen(true);
 	};
 
 	const isConnectionChanged = useCallback(
@@ -274,8 +288,8 @@ const WorkflowCanvas = () => {
 			position: screenToFlowPosition(point),
 			connectionId,
 		});
-		sidebar.setSidebarOpen(true);
 		sidebar.setTabOpen("nodes");
+		setToolsOpen(true);
 	};
 
 	if (nodesLoading || connectionsLoading) {
@@ -372,7 +386,7 @@ const WorkflowCanvas = () => {
 const WorkflowCanvasLayout = () => {
 	const { workflowId } = Route.useParams();
 	return (
-		<div style={{ width: "100%", height: "100%" }}>
+		<div className="h-full min-w-0 flex-1">
 			<TestWebhook />
 			<WorkflowCanvas key={workflowId} />
 		</div>

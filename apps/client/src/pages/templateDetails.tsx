@@ -259,7 +259,7 @@ const TemplateDetails = ({ template, templateData }: TemplateDetailsProps) => {
 			<div className="mt-12 space-y-10">
 				<section className="max-w-prose">
 					<SectionLabel>About this template</SectionLabel>
-					<p className="mt-3 text-sm leading-relaxed text-muted-foreground text-pretty">
+					<p className="mt-3 whitespace-pre-line break-words text-sm leading-relaxed text-muted-foreground text-pretty">
 						{template.description || "No description provided."}
 					</p>
 				</section>

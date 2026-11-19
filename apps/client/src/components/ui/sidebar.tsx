@@ -14,6 +14,7 @@ import {
 	SheetDescription,
 	SheetHeader,
 	SheetTitle,
+	SheetTrigger,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -354,6 +355,7 @@ function Sidebar({
 	side = "left",
 	variant = "sidebar",
 	collapsible = "offcanvas",
+	mobileTrigger,
 	className,
 	children,
 	...props
@@ -361,6 +363,7 @@ function Sidebar({
 	side?: "left" | "right";
 	variant?: "sidebar" | "floating" | "inset";
 	collapsible?: "offcanvas" | "icon" | "none";
+	mobileTrigger?: React.ReactElement;
 }) {
 	const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
@@ -381,12 +384,18 @@ function Sidebar({
 
 	if (isMobile) {
 		return (
-			<Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
+			<Sheet open={openMobile} onOpenChange={setOpenMobile}>
+				{mobileTrigger && <SheetTrigger asChild>{mobileTrigger}</SheetTrigger>}
 				<SheetContent
 					data-sidebar="sidebar"
 					data-slot="sidebar"
 					data-mobile="true"
-					className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+					showCloseButton={!!mobileTrigger}
+					className={cn(
+						"bg-sidebar text-sidebar-foreground w-(--sidebar-width) max-w-full p-0",
+						mobileTrigger &&
+							"gap-0 pt-14 [&>button]:top-1.5 [&>button]:right-2 [&>button]:grid [&>button]:size-11 [&>button]:place-items-center motion-reduce:data-[state=closed]:animate-none motion-reduce:data-[state=open]:animate-none",
+					)}
 					style={
 						{
 							"--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -394,8 +403,10 @@ function Sidebar({
 					}
 					side={side}
 				>
-					<SheetHeader className="sr-only">
-						<SheetTitle>Sidebar</SheetTitle>
+					<SheetHeader
+						className={mobileTrigger ? "absolute top-4 left-4 p-0" : "sr-only"}
+					>
+						<SheetTitle>{props["aria-label"] ?? "Sidebar"}</SheetTitle>
 						<SheetDescription>Displays the mobile sidebar.</SheetDescription>
 					</SheetHeader>
 					<div className="flex h-full w-full flex-col">{children}</div>
